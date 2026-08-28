@@ -9483,3 +9483,701 @@ button {
   }
 
 }
+/* =========================================================
+   DASHBOARD GRAFİKLERİ
+   ========================================================= */
+
+.dashboard-chart-section {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 18px;
+  margin-bottom: 30px;
+}
+
+.dashboard-chart-card {
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e8e4dc;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.dashboard-chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.dashboard-chart-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: #b8943d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+}
+
+.dashboard-chart-header h2 {
+  margin: 0;
+  color: #171717;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.dashboard-chart-header p {
+  margin: 6px 0 0;
+  color: #888;
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   GRAFİK BUTONLARI
+   ========================================================= */
+
+.chart-period-buttons {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: #f4f2ed;
+  border-radius: 10px;
+}
+
+.chart-period-button {
+  padding: 8px 11px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #777;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chart-period-button.active {
+  background: #171717;
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   CİRO GRAFİĞİ
+   ========================================================= */
+
+.revenue-chart {
+  height: 250px;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding-top: 15px;
+  border-bottom: 1px solid #e8e4dc;
+}
+
+.revenue-chart.monthly-chart {
+  gap: 3px;
+}
+
+.revenue-chart-column {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.revenue-bar-wrapper {
+  width: 100%;
+  height: 205px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.revenue-bar {
+  width: 70%;
+  min-height: 0;
+  background: #b8943d;
+  border-radius: 6px 6px 0 0;
+  transition: height 0.25s ease;
+}
+
+.revenue-chart-column:hover .revenue-bar {
+  opacity: 0.75;
+}
+
+.revenue-tooltip {
+  position: absolute;
+  bottom: calc(100% - 32px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+
+  padding: 6px 8px;
+
+  white-space: nowrap;
+
+  background: #171717;
+  color: #ffffff;
+
+  border-radius: 6px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity 0.15s ease;
+}
+
+.revenue-chart-column:hover .revenue-tooltip {
+  opacity: 1;
+}
+
+.revenue-label {
+  margin-top: 8px;
+  color: #888;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   SİPARİŞ DURUM GRAFİĞİ
+   ========================================================= */
+
+.order-status-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 5px;
+}
+
+.order-status-row {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.order-status-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-status-info span {
+  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.order-status-info strong {
+  color: #171717;
+  font-size: 13px;
+}
+
+.order-status-bar {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  background: #eeeeee;
+  border-radius: 999px;
+}
+
+.order-status-fill {
+  height: 100%;
+  background: #171717;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+
+/* =========================================================
+   SON SİPARİŞLER
+   ========================================================= */
+
+.dashboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  padding: 15px 17px;
+
+  background: #ffffff;
+
+  border: 1px solid #e8e4dc;
+
+  border-radius: 12px;
+}
+
+.dashboard-list-item > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-list-item > div:last-child {
+  align-items: flex-end;
+}
+
+.dashboard-list-item strong {
+  color: #171717;
+  font-size: 13px;
+}
+
+.dashboard-list-item span {
+  color: #888;
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   SON DEĞERLENDİRMELER
+   ========================================================= */
+
+.dashboard-review-item {
+  display: flex;
+  gap: 12px;
+
+  padding: 15px 17px;
+
+  background: #ffffff;
+
+  border: 1px solid #e8e4dc;
+
+  border-radius: 12px;
+}
+
+.dashboard-review-avatar {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #171717;
+  color: #d4a01c;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.dashboard-review-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-review-content > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dashboard-review-content strong {
+  color: #171717;
+  font-size: 13px;
+}
+
+.dashboard-review-content span {
+  color: #d49b13;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.dashboard-review-content p {
+  margin: 7px 0 0;
+
+  color: #777;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   TÜMÜNÜ GÖR
+   ========================================================= */
+
+.dashboard-see-all {
+  color: #b8943d;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.dashboard-see-all:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   BOŞ DURUM
+   ========================================================= */
+
+.dashboard-empty {
+  padding: 25px;
+
+  background: #ffffff;
+
+  border: 1px solid #e8e4dc;
+
+  border-radius: 12px;
+
+  color: #888;
+
+  font-size: 12px;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   MOBİL
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+  .dashboard-chart-section {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-chart-header {
+    flex-direction: column;
+  }
+
+  .chart-period-buttons {
+    align-self: stretch;
+  }
+
+  .chart-period-button {
+    flex: 1;
+  }
+
+  .revenue-chart {
+    gap: 5px;
+  }
+
+  .revenue-bar {
+    width: 75%;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .dashboard-chart-card {
+    padding: 17px;
+  }
+
+  .dashboard-chart-header h2 {
+    font-size: 19px;
+  }
+
+  .revenue-chart {
+    height: 210px;
+  }
+
+  .revenue-bar-wrapper {
+    height: 170px;
+  }
+
+  .revenue-label {
+    font-size: 8px;
+  }
+
+  .monthly-chart .revenue-label {
+    font-size: 7px;
+  }
+
+}
+/* =========================================================
+   OZT ADMIN — QR / NFC KART DÜZELTMESİ
+   ========================================================= */
+
+/* Yönetim kartlarının tamamını aynı yapıya getir */
+.admin-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+/* QR/NFC dahil tüm kartlar */
+.admin-grid .admin-card {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  min-height: 175px !important;
+  box-sizing: border-box !important;
+  padding: 24px !important;
+  border: 1px solid #e5dfd2 !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  color: #171717 !important;
+  text-decoration: none !important;
+  overflow: hidden !important;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease !important;
+}
+
+/* Kart hover */
+.admin-grid .admin-card:hover {
+  transform: translateY(-4px) !important;
+  border-color: #d6b45a !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .08) !important;
+}
+
+/* İkon kutusu */
+.admin-grid .admin-card .admin-card-icon {
+  width: 46px !important;
+  height: 46px !important;
+  min-width: 46px !important;
+  min-height: 46px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 0 16px !important;
+  padding: 0 !important;
+  border-radius: 13px !important;
+  background: #fff6dc !important;
+  color: #171717 !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+}
+
+/* Başlık */
+.admin-grid .admin-card h2 {
+  margin: 0 0 7px !important;
+  padding: 0 !important;
+  color: #171717 !important;
+  font-size: 19px !important;
+  line-height: 1.25 !important;
+  font-weight: 800 !important;
+  letter-spacing: -.2px !important;
+}
+
+/* Açıklama */
+.admin-grid .admin-card p {
+  max-width: 300px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #77736c !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+/* Sağ alt ok */
+.admin-grid .admin-card .admin-card-arrow {
+  position: absolute !important;
+  right: 20px !important;
+  bottom: 18px !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: #171717 !important;
+  color: #fff !important;
+  font-size: 17px !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+  transition: transform .2s ease, background .2s ease !important;
+}
+
+/* Ok hover */
+.admin-grid .admin-card:hover .admin-card-arrow {
+  transform: translateX(3px) !important;
+  background: #c8941d !important;
+}
+
+/* Eski genel span kuralının ikon/ok düzenini bozmasını engelle */
+.admin-grid .admin-card > span {
+  box-sizing: border-box !important;
+}
+
+/* Mobil */
+@media (max-width: 700px) {
+  .admin-grid {
+    grid-template-columns: 1fr !important;
+    gap: 13px !important;
+  }
+
+  .admin-grid .admin-card {
+    min-height: 155px !important;
+    padding: 20px !important;
+  }
+
+  .admin-grid .admin-card h2 {
+    font-size: 18px !important;
+  }
+
+  .admin-grid .admin-card p {
+    font-size: 12px !important;
+    max-width: 85% !important;
+  }
+}
+/* =========================================================
+   QR / NFC — YÖNETİM KARTI
+   ========================================================= */
+
+.admin-grid .admin-management-card {
+  position: relative !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+
+  box-sizing: border-box !important;
+
+  width: 100% !important;
+  min-height: 115px !important;
+
+  padding: 18px !important;
+
+  border: 1px solid #e5dfd2 !important;
+  border-radius: 16px !important;
+
+  background: #ffffff !important;
+
+  color: #171717 !important;
+
+  text-decoration: none !important;
+
+  overflow: hidden !important;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease !important;
+}
+
+/* Hover */
+.admin-grid .admin-management-card:hover {
+  transform: translateY(-3px) !important;
+
+  border-color: #d6b45a !important;
+
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* İKON */
+.admin-grid .admin-management-card .admin-card-icon {
+  width: 38px !important;
+  height: 38px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  margin-bottom: 10px !important;
+
+  border-radius: 11px !important;
+
+  background: #fff5d8 !important;
+
+  font-size: 20px !important;
+  line-height: 1 !important;
+}
+
+/* BAŞLIK */
+.admin-grid .admin-management-card h3 {
+  margin: 0 0 5px !important;
+
+  color: #171717 !important;
+
+  font-size: 17px !important;
+  font-weight: 800 !important;
+
+  line-height: 1.25 !important;
+
+  text-decoration: none !important;
+}
+
+/* AÇIKLAMA */
+.admin-grid .admin-management-card p {
+  margin: 0 !important;
+
+  color: #77736c !important;
+
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+
+  text-decoration: none !important;
+
+  max-width: 85% !important;
+}
+
+/* SAĞ ALT OK */
+.admin-grid .admin-management-card::after {
+  content: "→";
+
+  position: absolute;
+
+  right: 16px;
+  bottom: 15px;
+
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #171717;
+
+  color: white;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+/* OK HOVER */
+.admin-grid .admin-management-card:hover::after {
+  transform: translateX(3px);
+  background: #c8941d;
+}
+
+/* MOBİL */
+@media (max-width: 700px) {
+  .admin-grid .admin-management-card {
+    min-height: 145px !important;
+    padding: 20px !important;
+  }
+
+  .admin-grid .admin-management-card h3 {
+    font-size: 18px !important;
+  }
+
+  .admin-grid .admin-management-card p {
+    font-size: 12px !important;
+  }
+}

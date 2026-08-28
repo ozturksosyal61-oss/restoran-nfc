@@ -3,10 +3,17 @@ import { supabase } from "../../../lib/supabase";
 
 export default async function RestaurantPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ masa?: string | string[] }>;
 }) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const rawTableToken = resolvedSearchParams.masa;
+  const tableToken = Array.isArray(rawTableToken)
+    ? rawTableToken[0]
+    : rawTableToken;
 
   // --------------------------------------------------
   // RESTORANI GETİR
@@ -23,6 +30,33 @@ export default async function RestaurantPage({
   if (error || !restaurant) {
     notFound();
   }
+
+  // --------------------------------------------------
+  // QR / NFC MASA BİLGİSİNİ GETİR
+  // --------------------------------------------------
+
+  let table: {
+    id: number;
+    table_number: number;
+    public_token: string;
+  } | null = null;
+
+  if (tableToken) {
+    const { data: tableData } = await supabase
+      .from("restaurant_tables")
+      .select("id, table_number, public_token")
+      .eq("restaurant_id", restaurant.id)
+      .eq("public_token", tableToken)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    table = tableData;
+  }
+
+  // QR ve NFC ile gelen masa bilgisi varsa, alt sayfalara da taşı.
+  const tableQuery = table?.public_token
+    ? `?masa=${encodeURIComponent(table.public_token)}`
+    : "";
 
   // --------------------------------------------------
   // YAYINDAKİ DEĞERLENDİRMELERİ GETİR
@@ -118,6 +152,26 @@ export default async function RestaurantPage({
           {restaurant.slug}
         </span>
 
+        {table && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              marginTop: "14px",
+              padding: "8px 14px",
+              borderRadius: "999px",
+              background: "rgba(224,160,0,0.12)",
+              border: "1px solid rgba(224,160,0,0.35)",
+              color: "#d99b00",
+              fontWeight: 800,
+              fontSize: "13px",
+            }}
+          >
+            📍 Masa {table.table_number}
+          </div>
+        )}
+
       </section>
 
 
@@ -128,7 +182,7 @@ export default async function RestaurantPage({
       <section className="actions">
 
         <a
-          href={`/restoran/${restaurant.slug}/menu`}
+          href={`/restoran/${restaurant.slug}/menu${tableQuery}`}
           className="action-button primary-action"
         >
           🍽️ Dijital Menü
@@ -157,21 +211,21 @@ export default async function RestaurantPage({
         )}
 
         <a
-          href={`/restoran/${restaurant.slug}/siparis`}
+          href={`/restoran/${restaurant.slug}/siparis${tableQuery}`}
           className="action-button"
         >
           🛎️ Sipariş Ver
         </a>
 
         <a
-          href={`/restoran/${restaurant.slug}/calisan`}
+          href={`/restoran/${restaurant.slug}/calisan${tableQuery}`}
           className="action-button"
         >
           👤 Çalışanı Değerlendir
         </a>
 
         <a
-          href={`/restoran/${restaurant.slug}/odeme`}
+          href={`/restoran/${restaurant.slug}/odeme${tableQuery}`}
           className="action-button"
         >
           💳 Ödeme Yap
