@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "../menu/CartContext";
 import { createClient } from "../../../../lib/supabase/client";
 
@@ -14,8 +14,10 @@ type Restaurant = {
 export default function OrderPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const slug = params.slug as string;
+  const tableToken = searchParams.get("masa");
 
   const { items, total } = useCart();
 
@@ -27,6 +29,9 @@ export default function OrderPage() {
 
   const [tableNumber, setTableNumber] =
     useState("");
+
+  const [tableLocked, setTableLocked] =
+    useState(false);
 
   const [note, setNote] =
     useState("");
@@ -76,6 +81,48 @@ export default function OrderPage() {
 
         setRestaurant(data);
 
+        /*
+         * =================================================
+         * QR / NFC MASA KONTROLÜ
+         *
+         * QR veya NFC bağlantısı şu şekilde olacak:
+         * /restoran/ozt-kafe/siparis?masa=PUBLIC_TOKEN
+         *
+         * Token geçerliyse müşterinin masası otomatik
+         * belirlenir ve masa seçmesi gerekmez.
+         * =================================================
+         */
+        if (tableToken) {
+          const {
+            data: table,
+            error: tableError,
+          } = await supabase
+            .from("restaurant_tables")
+            .select("id, table_number, public_token, is_active")
+            .eq("restaurant_id", data.id)
+            .eq("public_token", tableToken)
+            .eq("is_active", true)
+            .maybeSingle();
+
+          if (tableError) {
+            console.error(
+              "Table token error:",
+              tableError
+            );
+          }
+
+          if (table) {
+            setTableNumber(
+              String(table.table_number)
+            );
+            setTableLocked(true);
+          } else {
+            setError(
+              "Bu QR/NFC masa kodu geçersiz veya pasif."
+            );
+          }
+        }
+
         setLoadingRestaurant(false);
       } catch (error) {
         console.error(error);
@@ -89,7 +136,7 @@ export default function OrderPage() {
     }
 
     loadRestaurant();
-  }, [slug]);
+  }, [slug, tableToken]);
 
   /* =====================================================
      SİPARİŞ GÖNDER
@@ -415,43 +462,60 @@ export default function OrderPage() {
 
             Masa Numaranız
 
-            <select
-              value={
-                tableNumber
-              }
-              onChange={(
-                event
-              ) =>
-                setTableNumber(
-                  event.target.value
-                )
-              }
-              required
-            >
+            {tableLocked ? (
+              <>
+                <input
+                  type="text"
+                  value={`Masa ${tableNumber}`}
+                  readOnly
+                  aria-label="Otomatik belirlenen masa"
+                />
 
-              <option value="">
-                Masa seçin
-              </option>
+                <small>
+                  📍 QR/NFC üzerinden masanız otomatik belirlendi.
+                </small>
+              </>
+            ) : (
+              <>
+                <select
+                  value={
+                    tableNumber
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setTableNumber(
+                      event.target.value
+                    )
+                  }
+                  required
+                >
 
-              {tables.map(
-                (table) => (
-
-                  <option
-                    key={table}
-                    value={table}
-                  >
-                    Masa {table}
+                  <option value="">
+                    Masa seçin
                   </option>
 
-                )
-              )}
+                  {tables.map(
+                    (table) => (
 
-            </select>
+                      <option
+                        key={table}
+                        value={table}
+                      >
+                        Masa {table}
+                      </option>
 
-            <small>
-              Lütfen bulunduğunuz
-              masayı seçin.
-            </small>
+                    )
+                  )}
+
+                </select>
+
+                <small>
+                  Lütfen bulunduğunuz
+                  masayı seçin.
+                </small>
+              </>
+            )}
 
           </label>
 
