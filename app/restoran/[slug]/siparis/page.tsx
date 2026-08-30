@@ -872,39 +872,38 @@ export default function OrderPage() {
      */
 
     const {
-      data: orderId,
-      error: orderError,
-    } = await supabase.rpc(
-      "create_public_order",
-      {
-        p_restaurant_id:
-          restaurant.id,
+  data: orderId,
+  error: orderError,
+} = await supabase.rpc(
+  "create_public_order_with_session",
+  {
+    p_restaurant_id:
+      restaurant.id,
 
-        p_table_id:
-          verifiedTable.id,
+    p_table_id:
+      verifiedTable.id,
 
-        p_table_number:
-          String(
-            verifiedTable.table_number
-          ),
+    p_table_number:
+      String(
+        verifiedTable.table_number
+      ),
 
-        p_customer_name:
-          customerName.trim() || "",
+    p_customer_name:
+      customerName.trim() || "",
 
-        p_note:
-          note.trim() || "",
+    p_note:
+      note.trim() || "",
 
-        p_total_amount:
-          Number(total),
+    p_total_amount:
+      Number(total),
 
-        p_payment_method:
-          paymentMethod,
+    p_payment_method:
+      paymentMethod,
 
-        p_items:
-          orderItems,
-      }
-    );
-
+    p_items:
+      orderItems,
+  }
+);
     /*
      * =================================================
      * RPC HATASI

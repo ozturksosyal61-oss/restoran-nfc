@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import OrderActions from "./OrderActions";
 import OrdersAutoRefresh from "./OrdersAutoRefresh";
 import NewOrderNotification from "./NewOrderNotification";
+import SessionControls from "./SessionControls";
 import { hasPlanFeature, getPlanLabel } from "../../../lib/plan";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ type Order = {
   status: string;
   payment_method: string | null;
   payment_status: string | null;
+  session_id: number | null;
   created_at: string;
 };
 
@@ -32,6 +34,15 @@ type OrderItem = {
   product_name: string;
   price: number;
   quantity: number;
+};
+
+type DiningSession = {
+  id: number;
+  restaurant_id: number;
+  table_id: number;
+  status: "open" | "closed";
+  opened_at: string;
+  closed_at: string | null;
 };
 
 function statusText(status: string) {
@@ -133,6 +144,18 @@ function paymentStatusText(status: string | null) {
   }
 }
 
+
+function sessionOrdersTableLabel(
+  sessionId: number,
+  orders: Order[]
+) {
+  const order = orders.find(
+    (item) =>
+      item.session_id === sessionId
+  );
+
+  return order?.table_number || "—";
+}
 
 export default async function OrdersPage({
   searchParams,
@@ -368,6 +391,7 @@ if (restaurantError || !restaurant) {
         status,
         payment_method,
         payment_status,
+        session_id,
         created_at
       `
     )
@@ -391,6 +415,81 @@ if (restaurantError || !restaurant) {
       </main>
     );
   }
+
+  // =====================================================
+  // AÇIK MASA OTURUMLARI
+  // =====================================================
+
+  const {
+    data: openSessions,
+    error: openSessionsError,
+  } = await supabase
+    .from("dining_sessions")
+    .select(
+      "id, restaurant_id, table_id, status, opened_at, closed_at"
+    )
+    .eq("restaurant_id", restaurant.id)
+    .eq("status", "open")
+    .order("opened_at", {
+      ascending: true,
+    });
+
+  if (openSessionsError) {
+    console.error(
+      "Açık masa oturumları yüklenemedi:",
+      openSessionsError
+    );
+  }
+
+  const safeOpenSessions: DiningSession[] =
+    (openSessions || []) as DiningSession[];
+
+  const sessionStats = safeOpenSessions.map(
+    (session) => {
+      const sessionOrders =
+        (orders || []).filter(
+          (order) =>
+            order.session_id ===
+            session.id
+        );
+
+      const total =
+        sessionOrders.reduce(
+          (sum, order) =>
+            sum +
+            Number(
+              order.total_amount || 0
+            ),
+          0
+        );
+
+      const unpaidTotal =
+        sessionOrders
+          .filter(
+            (order) =>
+              order.payment_status !==
+              "paid" &&
+              order.payment_status !==
+              "refunded"
+          )
+          .reduce(
+            (sum, order) =>
+              sum +
+              Number(
+                order.total_amount || 0
+              ),
+            0
+          );
+
+      return {
+        session,
+        orders: sessionOrders,
+        orderCount: sessionOrders.length,
+        total,
+        unpaidTotal,
+      };
+    }
+  );
 
   // =====================================================
   // SİPARİŞ ÜRÜNLERİ
@@ -1085,6 +1184,156 @@ if (restaurantError || !restaurant) {
         <>
 
           {/* =============================================
+              AÇIK MASA HESAPLARI
+          ============================================== */}
+
+          {sessionStats.length > 0 && (
+            <section
+              className="orders-section"
+              style={{
+                marginBottom: "25px",
+              }}
+            >
+              <div className="orders-section-heading">
+                <div>
+                  <span className="orders-kicker">
+                    MASA HESAPLARI
+                  </span>
+                  <h2>Açık Masa Oturumları</h2>
+                </div>
+
+                <div className="orders-count">
+                  {sessionStats.length} açık hesap
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: "14px",
+                }}
+              >
+                {sessionStats.map(
+                  ({
+                    session,
+                    orderCount,
+                    total,
+                    unpaidTotal,
+                  }) => (
+                    <article
+                      key={session.id}
+                      style={{
+                        background: "#fff",
+                        border: "1px solid #e7e0d5",
+                        borderRadius: "18px",
+                        padding: "18px",
+                        boxShadow:
+                          "0 8px 24px rgba(60,50,30,.05)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "15px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "10px",
+                              fontWeight: 900,
+                              letterSpacing: "0.12em",
+                              color: "#c8941d",
+                            }}
+                          >
+                            AÇIK HESAP
+                          </div>
+
+                          <h3
+                            style={{
+                              margin: "5px 0",
+                              fontSize: "20px",
+                            }}
+                          >
+                            🪑 Masa{" "}
+                            {sessionOrdersTableLabel(
+                              session.id,
+                              orders
+                            )}
+                          </h3>
+
+                          <div
+                            style={{
+                              color: "#888",
+                              fontSize: "11px",
+                            }}
+                          >
+                            Oturum #{session.id} •{" "}
+                            {orderCount} sipariş • Açılış{" "}
+                            {formatDate(session.opened_at)}
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            textAlign: "right",
+                          }}
+                        >
+                          <div
+                            style={{
+                              color: "#999",
+                              fontSize: "9px",
+                              fontWeight: 900,
+                              letterSpacing: "0.08em",
+                            }}
+                          >
+                            HESAP TOPLAMI
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: "3px",
+                              fontSize: "22px",
+                              fontWeight: 950,
+                            }}
+                          >
+                            {formatPrice(total)} TL
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: "3px",
+                              color:
+                                unpaidTotal > 0
+                                  ? "#b42318"
+                                  : "#15803d",
+                              fontSize: "10px",
+                              fontWeight: 800,
+                            }}
+                          >
+                            {unpaidTotal > 0
+                              ? `Açık: ${formatPrice(
+                                  unpaidTotal
+                                )} TL`
+                              : "Ödemeler tamamlandı"}
+                          </div>
+                        </div>
+
+                        <SessionControls
+                          sessionId={session.id}
+                        />
+                      </div>
+                    </article>
+                  )
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* =============================================
               AKTİF SİPARİŞLER
           ============================================== */}
 
@@ -1154,6 +1403,19 @@ if (restaurantError || !restaurant) {
                                 {order.table_number}
                               </strong>
                             </div>
+
+                            {order.session_id && (
+                              <div
+                                style={{
+                                  marginTop: "5px",
+                                  color: "#9a6b00",
+                                  fontSize: "10px",
+                                  fontWeight: 800,
+                                }}
+                              >
+                                Hesap Oturumu #{order.session_id}
+                              </div>
+                            )}
 
                           </div>
 
@@ -1489,6 +1751,19 @@ if (restaurantError || !restaurant) {
                                 {order.table_number}
                               </strong>
                             </div>
+
+                            {order.session_id && (
+                              <div
+                                style={{
+                                  marginTop: "5px",
+                                  color: "#9a6b00",
+                                  fontSize: "10px",
+                                  fontWeight: 800,
+                                }}
+                              >
+                                Hesap Oturumu #{order.session_id}
+                              </div>
+                            )}
 
                           </div>
 

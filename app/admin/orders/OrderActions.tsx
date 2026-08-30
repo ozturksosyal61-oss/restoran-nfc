@@ -467,14 +467,31 @@ export default function OrderActions({
        * =================================================
        */
 
-      const {
-        error: updateError,
-      } = await supabase
-        .from("orders")
-        .update({
-          payment_status: newPaymentStatus,
-        })
-        .eq("id", orderId);
+      let updateError: { message: string } | null = null;
+
+      if (newPaymentStatus === "paid") {
+        const { error } = await supabase.rpc(
+          "mark_order_paid_and_maybe_close_session",
+          {
+            p_order_id: orderId,
+          }
+        );
+
+        updateError = error
+          ? { message: error.message }
+          : null;
+      } else {
+        const { error } = await supabase
+          .from("orders")
+          .update({
+            payment_status: newPaymentStatus,
+          })
+          .eq("id", orderId);
+
+        updateError = error
+          ? { message: error.message }
+          : null;
+      }
 
       if (updateError) {
         console.error(
