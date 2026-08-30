@@ -351,99 +351,146 @@ export default function OrderTrackingPage() {
   // =====================================================
 
   async function submitReview() {
-    if (!order) {
-      setReviewError(
-        "Sipariş bilgileri yüklenemedi."
-      );
-      return;
-    }
-
-    if (rating < 1 || rating > 5) {
-      setReviewError(
-        "Lütfen 1 ile 5 arasında bir puan seçin."
-      );
-      return;
-    }
-
-    setReviewLoading(true);
-    setReviewError("");
-
-    try {
-      const supabase = createClient();
-
-      // -------------------------------------------------
-      // RESTORANI BUL
-      // -------------------------------------------------
-
-      const {
-        data: restaurant,
-        error: restaurantError,
-      } = await supabase
-        .from("restaurants")
-        .select("id")
-        .eq("slug", slug)
-        .single();
-
-      if (restaurantError || !restaurant) {
-        setReviewError(
-          "İşletme bulunamadı."
-        );
-
-        setReviewLoading(false);
-        return;
-      }
-
-      // -------------------------------------------------
-      // DEĞERLENDİRME
-      // -------------------------------------------------
-
-      const { error } = await supabase
-        .from("reviews")
-        .insert({
-          order_id: order.id,
-          restaurant_id: restaurant.id,
-          customer_name:
-            order.customer_name || null,
-          rating,
-          comment:
-            reviewComment.trim() || null,
-          is_visible: true,
-        });
-
-      if (error) {
-        console.error(
-          "Değerlendirme hatası:",
-          error
-        );
-
-        if (error.code === "23505") {
-          setReviewError(
-            "Bu sipariş için zaten bir değerlendirme yapılmış."
-          );
-        } else {
-          setReviewError(
-            "Değerlendirme gönderilemedi: " +
-              error.message
-          );
-        }
-
-        setReviewLoading(false);
-        return;
-      }
-
-      setReviewSubmitted(true);
-      setReviewLoading(false);
-    } catch (error) {
-      console.error(error);
-
-      setReviewError(
-        "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
-      );
-
-      setReviewLoading(false);
-    }
+  if (!order) {
+    setReviewError(
+      "Sipariş bilgileri yüklenemedi."
+    );
+    return;
   }
 
+  if (rating < 1 || rating > 5) {
+    setReviewError(
+      "Lütfen 1 ile 5 arasında bir puan seçin."
+    );
+    return;
+  }
+
+  setReviewLoading(true);
+  setReviewError("");
+
+  try {
+    const supabase = createClient();
+
+    // -------------------------------------------------
+    // RESTORANI BUL
+    // -------------------------------------------------
+
+    const {
+      data: restaurant,
+      error: restaurantError,
+    } = await supabase
+      .from("restaurants")
+      .select("id")
+      .eq("slug", slug)
+      .single();
+
+    if (restaurantError || !restaurant) {
+      setReviewError(
+        "İşletme bulunamadı."
+      );
+
+      setReviewLoading(false);
+      return;
+    }
+
+    // -------------------------------------------------
+    // DEĞERLENDİRMEYİ RPC İLE GÖNDER
+    // -------------------------------------------------
+
+    const {
+      data: reviewId,
+      error: reviewError,
+    } = await supabase.rpc(
+      "create_public_review",
+      {
+        p_order_id: order.id,
+        p_restaurant_id: restaurant.id,
+        p_rating: rating,
+        p_comment:
+          reviewComment.trim() || null,
+      }
+    );
+
+    // -------------------------------------------------
+    // RPC HATASI
+    // -------------------------------------------------
+
+    if (
+      reviewError ||
+      !reviewId
+    ) {
+      console.error(
+        "Değerlendirme RPC hatası:",
+        reviewError
+      );
+
+      const errorMessage =
+        reviewError?.message || "";
+
+      // Duplicate değerlendirme
+      if (
+        errorMessage.includes(
+          "zaten bir değerlendirme yapılmış"
+        )
+      ) {
+        setReviewError(
+          "Bu sipariş için zaten bir değerlendirme yapılmış."
+        );
+      }
+
+      // Sipariş delivered değil
+      else if (
+        errorMessage.includes(
+          "değerlendirme için uygun değil"
+        )
+      ) {
+        setReviewError(
+          "Bu sipariş henüz değerlendirmeye uygun değil."
+        );
+      }
+
+      // Genel hata
+      else {
+        setReviewError(
+          "Değerlendirme gönderilemedi: " +
+            (
+              errorMessage ||
+              "Bilinmeyen hata"
+            )
+        );
+      }
+
+      setReviewLoading(false);
+      return;
+    }
+
+    // -------------------------------------------------
+    // BAŞARILI
+    // -------------------------------------------------
+
+    console.log(
+      "Değerlendirme başarıyla oluşturuldu:",
+      reviewId
+    );
+
+    setReviewSubmitted(true);
+    setReviewLoading(false);
+
+  } catch (error) {
+    console.error(
+      "Değerlendirme gönderme hatası:",
+      error
+    );
+
+    setReviewError(
+      error instanceof Error
+        ? `Değerlendirme gönderilemedi: ${error.message}`
+        : "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
+    );
+
+    setReviewLoading(false);
+  }
+}
   // =====================================================
   // YÜKLENİYOR
   // =====================================================
