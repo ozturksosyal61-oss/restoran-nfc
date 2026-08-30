@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
 
 type Product = {
@@ -53,41 +53,127 @@ export default function ProductCard({
       });
     }
 
-    setIsOpen(false);
+    closeModal();
   }
 
-  const total = Number(product.price) * quantity;
+  const total =
+    Number(product.price) * quantity;
+
+  /*
+   * =====================================================
+   * MODAL AÇIKKEN ARKA PLAN SCROLL'UNU KİLİTLE
+   * =====================================================
+   */
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow =
+        previousOverflow;
+    };
+  }, [isOpen]);
+
+  /*
+   * =====================================================
+   * ESC İLE MODAL KAPAT
+   * =====================================================
+   */
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handleKeyDown(
+      event: KeyboardEvent
+    ) {
+      if (event.key === "Escape") {
+        closeModal();
+      }
+    }
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  }, [isOpen]);
 
   return (
     <>
-      {/* =========================
+      {/* =================================================
           ÜRÜN KARTI
-      ========================= */}
+      ================================================= */}
 
-      <div
+      <article
         className="customer-product"
         onClick={openModal}
+        role="button"
+        tabIndex={0}
+        aria-label={`${product.name} detaylarını aç`}
+        onKeyDown={(event) => {
+          if (
+            event.key === "Enter" ||
+            event.key === " "
+          ) {
+            event.preventDefault();
+            openModal();
+          }
+        }}
       >
-        {product.image_url && (
-          <img
-            src={product.image_url}
-            alt={product.name}
-            className="customer-product-image"
-          />
-        )}
+        {/* FOTOĞRAF */}
 
-        <div className="customer-product-info">
-          <h3>{product.name}</h3>
-
-          {product.description && (
-            <p>{product.description}</p>
+        <div className="customer-product-image-wrap">
+          {product.image_url ? (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="customer-product-image"
+            />
+          ) : (
+            <div className="customer-product-no-image">
+              🍽️
+            </div>
           )}
         </div>
 
-        <div className="customer-product-right">
+        {/* ÜRÜN BİLGİLERİ */}
+
+        <div className="customer-product-info">
+
+          <h3>
+            {product.name}
+          </h3>
+
+          {product.description && (
+            <p>
+              {product.description}
+            </p>
+          )}
+
           <strong className="customer-product-price">
             {product.price} TL
           </strong>
+
+        </div>
+
+        {/* SAĞ BUTON */}
+
+        <div className="customer-product-right">
 
           <button
             type="button"
@@ -96,30 +182,37 @@ export default function ProductCard({
               event.stopPropagation();
               openModal();
             }}
+            aria-label={`${product.name} detaylarını aç`}
           >
             <span>＋</span>
-            Sepete Ekle
           </button>
-        </div>
-      </div>
 
-      {/* =========================
+        </div>
+      </article>
+
+      {/* =================================================
           ÜRÜN DETAY MODALI
-      ========================= */}
+      ================================================= */}
 
       {isOpen && (
         <div
           className="product-modal-overlay"
           onClick={closeModal}
+          role="presentation"
         >
           <div
             className="product-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${product.name} ürün detayları`}
             onClick={(event) =>
               event.stopPropagation()
             }
           >
 
-            {/* SOL FOTOĞRAF ALANI */}
+            {/* ================================
+                FOTOĞRAF
+            ================================= */}
 
             <div className="product-modal-image-area">
 
@@ -135,26 +228,26 @@ export default function ProductCard({
                 </div>
               )}
 
-              <div className="product-modal-image-label">
-                ✦ Özel Lezzet
-              </div>
-
             </div>
 
-            {/* SAĞ İÇERİK */}
+            {/* ================================
+                KAPAT
+            ================================= */}
+
+            <button
+              type="button"
+              className="product-modal-close"
+              onClick={closeModal}
+              aria-label="Ürün detayını kapat"
+            >
+              ×
+            </button>
+
+            {/* ================================
+                İÇERİK
+            ================================= */}
 
             <div className="product-modal-content">
-
-              {/* KAPAT */}
-
-              <button
-                type="button"
-                className="product-modal-close"
-                onClick={closeModal}
-                aria-label="Kapat"
-              >
-                ×
-              </button>
 
               {/* BAŞLIK */}
 
@@ -200,7 +293,7 @@ export default function ProductCard({
                 </div>
               )}
 
-              {/* ALERJENLER */}
+              {/* ALERJEN */}
 
               {product.allergens && (
                 <div className="product-modal-allergen-box">
@@ -231,7 +324,7 @@ export default function ProductCard({
                 <button
                   type="button"
                   onClick={decrease}
-                  aria-label="Azalt"
+                  aria-label="Ürün adedini azalt"
                 >
                   −
                 </button>
@@ -243,7 +336,7 @@ export default function ProductCard({
                 <button
                   type="button"
                   onClick={increase}
-                  aria-label="Artır"
+                  aria-label="Ürün adedini artır"
                 >
                   +
                 </button>
@@ -272,6 +365,7 @@ export default function ProductCard({
                 onClick={handleAddToCart}
               >
                 <span>🛒</span>
+
                 Sepete Ekle
               </button>
 

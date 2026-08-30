@@ -14,6 +14,7 @@ export default function NewProductPage() {
   const supabase = createClient();
 
   const [categories, setCategories] = useState<Category[]>([]);
+
   const [categoryId, setCategoryId] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -21,9 +22,14 @@ export default function NewProductPage() {
   const [allergens, setAllergens] = useState("");
   const [price, setPrice] = useState("");
 
-  const [loading, setLoading] = useState(false);
   const [image, setImage] = useState<File | null>(null);
+
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  /* =====================================================
+     KATEGORİLERİ GETİR
+     ===================================================== */
 
   useEffect(() => {
     async function loadCategories() {
@@ -33,7 +39,7 @@ export default function NewProductPage() {
         .order("id");
 
       if (error) {
-        setError(error.message);
+        setError("Kategoriler yüklenemedi: " + error.message);
         return;
       }
 
@@ -42,6 +48,10 @@ export default function NewProductPage() {
 
     loadCategories();
   }, []);
+
+  /* =====================================================
+     ÜRÜN KAYDET
+     ===================================================== */
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -59,111 +69,147 @@ export default function NewProductPage() {
 
     setLoading(true);
 
-    let imageUrl: string | null = null;
+    try {
+      let imageUrl: string | null = null;
 
-    // FOTOĞRAF YÜKLEME
-    if (image) {
-      const fileExtension =
-        image.name.split(".").pop();
+      /* =================================================
+         FOTOĞRAF YÜKLE
+         ================================================= */
 
-      const fileName =
-        `${crypto.randomUUID()}.${fileExtension}`;
+      if (image) {
+        const fileExtension =
+          image.name.split(".").pop()?.toLowerCase();
 
-      const filePath =
-        `products/${fileName}`;
+        const fileName =
+          `${crypto.randomUUID()}.${fileExtension}`;
 
-      const { error: uploadError } =
-        await supabase.storage
-          .from("product-images")
-          .upload(filePath, image);
+        const filePath =
+          `products/${fileName}`;
 
-      if (uploadError) {
-        setError(
-          "Fotoğraf yüklenemedi: " +
+        const { error: uploadError } =
+          await supabase.storage
+            .from("product-images")
+            .upload(filePath, image);
+
+        if (uploadError) {
+          setError(
+            "Fotoğraf yüklenemedi: " +
             uploadError.message
+          );
+
+          setLoading(false);
+          return;
+        }
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage
+          .from("product-images")
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+      }
+
+      /* =================================================
+         ÜRÜNÜ VERİTABANINA KAYDET
+         ================================================= */
+
+      const { error: insertError } =
+        await supabase
+          .from("products")
+          .insert({
+            category_id: Number(categoryId),
+
+            name: name.trim(),
+
+            description:
+              description.trim() || null,
+
+            ingredients:
+              ingredients.trim() || null,
+
+            allergens:
+              allergens.trim() || null,
+
+            price: Number(price),
+
+            image_url: imageUrl,
+          });
+
+      if (insertError) {
+        console.error(
+          "Product insert error:",
+          insertError
+        );
+
+        setError(
+          "Ürün kaydedilemedi: " +
+          insertError.message
         );
 
         setLoading(false);
         return;
       }
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage
-        .from("product-images")
-        .getPublicUrl(filePath);
+      /* =================================================
+         BAŞARILI
+         ================================================= */
 
-      imageUrl = publicUrl;
-    }
+      router.push("/admin/menu");
+      router.refresh();
 
-    // ÜRÜNÜ VERİTABANINA KAYDET
-    const { error } = await supabase
-      .from("products")
-      .insert({
-        category_id: Number(categoryId),
-        name: name.trim(),
-        description:
-          description.trim() || null,
-        ingredients:
-          ingredients.trim() || null,
-        allergens:
-          allergens.trim() || null,
-        price: Number(price),
-        image_url: imageUrl,
-      });
-
-    if (error) {
-      console.error(
-        "Ürün kaydetme hatası:",
-        error
-      );
+    } catch (error) {
+      console.error(error);
 
       setError(
-        "Ürün kaydedilemedi: " +
-          error.message
+        "Beklenmeyen bir hata oluştu. " +
+        "Lütfen tekrar deneyin."
       );
 
       setLoading(false);
-      return;
     }
-
-    // BAŞARILI
-    router.push("/admin/menu");
-    router.refresh();
   }
+
+  /* =====================================================
+     EKRAN
+     ===================================================== */
 
   return (
     <main className="admin-page">
 
-      {/* BAŞLIK */}
+      {/* HEADER */}
+
       <section className="admin-header">
+
         <a href="/admin/menu">
           ← Menü Yönetimi
         </a>
 
-        <h1>Yeni Ürün Ekle</h1>
+        <h1>
+          Yeni Ürün Ekle
+        </h1>
 
         <p>
           Menünüze yeni bir ürün ekleyin.
         </p>
+
       </section>
 
-
       {/* FORM */}
+
       <section className="admin-form">
 
         <form onSubmit={handleSubmit}>
 
           {/* KATEGORİ */}
+
           <label>
             Kategori
 
             <select
               value={categoryId}
               onChange={(event) =>
-                setCategoryId(
-                  event.target.value
-                )
+                setCategoryId(event.target.value)
               }
               required
             >
@@ -171,21 +217,19 @@ export default function NewProductPage() {
                 Kategori seçin
               </option>
 
-              {categories.map(
-                (category) => (
-                  <option
-                    key={category.id}
-                    value={category.id}
-                  >
-                    {category.name}
-                  </option>
-                )
-              )}
+              {categories.map((category) => (
+                <option
+                  key={category.id}
+                  value={category.id}
+                >
+                  {category.name}
+                </option>
+              ))}
             </select>
           </label>
 
-
           {/* ÜRÜN ADI */}
+
           <label>
             Ürün Adı
 
@@ -193,75 +237,65 @@ export default function NewProductPage() {
               type="text"
               value={name}
               onChange={(event) =>
-                setName(
-                  event.target.value
-                )
+                setName(event.target.value)
               }
               placeholder="Örn. Cheeseburger"
               required
             />
           </label>
 
-
           {/* AÇIKLAMA */}
+
           <label>
             Açıklama
 
             <textarea
               value={description}
               onChange={(event) =>
-                setDescription(
-                  event.target.value
-                )
+                setDescription(event.target.value)
               }
-              placeholder="Ürünün açıklaması"
+              placeholder="Ürünün kısa açıklaması"
             />
           </label>
 
-
           {/* İÇİNDEKİLER */}
+
           <label>
             İçindekiler
 
             <textarea
               value={ingredients}
               onChange={(event) =>
-                setIngredients(
-                  event.target.value
-                )
+                setIngredients(event.target.value)
               }
               placeholder="Örn. Dana eti, cheddar peyniri, marul, domates, soğan, özel sos"
             />
 
             <small>
-              Üründe bulunan malzemeleri
-              yazabilirsiniz.
+              Üründe bulunan malzemeleri yazabilirsiniz.
             </small>
           </label>
 
-
           {/* ALERJENLER */}
+
           <label>
             Alerjenler
 
             <textarea
               value={allergens}
               onChange={(event) =>
-                setAllergens(
-                  event.target.value
-                )
+                setAllergens(event.target.value)
               }
               placeholder="Örn. Süt ürünü, gluten, yumurta"
             />
 
             <small>
-              Varsa üründeki alerjenleri
-              belirtin.
+              Varsa üründeki alerjenleri belirtin.
             </small>
           </label>
 
-
           {/* FİYAT */}
+
           <label>
             Fiyat (TL)
 
@@ -271,17 +305,15 @@ export default function NewProductPage() {
               step="0.01"
               value={price}
               onChange={(event) =>
-                setPrice(
-                  event.target.value
-                )
+                setPrice(event.target.value)
               }
               placeholder="380"
               required
             />
           </label>
 
-
           {/* FOTOĞRAF */}
+
           <label>
             Ürün Fotoğrafı
 
@@ -289,9 +321,9 @@ export default function NewProductPage() {
               type="file"
               accept="image/jpeg,image/png,image/webp"
               onChange={(event) => {
+
                 const file =
-                  event.target.files?.[0] ||
-                  null;
+                  event.target.files?.[0] || null;
 
                 if (!file) {
                   setImage(null);
@@ -307,32 +339,33 @@ export default function NewProductPage() {
                   );
 
                   event.target.value = "";
+
                   setImage(null);
 
                   return;
                 }
 
                 setError("");
+
                 setImage(file);
               }}
             />
 
             <small>
-              JPG, PNG veya WEBP —
-              maksimum 5 MB
+              JPG, PNG veya WEBP — maksimum 5 MB
             </small>
           </label>
 
-
           {/* HATA */}
+
           {error && (
             <p className="login-error">
               ❌ {error}
             </p>
           )}
 
-
           {/* KAYDET */}
+
           <button
             type="submit"
             disabled={loading}

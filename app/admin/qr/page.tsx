@@ -1,12 +1,12 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import QRCode from "qrcode";
 import { redirect } from "next/navigation";
-import { createServerSupabaseClient } from "../../../lib/supabase-server";
+import { createSupabaseServerClient } from "../../../lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminQRPage() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createSupabaseServerClient();
 
   const {
     data: { user },
@@ -90,18 +90,37 @@ export default async function AdminQRPage() {
     dinamik hale getirebiliriz.
   */
 
-  const tableCount = restaurant.table_count ?? 20;
+ 
+  const { data: tables, error: tablesError } =
+  await supabase
+    .from("restaurant_tables")
+    .select(
+      "id, table_number, public_token, is_active"
+    )
+    .eq(
+      "restaurant_id",
+      restaurant.id
+    )
+    .order(
+      "table_number",
+      { ascending: true }
+    );
 
-  const tableQrs = await Promise.all(
-    Array.from(
-      { length: tableCount },
-      async (_, index) => {
-        const tableNumber = index + 1;
+if (tablesError) {
+  console.error(
+    "Masa bilgileri alınamadı:",
+    tablesError
+  );
+}
 
-        const tableUrl =
-          `${baseUrl}/restoran/${restaurant.slug}/menu?masa=${tableNumber}`;
+const tableQrs = await Promise.all(
+  (tables || []).map(
+    async (table) => {
+      const tableUrl =
+        `${baseUrl}/restoran/${restaurant.slug}?masa=${table.public_token}`;
 
-        const qrCode = await QRCode.toDataURL(
+      const qrCode =
+        await QRCode.toDataURL(
           tableUrl,
           {
             width: 400,
@@ -110,14 +129,20 @@ export default async function AdminQRPage() {
           }
         );
 
-        return {
-          tableNumber,
-          tableUrl,
-          qrCode,
-        };
-      }
-    )
-  );
+      return {
+        id: table.id,
+        tableNumber:
+          table.table_number,
+        publicToken:
+          table.public_token,
+        isActive:
+          table.is_active,
+        tableUrl,
+        qrCode,
+      };
+    }
+  )
+);
 
   return (
     <main className="admin-page">
@@ -305,6 +330,121 @@ export default async function AdminQRPage() {
 
 
       {/* =================================================
+          QR / NFC ÖZETİ
+          ================================================= */}
+
+      <section
+        style={{
+          maxWidth: "1100px",
+          margin: "0 auto 24px",
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: "12px",
+        }}
+      >
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #e7e1d7",
+            borderRadius: "16px",
+            padding: "16px",
+          }}
+        >
+          <div style={{ fontSize: "20px", marginBottom: "7px" }}>
+            🪑
+          </div>
+          <div
+            style={{
+              color: "#888",
+              fontSize: "11px",
+              fontWeight: 700,
+            }}
+          >
+            TOPLAM MASA
+          </div>
+          <strong style={{ fontSize: "24px" }}>
+            {tableQrs.length}
+          </strong>
+        </div>
+
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #e7e1d7",
+            borderRadius: "16px",
+            padding: "16px",
+          }}
+        >
+          <div style={{ fontSize: "20px", marginBottom: "7px" }}>
+            🟢
+          </div>
+          <div
+            style={{
+              color: "#888",
+              fontSize: "11px",
+              fontWeight: 700,
+            }}
+          >
+            AKTİF MASA
+          </div>
+          <strong style={{ fontSize: "24px" }}>
+            {tableQrs.filter((table) => table.isActive).length}
+          </strong>
+        </div>
+
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #e7e1d7",
+            borderRadius: "16px",
+            padding: "16px",
+          }}
+        >
+          <div style={{ fontSize: "20px", marginBottom: "7px" }}>
+            ⚪
+          </div>
+          <div
+            style={{
+              color: "#888",
+              fontSize: "11px",
+              fontWeight: 700,
+            }}
+          >
+            PASİF MASA
+          </div>
+          <strong style={{ fontSize: "24px" }}>
+            {tableQrs.filter((table) => !table.isActive).length}
+          </strong>
+        </div>
+
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #e7e1d7",
+            borderRadius: "16px",
+            padding: "16px",
+          }}
+        >
+          <div style={{ fontSize: "20px", marginBottom: "7px" }}>
+            📱
+          </div>
+          <div
+            style={{
+              color: "#888",
+              fontSize: "11px",
+              fontWeight: 700,
+            }}
+          >
+            QR HAZIR
+          </div>
+          <strong style={{ fontSize: "24px" }}>
+            {tableQrs.length}
+          </strong>
+        </div>
+      </section>
+
+      {/* =================================================
           MASA QR'LARI
           ================================================= */}
 
@@ -385,6 +525,32 @@ export default async function AdminQRPage() {
               >
                 🪑 Masa {table.tableNumber}
               </h3>
+              <div
+  style={{
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    marginBottom: "15px",
+    padding: "6px 10px",
+    borderRadius: "999px",
+    background: table.isActive
+      ? "#eaf8ef"
+      : "#fcebea",
+    color: table.isActive
+      ? "#16803c"
+      : "#b42318",
+    fontSize: "11px",
+    fontWeight: 800,
+  }}
+>
+  <span>
+    {table.isActive ? "●" : "●"}
+  </span>
+
+  {table.isActive
+    ? " AKTİF"
+    : " PASİF"}
+</div>
 
               <div
                 style={{

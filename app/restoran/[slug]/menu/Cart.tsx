@@ -1,7 +1,12 @@
 "use client";
 
+import {
+  useParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+
 import { useCart } from "./CartContext";
-import { useParams, useRouter } from "next/navigation";
 
 export default function Cart() {
   const {
@@ -15,8 +20,34 @@ export default function Cart() {
 
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const slug = params.slug as string;
+
+  /*
+   * =====================================================
+   * QR / NFC TOKEN
+   * =====================================================
+   *
+   * QR/NFC bağlantısı:
+   *
+   * /restoran/ozt-kafe/menu?masa=UUID
+   *
+   * Buradaki UUID:
+   *
+   * restaurant_tables.public_token
+   *
+   * değeridir.
+   */
+
+  const tableTokenFromUrl =
+    searchParams.get("masa")?.trim() || "";
+
+  /*
+   * =====================================================
+   * SEPETİ AÇ
+   * =====================================================
+   */
 
   function openCart() {
     document
@@ -27,47 +58,122 @@ export default function Cart() {
       });
   }
 
+  /*
+   * =====================================================
+   * SİPARİŞ SAYFASINA GİT
+   * =====================================================
+   */
+
   function goToOrder() {
     if (items.length === 0) {
       return;
     }
 
-    router.push(`/restoran/${slug}/siparis`);
+    /*
+     * Öncelik:
+     *
+     * 1. URL'deki QR/NFC token
+     * 2. Daha önce kaydedilmiş token
+     */
+
+    let tableToken =
+      tableTokenFromUrl;
+
+    if (!tableToken) {
+      tableToken =
+        localStorage.getItem(
+          "ozt_table_token"
+        )?.trim() || "";
+    }
+
+    /*
+     * =================================================
+     * QR / NFC TOKEN VAR
+     * =================================================
+     */
+
+    if (tableToken) {
+      /*
+       * Tokenı tekrar localStorage'a kaydet.
+       */
+
+      localStorage.setItem(
+        "ozt_table_token",
+        tableToken
+      );
+
+      router.push(
+        `/restoran/${slug}/siparis?masa=${encodeURIComponent(
+          tableToken
+        )}`
+      );
+
+      return;
+    }
+
+    /*
+     * =================================================
+     * NORMAL MANUEL SİPARİŞ
+     * =================================================
+     */
+
+    router.push(
+      `/restoran/${slug}/siparis`
+    );
   }
 
   return (
     <>
-      {/* SABİT MİNİ SEPET */}
+      {/* =================================================
+          SABİT MİNİ SEPET
+      ================================================= */}
+
       {items.length > 0 && (
         <div
           style={{
             position: "fixed",
             left: "50%",
             bottom: "20px",
-            transform: "translateX(-50%)",
-            width: "min(448px, calc(100% - 24px))",
-            padding: "12px 14px",
-            background: "#111",
-            color: "white",
-            borderRadius: "16px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "12px",
-            boxShadow: "0 8px 30px rgba(0, 0, 0, 0.3)",
-            zIndex: 99999,
+            transform:
+              "translateX(-50%)",
+            width:
+              "min(448px, calc(100% - 24px))",
+            padding:
+              "12px 14px",
+            background:
+              "#111",
+            color:
+              "white",
+            borderRadius:
+              "16px",
+            display:
+              "flex",
+            alignItems:
+              "center",
+            justifyContent:
+              "space-between",
+            gap:
+              "12px",
+            boxShadow:
+              "0 8px 30px rgba(0, 0, 0, 0.3)",
+            zIndex:
+              99999,
           }}
         >
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
+              display:
+                "flex",
+              alignItems:
+                "center",
+              gap:
+                "10px",
             }}
           >
             <span
               style={{
-                fontSize: "24px",
+                fontSize:
+                  "24px",
               }}
             >
               🛒
@@ -75,14 +181,18 @@ export default function Cart() {
 
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "2px",
+                display:
+                  "flex",
+                flexDirection:
+                  "column",
+                gap:
+                  "2px",
               }}
             >
               <strong
                 style={{
-                  fontSize: "14px",
+                  fontSize:
+                    "14px",
                 }}
               >
                 {itemCount} Ürün
@@ -90,11 +200,16 @@ export default function Cart() {
 
               <span
                 style={{
-                  fontSize: "13px",
-                  opacity: 0.75,
+                  fontSize:
+                    "13px",
+                  opacity:
+                    0.75,
                 }}
               >
-                {total} TL
+                {total.toLocaleString(
+                  "tr-TR"
+                )}{" "}
+                TL
               </span>
             </div>
           </div>
@@ -103,14 +218,22 @@ export default function Cart() {
             type="button"
             onClick={openCart}
             style={{
-              border: "none",
-              background: "white",
-              color: "#111",
-              padding: "11px 14px",
-              borderRadius: "10px",
-              fontWeight: 700,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
+              border:
+                "none",
+              background:
+                "white",
+              color:
+                "#111",
+              padding:
+                "11px 14px",
+              borderRadius:
+                "10px",
+              fontWeight:
+                700,
+              cursor:
+                "pointer",
+              whiteSpace:
+                "nowrap",
             }}
           >
             Sepeti Gör →
@@ -118,89 +241,164 @@ export default function Cart() {
         </div>
       )}
 
-      {/* NORMAL SEPET */}
+      {/* =================================================
+          NORMAL SEPET
+      ================================================= */}
+
       <section
         id="cart-details"
         className="cart-section"
       >
-        <div className="cart-header">
-          <h2>🛒 Sepet</h2>
+        <div
+          className="cart-header"
+        >
+          <h2>
+            🛒 Sepet
+          </h2>
 
           {items.length > 0 && (
-            <span>{itemCount} ürün</span>
+            <span>
+              {itemCount} ürün
+            </span>
           )}
         </div>
 
         {items.length === 0 ? (
-          <p>Sepetiniz şu anda boş.</p>
+          <p>
+            Sepetiniz şu anda boş.
+          </p>
         ) : (
           <>
-            <div className="cart-items">
-              {items.map((item) => (
-                <div
-                  className="cart-item"
-                  key={item.id}
-                >
-                  {item.image_url && (
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      className="cart-item-image"
-                    />
-                  )}
+            {/* =================================================
+                SEPET ÜRÜNLERİ
+            ================================================= */}
 
-                  <div className="cart-item-info">
-                    <h3>{item.name}</h3>
-
-                    <strong>
-                      {item.price} TL
-                    </strong>
-                  </div>
-
-                  <div className="cart-item-actions">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        decreaseQuantity(item.id)
-                      }
-                    >
-                      −
-                    </button>
-
-                    <span>{item.quantity}</span>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        increaseQuantity(item.id)
-                      }
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <div className="cart-item-total">
-                    {item.price * item.quantity} TL
-                  </div>
-
-                  <button
-                    type="button"
-                    className="cart-remove-button"
-                    onClick={() =>
-                      removeFromCart(item.id)
-                    }
+            <div
+              className="cart-items"
+            >
+              {items.map(
+                (item) => (
+                  <div
+                    className="cart-item"
+                    key={item.id}
                   >
-                    🗑️
-                  </button>
-                </div>
-              ))}
+                    {item.image_url && (
+                      <img
+                        src={
+                          item.image_url
+                        }
+                        alt={
+                          item.name
+                        }
+                        className="cart-item-image"
+                      />
+                    )}
+
+                    <div
+                      className="cart-item-info"
+                    >
+                      <h3>
+                        {item.name}
+                      </h3>
+
+                      <strong>
+                        {Number(
+                          item.price
+                        ).toLocaleString(
+                          "tr-TR"
+                        )}{" "}
+                        TL
+                      </strong>
+                    </div>
+
+                    {/* ADET */}
+
+                    <div
+                      className="cart-item-actions"
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          decreaseQuantity(
+                            item.id
+                          )
+                        }
+                      >
+                        −
+                      </button>
+
+                      <span>
+                        {item.quantity}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          increaseQuantity(
+                            item.id
+                          )
+                        }
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* ÜRÜN TOPLAMI */}
+
+                    <div
+                      className="cart-item-total"
+                    >
+                      {(
+                        Number(
+                          item.price
+                        ) *
+                        item.quantity
+                      ).toLocaleString(
+                        "tr-TR"
+                      )}{" "}
+                      TL
+                    </div>
+
+                    {/* SİL */}
+
+                    <button
+                      type="button"
+                      className="cart-remove-button"
+                      onClick={() =>
+                        removeFromCart(
+                          item.id
+                        )
+                      }
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )
+              )}
             </div>
 
-            <div className="cart-summary">
-              <span>Toplam</span>
+            {/* =================================================
+                SEPET TOPLAMI
+            ================================================= */}
 
-              <strong>{total} TL</strong>
+            <div
+              className="cart-summary"
+            >
+              <span>
+                Toplam
+              </span>
+
+              <strong>
+                {total.toLocaleString(
+                  "tr-TR"
+                )}{" "}
+                TL
+              </strong>
             </div>
+
+            {/* =================================================
+                SİPARİŞ VER
+            ================================================= */}
 
             <button
               type="button"

@@ -36,11 +36,20 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const { data: claimsData } = await supabase.auth.getClaims();
+  // --------------------------------------------------
+  // SUPABASE OTURUM KONTROLÜ
+  // --------------------------------------------------
+
+  const { data: claimsData } =
+    await supabase.auth.getClaims();
 
   const claims = claimsData?.claims;
 
   const pathname = request.nextUrl.pathname;
+
+  // --------------------------------------------------
+  // ADMIN PANELİ KORUMASI
+  // --------------------------------------------------
 
   if (
     pathname.startsWith("/admin") &&
@@ -52,6 +61,45 @@ export async function updateSession(request: NextRequest) {
     url.pathname = "/admin/login";
 
     return NextResponse.redirect(url);
+  }
+
+  // --------------------------------------------------
+  // SİSTEM SAHİBİ PANELİ KORUMASI
+  // --------------------------------------------------
+
+  if (
+    pathname.startsWith("/sistem") &&
+    !pathname.startsWith("/sistem/login")
+  ) {
+    // Kullanıcı giriş yapmamışsa
+    if (!claims) {
+      const url = request.nextUrl.clone();
+
+      url.pathname = "/sistem/login";
+
+      return NextResponse.redirect(url);
+    }
+
+    // JWT içerisindeki kullanıcı ID'si
+    const userId = claims.sub;
+
+    // Kullanıcının system_admins tablosunda
+    // sistem sahibi olarak kayıtlı olup olmadığını kontrol et
+    const { data: systemAdmin, error } = await supabase
+      .from("system_admins")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    // Sistem sahibi değilse erişimi engelle
+    if (error || !systemAdmin) {
+      const url = request.nextUrl.clone();
+
+      url.pathname = "/sistem/login";
+      url.searchParams.set("error", "unauthorized");
+
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

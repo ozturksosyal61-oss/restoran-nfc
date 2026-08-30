@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createServerSupabaseClient } from "../../../../lib/supabase-server";
+import { createSupabaseServerClient } from "../../../../lib/supabase-server";
 
 export default async function NewCategoryPage() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createSupabaseServerClient();
 
   const {
     data: { user },
@@ -32,7 +32,7 @@ export default async function NewCategoryPage() {
       return;
     }
 
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createSupabaseServerClient();
 
     const {
       data: { user },

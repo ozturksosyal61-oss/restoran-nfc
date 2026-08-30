@@ -23,56 +23,79 @@ export default function YeniCalisanPage() {
 
     setError("");
 
-    if (!name.trim()) {
+    const cleanName = name.trim();
+    const cleanPhone = phone.trim();
+
+    if (!cleanName) {
       setError("Çalışan adı zorunludur.");
+      return;
+    }
+
+    if (cleanName.length < 2) {
+      setError("Çalışan adı en az 2 karakter olmalıdır.");
+      return;
+    }
+
+    if (cleanName.length > 100) {
+      setError("Çalışan adı en fazla 100 karakter olabilir.");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Giriş yapan kullanıcıyı bul
+      // =====================================================
+      // GİRİŞ YAPAN KULLANICI
+      // =====================================================
+
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser();
 
-      if (!user) {
-        setError("Oturum bulunamadı.");
-        setLoading(false);
+      if (userError || !user) {
+        setError("Oturum bulunamadı. Lütfen tekrar giriş yapın.");
         return;
       }
 
-      // Kullanıcının restoranını bul
-      const { data: membership, error: membershipError } =
-        await supabase
-          .from("restaurant_users")
-          .select("restaurant_id")
-          .eq("user_id", user.id)
-          .single();
+      // =====================================================
+      // KULLANICININ RESTORANI
+      // =====================================================
 
-      if (
-        membershipError ||
-        !membership?.restaurant_id
-      ) {
+      const {
+        data: membership,
+        error: membershipError,
+      } = await supabase
+        .from("restaurant_users")
+        .select("restaurant_id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (membershipError || !membership?.restaurant_id) {
+        console.error(
+          "Restoran üyeliği bulunamadı:",
+          membershipError
+        );
+
         setError(
           "Kullanıcının bağlı olduğu işletme bulunamadı."
         );
-        setLoading(false);
         return;
       }
 
-      // Çalışanı oluştur
-      const { error: insertError } =
-        await supabase
-          .from("employees")
-          .insert({
-            restaurant_id:
-              membership.restaurant_id,
-            name: name.trim(),
-            phone: phone.trim() || null,
-            role,
-            is_active: isActive,
-          });
+      // =====================================================
+      // ÇALIŞANI OLUŞTUR
+      // =====================================================
+
+      const { error: insertError } = await supabase
+        .from("employees")
+        .insert({
+          restaurant_id: membership.restaurant_id,
+          name: cleanName,
+          phone: cleanPhone || null,
+          role,
+          is_active: isActive,
+        });
 
       if (insertError) {
         console.error(
@@ -85,42 +108,113 @@ export default function YeniCalisanPage() {
             insertError.message
         );
 
-        setLoading(false);
         return;
       }
 
-      // Çalışan listesine dön
       router.push("/admin/calisanlar");
       router.refresh();
     } catch (error) {
       console.error(error);
 
       setError(
-        "Beklenmeyen bir hata oluştu."
+        "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
       );
-
+    } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="admin-page">
-      <section className="admin-header">
-        <a href="/admin/calisanlar">
+    <main
+      className="admin-page"
+      style={{
+        minHeight: "100vh",
+        background: "#f5f3ef",
+        paddingBottom: "60px",
+      }}
+    >
+      <section
+        className="admin-header"
+        style={{
+          marginBottom: "18px",
+        }}
+      >
+        <a
+          href="/admin/calisanlar"
+          style={{
+            display: "inline-block",
+            marginBottom: "16px",
+            color: "#777",
+            textDecoration: "none",
+            fontSize: "13px",
+            fontWeight: 700,
+          }}
+        >
           ← Çalışanlara Dön
         </a>
 
-        <h1>Yeni Çalışan</h1>
+        <div
+          style={{
+            color: "#c58d08",
+            fontSize: "10px",
+            fontWeight: 900,
+            letterSpacing: "1.7px",
+            marginBottom: "7px",
+          }}
+        >
+          EKİP YÖNETİMİ
+        </div>
 
-        <p>
+        <h1
+          style={{
+            margin: 0,
+          }}
+        >
+          Yeni Çalışan
+        </h1>
+
+        <p
+          style={{
+            margin: "8px 0 0",
+            color: "#777",
+          }}
+        >
           İşletmenize yeni bir çalışan ekleyin.
         </p>
       </section>
 
-      <section className="admin-form">
+      <section
+        className="admin-form"
+        style={{
+          maxWidth: "720px",
+          background: "#fff",
+          border: "1px solid #e5e0d8",
+          borderRadius: "19px",
+          padding: "24px",
+        }}
+      >
         <form onSubmit={handleSubmit}>
-          <label>
-            Ad Soyad
+          {/* =================================================
+              AD SOYAD
+          ================================================= */}
+
+          <label
+            style={{
+              display: "block",
+              marginBottom: "17px",
+            }}
+          >
+            <span
+              style={{
+                display: "block",
+                marginBottom: "7px",
+                fontSize: "12px",
+                fontWeight: 800,
+                color: "#292929",
+              }}
+            >
+              Ad Soyad
+            </span>
 
             <input
               type="text"
@@ -129,12 +223,43 @@ export default function YeniCalisanPage() {
                 setName(event.target.value)
               }
               placeholder="Örn. Ahmet Yılmaz"
+              autoComplete="name"
+              maxLength={100}
               required
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "13px 14px",
+                border: "1px solid #d9d4cc",
+                borderRadius: "10px",
+                background: "#fff",
+                color: "#171717",
+                fontSize: "14px",
+              }}
             />
           </label>
 
-          <label>
-            Telefon
+          {/* =================================================
+              TELEFON
+          ================================================= */}
+
+          <label
+            style={{
+              display: "block",
+              marginBottom: "17px",
+            }}
+          >
+            <span
+              style={{
+                display: "block",
+                marginBottom: "7px",
+                fontSize: "12px",
+                fontWeight: 800,
+                color: "#292929",
+              }}
+            >
+              Telefon
+            </span>
 
             <input
               type="tel"
@@ -143,69 +268,228 @@ export default function YeniCalisanPage() {
                 setPhone(event.target.value)
               }
               placeholder="05XX XXX XX XX"
+              autoComplete="tel"
+              maxLength={30}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "13px 14px",
+                border: "1px solid #d9d4cc",
+                borderRadius: "10px",
+                background: "#fff",
+                color: "#171717",
+                fontSize: "14px",
+              }}
             />
           </label>
 
-          <label>
-            Görev
+          {/* =================================================
+              GÖREV
+          ================================================= */}
+
+          <label
+            style={{
+              display: "block",
+              marginBottom: "17px",
+            }}
+          >
+            <span
+              style={{
+                display: "block",
+                marginBottom: "7px",
+                fontSize: "12px",
+                fontWeight: 800,
+                color: "#292929",
+              }}
+            >
+              Görev
+            </span>
 
             <select
               value={role}
               onChange={(event) =>
                 setRole(event.target.value)
               }
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "13px 14px",
+                border: "1px solid #d9d4cc",
+                borderRadius: "10px",
+                background: "#fff",
+                color: "#171717",
+                fontSize: "14px",
+              }}
             >
               <option value="garson">
-                Garson
+                🧑‍🍽️ Garson
               </option>
 
               <option value="mutfak">
-                Mutfak
+                👨‍🍳 Mutfak
               </option>
 
               <option value="yonetici">
-                Yönetici
+                👔 Yönetici
               </option>
             </select>
+
+            <small
+              style={{
+                display: "block",
+                marginTop: "6px",
+                color: "#888",
+                fontSize: "11px",
+                lineHeight: 1.5,
+              }}
+            >
+              Görev bilgisi çalışan listesindeki rol
+              olarak gösterilir.
+            </small>
           </label>
 
-          <label
+          {/* =================================================
+              AKTİF
+          ================================================= */}
+
+          <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              cursor: "pointer",
+              padding: "16px",
+              marginBottom: "18px",
+              border: "1px solid #e5e0d8",
+              borderRadius: "14px",
+              background: "#faf9f7",
             }}
           >
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={(event) =>
-                setIsActive(event.target.checked)
-              }
+            <label
               style={{
-                width: "18px",
-                height: "18px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                cursor: "pointer",
               }}
-            />
+            >
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(event) =>
+                  setIsActive(event.target.checked)
+                }
+                style={{
+                  width: "18px",
+                  height: "18px",
+                  accentColor: "#d49a16",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              />
 
-            <span>Çalışan aktif</span>
-          </label>
+              <span>
+                <strong
+                  style={{
+                    display: "block",
+                    fontSize: "13px",
+                  }}
+                >
+                  Çalışan aktif
+                </strong>
+
+                <small
+                  style={{
+                    display: "block",
+                    marginTop: "3px",
+                    color: "#777",
+                    fontSize: "11px",
+                  }}
+                >
+                  Aktif çalışan olarak işaretle.
+                </small>
+              </span>
+            </label>
+          </div>
+
+          {/* =================================================
+              HATA
+          ================================================= */}
 
           {error && (
-            <p className="login-error">
+            <div
+              role="alert"
+              style={{
+                marginBottom: "17px",
+                padding: "13px 15px",
+                borderRadius: "11px",
+                background: "#fff0f0",
+                border: "1px solid #efb1b1",
+                color: "#b42318",
+                fontSize: "12px",
+                fontWeight: 700,
+                lineHeight: 1.5,
+              }}
+            >
               ❌ {error}
-            </p>
+            </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
+          {/* =================================================
+              BUTONLAR
+          ================================================= */}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "9px",
+              flexWrap: "wrap",
+            }}
           >
-            {loading
-              ? "Çalışan Ekleniyor..."
-              : "Çalışanı Kaydet"}
-          </button>
+            <a
+              href="/admin/calisanlar"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: "44px",
+                boxSizing: "border-box",
+                padding: "11px 16px",
+                borderRadius: "10px",
+                border: "1px solid #d9d4cc",
+                background: "#fff",
+                color: "#333",
+                textDecoration: "none",
+                fontSize: "12px",
+                fontWeight: 800,
+              }}
+            >
+              Vazgeç
+            </a>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                minHeight: "44px",
+                padding: "11px 20px",
+                border: "none",
+                borderRadius: "10px",
+                background: loading
+                  ? "#999"
+                  : "#d49a16",
+                color: "#fff",
+                fontSize: "12px",
+                fontWeight: 900,
+                cursor: loading
+                  ? "not-allowed"
+                  : "pointer",
+                boxShadow:
+                  "0 8px 18px rgba(0,0,0,.10)",
+              }}
+            >
+              {loading
+                ? "Çalışan Ekleniyor..."
+                : "✓ Çalışanı Kaydet"}
+            </button>
+          </div>
         </form>
       </section>
     </main>

@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   ReactNode,
 } from "react";
@@ -47,15 +48,23 @@ export function CartProvider({
 
   useEffect(() => {
     try {
-      const savedCart = window.localStorage.getItem(
-        CART_STORAGE_KEY
-      );
+      const savedCart =
+        window.localStorage.getItem(CART_STORAGE_KEY);
 
       if (savedCart) {
         const parsedCart = JSON.parse(savedCart);
 
         if (Array.isArray(parsedCart)) {
-          setItems(parsedCart);
+          const validCart = parsedCart.filter(
+            (item) =>
+              item &&
+              typeof item.id === "number" &&
+              typeof item.name === "string" &&
+              typeof item.quantity === "number" &&
+              item.quantity > 0
+          );
+
+          setItems(validCart);
         }
       }
     } catch (error) {
@@ -63,20 +72,28 @@ export function CartProvider({
         "Sepet yüklenirken hata oluştu:",
         error
       );
+    } finally {
+      // LocalStorage yükleme işlemi tamamen bittikten
+      // sonra uygulamanın geri kalanını göster.
+      setLoaded(true);
     }
-
-    setLoaded(true);
   }, []);
 
   // =====================================================
   // SEPETİ LOCALSTORAGE'A KAYDET
   // =====================================================
 
-  function saveCart(cart: CartItem[]) {
+  useEffect(() => {
+    // İlk yükleme tamamlanmadan localStorage'a
+    // boş sepet yazmasını engelliyoruz.
+    if (!loaded) {
+      return;
+    }
+
     try {
       window.localStorage.setItem(
         CART_STORAGE_KEY,
-        JSON.stringify(cart)
+        JSON.stringify(items)
       );
     } catch (error) {
       console.error(
@@ -84,7 +101,7 @@ export function CartProvider({
         error
       );
     }
-  }
+  }, [items, loaded]);
 
   // =====================================================
   // SEPETE ÜRÜN EKLE
@@ -96,10 +113,8 @@ export function CartProvider({
         (item) => item.id === product.id
       );
 
-      let newItems: CartItem[];
-
       if (existingItem) {
-        newItems = currentItems.map((item) =>
+        return currentItems.map((item) =>
           item.id === product.id
             ? {
                 ...item,
@@ -107,20 +122,15 @@ export function CartProvider({
               }
             : item
         );
-      } else {
-        newItems = [
-          ...currentItems,
-          {
-            ...product,
-            quantity: 1,
-          },
-        ];
       }
 
-      // DEĞİŞİKLİĞİ HEMEN KAYDET
-      saveCart(newItems);
-
-      return newItems;
+      return [
+        ...currentItems,
+        {
+          ...product,
+          quantity: 1,
+        },
+      ];
     });
   }
 
@@ -129,20 +139,16 @@ export function CartProvider({
   // =====================================================
 
   function increaseQuantity(id: number) {
-    setItems((currentItems) => {
-      const newItems = currentItems.map((item) =>
+    setItems((currentItems) =>
+      currentItems.map((item) =>
         item.id === id
           ? {
               ...item,
               quantity: item.quantity + 1,
             }
           : item
-      );
-
-      saveCart(newItems);
-
-      return newItems;
-    });
+      )
+    );
   }
 
   // =====================================================
@@ -150,8 +156,8 @@ export function CartProvider({
   // =====================================================
 
   function decreaseQuantity(id: number) {
-    setItems((currentItems) => {
-      const newItems = currentItems
+    setItems((currentItems) =>
+      currentItems
         .map((item) =>
           item.id === id
             ? {
@@ -160,12 +166,8 @@ export function CartProvider({
               }
             : item
         )
-        .filter((item) => item.quantity > 0);
-
-      saveCart(newItems);
-
-      return newItems;
-    });
+        .filter((item) => item.quantity > 0)
+    );
   }
 
   // =====================================================
@@ -173,15 +175,11 @@ export function CartProvider({
   // =====================================================
 
   function removeFromCart(id: number) {
-    setItems((currentItems) => {
-      const newItems = currentItems.filter(
+    setItems((currentItems) =>
+      currentItems.filter(
         (item) => item.id !== id
-      );
-
-      saveCart(newItems);
-
-      return newItems;
-    });
+      )
+    );
   }
 
   // =====================================================
@@ -207,21 +205,63 @@ export function CartProvider({
   // TOPLAM
   // =====================================================
 
-  const total = items.reduce(
-    (sum, item) =>
-      sum + Number(item.price) * item.quantity,
-    0
-  );
+  const total = useMemo(() => {
+    return items.reduce(
+      (sum, item) =>
+        sum +
+        Number(item.price) *
+          Number(item.quantity),
+      0
+    );
+  }, [items]);
 
   // =====================================================
   // ÜRÜN SAYISI
   // =====================================================
 
-  const itemCount = items.reduce(
-    (sum, item) =>
-      sum + item.quantity,
-    0
-  );
+  const itemCount = useMemo(() => {
+    return items.reduce(
+      (sum, item) =>
+        sum + Number(item.quantity),
+      0
+    );
+  }, [items]);
+
+  // =====================================================
+  // LOCALSTORAGE YÜKLENMEDEN SAYFAYI GÖSTERME
+  // =====================================================
+  //
+  // ÖNEMLİ:
+  //
+  // Sipariş sayfasına geçildiğinde CartProvider yeniden
+  // oluşturulursa önce localStorage okunur.
+  //
+  // Bu sayede:
+  //
+  // items = []
+  //
+  // ile yanlışlıkla sipariş ekranının açılmasını
+  // engelliyoruz.
+  //
+
+  if (!loaded) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#f7f5ef",
+          color: "#111",
+          fontSize: "16px",
+          fontWeight: 600,
+        }}
+      >
+        Sepet yükleniyor...
+      </div>
+    );
+  }
 
   return (
     <CartContext.Provider

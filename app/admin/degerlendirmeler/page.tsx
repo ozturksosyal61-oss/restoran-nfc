@@ -1,9 +1,9 @@
-import { createServerSupabaseClient } from "../../../lib/supabase-server";
+import { createSupabaseServerClient } from "../../../lib/supabase-server";
 import { notFound } from "next/navigation";
 import ReviewActions from "./ReviewActions";
 
 export default async function ReviewsPage() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createSupabaseServerClient();
 
   // Giriş yapan kullanıcıyı bul
   const {
@@ -89,9 +89,11 @@ export default async function ReviewsPage() {
     <main className="admin-page">
 
       {/* =========================
-          ÜST BAŞLIK
+          ÜST ALAN
       ========================= */}
+
       <section className="admin-header">
+
         <a
           href="/admin"
           style={{
@@ -126,11 +128,13 @@ export default async function ReviewsPage() {
             değerlendirmelerini buradan görüntüleyin.
           </p>
         </div>
+
       </section>
 
       {/* =========================
           İSTATİSTİKLER
       ========================= */}
+
       <section
         style={{
           display: "grid",
@@ -140,30 +144,43 @@ export default async function ReviewsPage() {
           marginTop: "20px",
         }}
       >
+
         {/* Ortalama */}
+
         <div className="admin-card">
+
           <span>⭐</span>
 
           <h2>
             {averageRating.toFixed(1)}
           </h2>
 
-          <p>Ortalama Puan</p>
+          <p>
+            Ortalama Puan
+          </p>
+
         </div>
 
         {/* Toplam */}
+
         <div className="admin-card">
+
           <span>💬</span>
 
           <h2>
             {reviewList.length}
           </h2>
 
-          <p>Toplam Değerlendirme</p>
+          <p>
+            Toplam Değerlendirme
+          </p>
+
         </div>
 
         {/* Yayındaki */}
+
         <div className="admin-card">
+
           <span>🟢</span>
 
           <h2>
@@ -174,13 +191,18 @@ export default async function ReviewsPage() {
             }
           </h2>
 
-          <p>Yayındaki Değerlendirme</p>
+          <p>
+            Yayındaki Değerlendirme
+          </p>
+
         </div>
+
       </section>
 
       {/* =========================
           YILDIZ DAĞILIMI
       ========================= */}
+
       <section
         style={{
           background: "white",
@@ -191,9 +213,13 @@ export default async function ReviewsPage() {
             "0 10px 30px rgba(0,0,0,0.06)",
         }}
       >
-        <h2>⭐ Puan Dağılımı</h2>
+
+        <h2>
+          ⭐ Puan Dağılımı
+        </h2>
 
         {[5, 4, 3, 2, 1].map((star) => {
+
           const count =
             starCounts[
               star as keyof typeof starCounts
@@ -216,6 +242,7 @@ export default async function ReviewsPage() {
                 marginTop: "12px",
               }}
             >
+
               <strong>
                 {star} ⭐
               </strong>
@@ -228,6 +255,7 @@ export default async function ReviewsPage() {
                   overflow: "hidden",
                 }}
               >
+
                 <div
                   style={{
                     width: `${percentage}%`,
@@ -236,25 +264,29 @@ export default async function ReviewsPage() {
                     borderRadius: "20px",
                   }}
                 />
+
               </div>
 
               <span>
                 {count}
               </span>
+
             </div>
           );
         })}
+
       </section>
 
       {/* =========================
           DEĞERLENDİRMELER
       ========================= */}
+
       <section
         style={{
           marginTop: "28px",
         }}
       >
-        {/* Başlık */}
+
         <div
           style={{
             display: "flex",
@@ -263,7 +295,9 @@ export default async function ReviewsPage() {
             marginBottom: "16px",
           }}
         >
+
           <div>
+
             <span
               style={{
                 color: "#c8941d",
@@ -282,6 +316,7 @@ export default async function ReviewsPage() {
             >
               Son Değerlendirmeler
             </h2>
+
           </div>
 
           <span
@@ -296,10 +331,13 @@ export default async function ReviewsPage() {
           >
             {reviewList.length} değerlendirme
           </span>
+
         </div>
 
-        {/* Değerlendirme yoksa */}
+        {/* DEĞERLENDİRME YOK */}
+
         {reviewList.length === 0 ? (
+
           <div
             style={{
               background: "white",
@@ -310,6 +348,7 @@ export default async function ReviewsPage() {
                 "0 10px 30px rgba(0,0,0,0.05)",
             }}
           >
+
             <div
               style={{
                 fontSize: "42px",
@@ -332,16 +371,22 @@ export default async function ReviewsPage() {
               Müşterileriniz değerlendirme
               yaptığında burada görünecek.
             </p>
+
           </div>
+
         ) : (
-          /* Değerlendirme listesi */
+
+          /* DEĞERLENDİRME LİSTESİ */
+
           <div
             style={{
               display: "grid",
               gap: "14px",
             }}
           >
+
             {reviewList.map((review) => (
+
               <article
                 key={review.id}
                 style={{
@@ -350,6 +395,7 @@ export default async function ReviewsPage() {
                   padding: "20px",
                   boxShadow:
                     "0 10px 30px rgba(0,0,0,0.05)",
+
                   border:
                     review.is_visible
                       ? "1px solid #eee"
@@ -357,9 +403,8 @@ export default async function ReviewsPage() {
                 }}
               >
 
-                {/* =========================
-                    MÜŞTERİ + TARİH
-                ========================= */}
+                {/* ÜST BİLGİ */}
+
                 <div
                   style={{
                     display: "flex",
@@ -369,21 +414,24 @@ export default async function ReviewsPage() {
                     flexWrap: "wrap",
                   }}
                 >
-                  {/* Müşteri */}
+
                   <div>
+
                     <strong>
                       👤{" "}
                       {review.customer_name ||
                         "Anonim Müşteri"}
                     </strong>
 
-                    {/* Yıldızlar */}
+                    {/* YILDIZLAR */}
+
                     <div
                       style={{
                         marginTop: "7px",
                         fontSize: "18px",
                       }}
                     >
+
                       {"⭐".repeat(
                         review.rating
                       )}
@@ -397,10 +445,13 @@ export default async function ReviewsPage() {
                           5 - review.rating
                         )}
                       </span>
+
                     </div>
+
                   </div>
 
-                  {/* Tarih + durum */}
+                  {/* TARİH + DURUM */}
+
                   <div
                     style={{
                       textAlign: "right",
@@ -408,6 +459,7 @@ export default async function ReviewsPage() {
                       color: "#888",
                     }}
                   >
+
                     {new Date(
                       review.created_at
                     ).toLocaleDateString(
@@ -420,29 +472,35 @@ export default async function ReviewsPage() {
                         display: "inline-block",
                         padding: "4px 8px",
                         borderRadius: "10px",
+
                         background:
                           review.is_visible
                             ? "#e8f7ed"
                             : "#fdeaea",
+
                         color:
                           review.is_visible
                             ? "#258345"
                             : "#b33a3a",
+
                         fontWeight: 700,
                       }}
                     >
+
                       {review.is_visible
                         ? "Yayında"
                         : "Gizli"}
+
                     </div>
+
                   </div>
+
                 </div>
 
-                {/* =========================
-                    YORUM
-                ========================= */}
+                {/* YORUM */}
 
                 {review.comment && (
+
                   <p
                     style={{
                       marginTop: "15px",
@@ -455,25 +513,26 @@ export default async function ReviewsPage() {
                   >
                     “{review.comment}”
                   </p>
+
                 )}
 
-                {/* =========================
-                    İŞLEMLER
+                {/* BUTONLAR */}
 
-                    ÖNEMLİ:
-                    ReviewActions burada
-                    <p>'nin DIŞINDA.
-                ========================= */}
                 <ReviewActions
                   reviewId={review.id}
                   isVisible={review.is_visible}
                 />
 
               </article>
+
             ))}
+
           </div>
+
         )}
+
       </section>
+
     </main>
   );
 }

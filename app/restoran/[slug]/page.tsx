@@ -614,4 +614,5 @@ export default async function RestaurantPage({
 
     </main>
   );
+
 }

@@ -1,7 +1,10 @@
-import { supabase } from "../../../lib/supabase";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
 import OrderActions from "./OrderActions";
 import OrdersAutoRefresh from "./OrdersAutoRefresh";
 import NewOrderNotification from "./NewOrderNotification";
+import { hasPlanFeature, getPlanLabel } from "../../../lib/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +21,8 @@ type Order = {
   note: string | null;
   total_amount: number;
   status: string;
+  payment_method: string | null;
+  payment_status: string | null;
   created_at: string;
 };
 
@@ -102,35 +107,243 @@ function formatPrice(price: number) {
   });
 }
 
+function paymentMethodText(method: string | null) {
+  switch (method) {
+    case "cash":
+      return "💵 Nakit";
+    case "card":
+      return "💳 Kart / POS";
+    case "online":
+      return "🌐 Online";
+    default:
+      return "Belirtilmedi";
+  }
+}
+
+function paymentStatusText(status: string | null) {
+  switch (status) {
+    case "paid":
+      return "🟢 Ödendi";
+    case "refunded":
+      return "↩️ İade";
+    case "unpaid":
+      return "🔴 Ödenmedi";
+    default:
+      return "🔴 Ödenmedi";
+  }
+}
+
+
 export default async function OrdersPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
+  const cookieStore = await cookies();
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(
+              ({ name, value, options }) => {
+                cookieStore.set(name, value, options);
+              }
+            );
+          } catch {
+            // Server Component içerisinde cookie yazılamayabilir.
+          }
+        },
+      },
+    }
+  );
+
   const params = await searchParams;
 
   const search = params.search?.trim() || "";
   const selectedStatus = params.status || "all";
-
   // =====================================================
   // RESTORAN
   // =====================================================
 
-  const {
-    data: restaurant,
-    error: restaurantError,
-  } = await supabase
-    .from("restaurants")
-    .select("id, name")
-    .eq("slug", "ozt-kafe")
+  // =====================================================
+// GİRİŞ YAPAN KULLANICI
+// =====================================================
+
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+  return (
+    <main className="orders-page">
+      <div className="orders-error">
+        <h1>Oturum bulunamadı.</h1>
+        <p>Lütfen tekrar giriş yapın.</p>
+      </div>
+    </main>
+  );
+}
+
+// =====================================================
+// KULLANICININ RESTORAN BAĞLANTISI
+// =====================================================
+
+const { data: membership, error: membershipError } =
+  await supabase
+    .from("restaurant_users")
+    .select("restaurant_id")
+    .eq("user_id", user.id)
     .single();
 
-  if (restaurantError || !restaurant) {
+if (membershipError || !membership?.restaurant_id) {
+  return (
+    <main className="orders-page">
+      <div className="orders-error">
+        <h1>Restoran bağlantısı bulunamadı.</h1>
+        <p>
+          Bu kullanıcı herhangi bir restorana bağlı değil.
+        </p>
+      </div>
+    </main>
+  );
+}
+
+// =====================================================
+// KULLANICIYA AİT RESTORAN
+// =====================================================
+
+const {
+  data: restaurant,
+  error: restaurantError,
+} = await supabase
+  .from("restaurants")
+  .select("id, name, plan")
+  .eq("id", membership.restaurant_id)
+  .single();
+
+if (restaurantError || !restaurant) {
+  return (
+    <main className="orders-page">
+      <div className="orders-error">
+        <h1>Restoran bulunamadı.</h1>
+      </div>
+    </main>
+  );
+}
+
+  // =====================================================
+  // PAKET KONTROLÜ
+  // =====================================================
+
+  // Sipariş yönetimi yalnızca PRO ve PREMIUM paketlerinde açıktır.
+  // Bu kontrol server tarafında çalıştığı için kullanıcı
+  // /admin/orders adresini doğrudan açsa bile STARTER erişemez.
+  const restaurantPlan = restaurant.plan;
+  const canUseOrders = hasPlanFeature(
+    restaurantPlan,
+    "orders"
+  );
+
+  if (!canUseOrders) {
     return (
       <main className="orders-page">
-        <div className="orders-error">
-          <h1>Restoran bulunamadı.</h1>
-        </div>
+        <section
+          className="orders-empty"
+          style={{
+            maxWidth: "720px",
+            margin: "80px auto",
+            background: "#fff",
+            borderRadius: "22px",
+            padding: "50px 28px",
+            textAlign: "center",
+            boxShadow: "0 12px 35px rgba(0,0,0,0.06)",
+            border: "1px solid #eee",
+          }}
+        >
+          <div
+            style={{
+              width: "72px",
+              height: "72px",
+              margin: "0 auto 18px",
+              borderRadius: "20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#fff5dc",
+              fontSize: "34px",
+            }}
+          >
+            🔒
+          </div>
+
+          <div
+            style={{
+              fontSize: "11px",
+              fontWeight: 900,
+              letterSpacing: "0.08em",
+              color: "#b27b00",
+              marginBottom: "8px",
+            }}
+          >
+            {getPlanLabel(restaurantPlan)} PAKET
+          </div>
+
+          <h1
+            style={{
+              margin: "0 0 10px",
+              fontSize: "28px",
+            }}
+          >
+            Sipariş Yönetimi Kilitli
+          </h1>
+
+          <p
+            style={{
+              maxWidth: "520px",
+              margin: "0 auto",
+              color: "#666",
+              lineHeight: 1.7,
+              fontSize: "14px",
+            }}
+          >
+            Sipariş alma ve sipariş yönetimi özelliği PRO ve
+            PREMIUM paketlerinde kullanılabilir.
+          </p>
+
+          <div
+            style={{
+              marginTop: "24px",
+              display: "flex",
+              justifyContent: "center",
+              gap: "10px",
+              flexWrap: "wrap",
+            }}
+          >
+            <a
+              href="/admin"
+              style={{
+                display: "inline-block",
+                padding: "12px 20px",
+                borderRadius: "10px",
+                background: "#1b1b1b",
+                color: "#fff",
+                textDecoration: "none",
+                fontWeight: 800,
+                fontSize: "13px",
+              }}
+            >
+              ← Yönetim Paneline Dön
+            </a>
+          </div>
+        </section>
       </main>
     );
   }
@@ -153,6 +366,8 @@ export default async function OrdersPage({
         note,
         total_amount,
         status,
+        payment_method,
+        payment_status,
         created_at
       `
     )
@@ -266,7 +481,9 @@ export default async function OrdersPage({
   const totalRevenue =
     orders?.reduce(
       (sum, order) =>
-        sum + Number(order.total_amount || 0),
+        order.payment_status === "refunded"
+          ? sum
+          : sum + Number(order.total_amount || 0),
       0
     ) ?? 0;
 
@@ -480,6 +697,26 @@ export default async function OrdersPage({
         <div className="orders-stat">
 
           <div className="orders-stat-icon">
+            ⚡
+          </div>
+
+          <div>
+            <span>Aktif</span>
+
+            <strong>
+              {activeOrders}
+            </strong>
+
+            <small>
+              İşlem bekleyen
+            </small>
+          </div>
+
+        </div>
+
+        <div className="orders-stat">
+
+          <div className="orders-stat-icon">
             📦
           </div>
 
@@ -511,7 +748,29 @@ export default async function OrdersPage({
             </strong>
 
             <small>
-              Tüm siparişler
+              İade edilenler hariç
+            </small>
+          </div>
+
+        </div>
+
+        <div className="orders-stat">
+
+          <div className="orders-stat-icon">
+            💳
+          </div>
+
+          <div>
+            <span>Ödenen</span>
+
+            <strong>
+              {orders?.filter(
+                (order) => order.payment_status === "paid"
+              ).length ?? 0}
+            </strong>
+
+            <small>
+              Başarılı ödeme
             </small>
           </div>
 
@@ -924,7 +1183,95 @@ export default async function OrdersPage({
 
                         </div>
 
+                        {/* ÖDEME */}
+
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: "10px",
+                            flexWrap: "wrap",
+                            padding: "11px 13px",
+                            marginBottom: "14px",
+                            background: "#fafafa",
+                            border: "1px solid #ece8df",
+                            borderRadius: "12px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              fontWeight: 800,
+                            }}
+                          >
+                            💳 {paymentMethodText(order.payment_method)}
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              fontWeight: 800,
+                              padding: "6px 9px",
+                              borderRadius: "999px",
+                              background:
+                                order.payment_status === "paid"
+                                  ? "#e9f8ed"
+                                  : "#fff0f0",
+                              color:
+                                order.payment_status === "paid"
+                                  ? "#23753a"
+                                  : "#a32929",
+                            }}
+                          >
+                            {paymentStatusText(order.payment_status)}
+                          </div>
+                        </div>
+
                         {/* MÜŞTERİ */}
+
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: "10px",
+                            flexWrap: "wrap",
+                            padding: "11px 13px",
+                            marginBottom: "14px",
+                            background: "#fafafa",
+                            border: "1px solid #ece8df",
+                            borderRadius: "12px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              fontWeight: 800,
+                            }}
+                          >
+                            💳 {paymentMethodText(order.payment_method)}
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              fontWeight: 800,
+                              padding: "6px 9px",
+                              borderRadius: "999px",
+                              background:
+                                order.payment_status === "paid"
+                                  ? "#e9f8ed"
+                                  : "#fff0f0",
+                              color:
+                                order.payment_status === "paid"
+                                  ? "#23753a"
+                                  : "#a32929",
+                            }}
+                          >
+                            {paymentStatusText(order.payment_status)}
+                          </div>
+                        </div>
 
                         <div className="order-customer">
 
@@ -1338,7 +1685,7 @@ export default async function OrdersPage({
           fontSize: "11px",
         }}
       >
-        OZT Digital Menu • Sipariş Yönetim Sistemi
+        OZT Digital Menu • Sipariş & Ödeme Yönetim Sistemi
       </footer>
 
     </main>

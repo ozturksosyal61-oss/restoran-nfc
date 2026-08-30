@@ -1,108 +1,290 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+
 import { useCart } from "../menu/CartContext";
+
 import { createClient } from "../../../../lib/supabase/client";
+import { hasPlanFeature } from "../../../../lib/plan";
 
 type Restaurant = {
   id: number;
   name: string;
   table_count: number | null;
+  plan: string | null;
 };
+
+type RestaurantTable = {
+  id: number;
+  table_number: number | string;
+  public_token: string;
+  is_active: boolean;
+};
+
+type PaymentMethod = "cash" | "card" | "online";
 
 export default function OrderPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams =
+    useSearchParams();
 
-  const slug = params.slug as string;
-  const tableToken = searchParams.get("masa");
+  const slug =
+    params.slug as string;
 
-  const { items, total } = useCart();
+  const {
+    items,
+    total,
+    clearCart,
+  } = useCart();
 
-  const [restaurant, setRestaurant] =
-    useState<Restaurant | null>(null);
+  /*
+   * =====================================================
+   * QR / NFC TOKEN
+   * =====================================================
+   *
+   * Örnek:
+   *
+   * ?masa=e630722f-3ed7-4b2d-b118-237051b9055a
+   *
+   * Bu değer masa numarası değildir.
+   *
+   * restaurant_tables.public_token
+   * değeridir.
+   */
 
-  const [customerName, setCustomerName] =
+  const tableTokenFromUrl =
+    searchParams
+      .get("masa")
+      ?.trim() || "";
+
+  const [
+    restaurant,
+    setRestaurant,
+  ] =
+    useState<Restaurant | null>(
+      null
+    );
+
+  const [
+    table,
+    setTable,
+  ] =
+    useState<RestaurantTable | null>(
+      null
+    );
+
+  const [
+    customerName,
+    setCustomerName,
+  ] =
     useState("");
 
-  const [tableNumber, setTableNumber] =
+  const [
+    tableNumber,
+    setTableNumber,
+  ] =
     useState("");
 
-  const [tableLocked, setTableLocked] =
+  const [
+    tableLocked,
+    setTableLocked,
+  ] =
     useState(false);
 
-  const [note, setNote] =
+  const [
+    note,
+    setNote,
+  ] =
     useState("");
 
-  const [loadingRestaurant, setLoadingRestaurant] =
+  const [
+    paymentMethod,
+    setPaymentMethod,
+  ] =
+    useState<PaymentMethod>("cash");
+
+  const [
+    loadingRestaurant,
+    setLoadingRestaurant,
+  ] =
     useState(true);
 
-  const [loading, setLoading] =
+  const [
+    loading,
+    setLoading,
+  ] =
     useState(false);
 
-  const [error, setError] =
+  const [
+    error,
+    setError,
+  ] =
     useState("");
 
-  /* =====================================================
-     RESTORANI GETİR
-     ===================================================== */
+  const [
+    serviceRequestLoading,
+    setServiceRequestLoading,
+  ] =
+    useState(false);
+
+  const [
+    serviceRequestMessage,
+    setServiceRequestMessage,
+  ] =
+    useState("");
+
+  /*
+   * =====================================================
+   * RESTORAN + MASA YÜKLE
+   * =====================================================
+   */
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadRestaurant() {
       try {
-        const supabase = createClient();
+        setLoadingRestaurant(
+          true
+        );
+
+        setError("");
+
+        const supabase =
+          createClient();
+
+        /*
+         * =================================================
+         * RESTORANI BUL
+         * =================================================
+         */
 
         const {
-          data,
-          error,
-        } = await supabase
-          .from("restaurants")
-          .select(
-            "id, name, table_count"
-          )
-          .eq("slug", slug)
-          .single();
+          data: restaurantData,
+          error:
+            restaurantError,
+        } =
+          await supabase
+            .from(
+              "restaurants"
+            )
+            .select(
+              "id, name, table_count, plan"
+            )
+            .eq(
+              "slug",
+              slug
+            )
+            .single();
 
-        if (error || !data) {
+        if (cancelled) {
+          return;
+        }
+
+        if (
+          restaurantError ||
+          !restaurantData
+        ) {
           console.error(
             "Restaurant error:",
-            error
+            restaurantError
           );
 
           setError(
             "İşletme bilgileri yüklenemedi."
           );
 
-          setLoadingRestaurant(false);
+          setLoadingRestaurant(
+            false
+          );
+
           return;
         }
 
-        setRestaurant(data);
+        setRestaurant(
+          restaurantData
+        );
+
+        if (!hasPlanFeature(restaurantData.plan, "orders")) {
+          setError(
+            "Bu işletmenin mevcut paketi online sipariş özelliğini içermiyor."
+          );
+        }
 
         /*
          * =================================================
-         * QR / NFC MASA KONTROLÜ
+         * TOKEN BELİRLE
+         * =================================================
          *
-         * QR veya NFC bağlantısı şu şekilde olacak:
-         * /restoran/ozt-kafe/siparis?masa=PUBLIC_TOKEN
+         * Öncelik:
          *
-         * Token geçerliyse müşterinin masası otomatik
-         * belirlenir ve masa seçmesi gerekmez.
+         * 1. URL
+         * 2. localStorage
+         */
+
+        let tableToken =
+          tableTokenFromUrl;
+
+        if (!tableToken) {
+          tableToken =
+            localStorage.getItem(
+              "ozt_table_token"
+            )?.trim() || "";
+        }
+
+        /*
+         * =================================================
+         * QR / NFC TOKEN VAR
          * =================================================
          */
+
         if (tableToken) {
           const {
-            data: table,
-            error: tableError,
-          } = await supabase
-            .from("restaurant_tables")
-            .select("id, table_number, public_token, is_active")
-            .eq("restaurant_id", data.id)
-            .eq("public_token", tableToken)
-            .eq("is_active", true)
-            .maybeSingle();
+            data: tableData,
+            error:
+              tableError,
+          } =
+            await supabase
+              .from(
+                "restaurant_tables"
+              )
+              .select(
+                "id, table_number, public_token, is_active"
+              )
+              /*
+               * EN ÖNEMLİ KISIM:
+               *
+               * Token mutlaka mevcut
+               * restoran ile birlikte
+               * kontrol ediliyor.
+               */
+              .eq(
+                "restaurant_id",
+                restaurantData.id
+              )
+              .eq(
+                "public_token",
+                tableToken
+              )
+              .eq(
+                "is_active",
+                true
+              )
+              .maybeSingle();
+
+          if (cancelled) {
+            return;
+          }
 
           if (tableError) {
             console.error(
@@ -111,36 +293,320 @@ export default function OrderPage() {
             );
           }
 
-          if (table) {
+          /*
+           * =================================================
+           * TOKEN GEÇERLİ
+           * =================================================
+           */
+
+          if (tableData) {
+            const realTableNumber =
+              String(
+                tableData.table_number
+              );
+
+            setTable(
+              tableData
+            );
+
             setTableNumber(
-              String(table.table_number)
+              realTableNumber
             );
-            setTableLocked(true);
+
+            /*
+             * Masa artık kilitli.
+             */
+
+            setTableLocked(
+              true
+            );
+
+            /*
+             * Tokenı kaydet.
+             */
+
+            localStorage.setItem(
+              "ozt_table_token",
+              tableData.public_token
+            );
+
+            /*
+             * Eski hatalı kayıt varsa temizle.
+             */
+
+            localStorage.removeItem(
+              "ozt_table_number"
+            );
+
+            console.log(
+              "QR/NFC masa bulundu:",
+              {
+                restaurantId:
+                  restaurantData.id,
+                tableId:
+                  tableData.id,
+                tableNumber:
+                  tableData.table_number,
+                token:
+                  tableData.public_token,
+              }
+            );
           } else {
-            setError(
-              "Bu QR/NFC masa kodu geçersiz veya pasif."
-            );
+            /*
+             * =================================================
+             * TOKEN GEÇERSİZ
+             * =================================================
+             */
+
+            if (
+              tableTokenFromUrl
+            ) {
+              setError(
+                "Bu QR/NFC masa kodu geçersiz veya pasif."
+              );
+
+              setTable(
+                null
+              );
+
+              setTableLocked(
+                false
+              );
+
+              setTableNumber(
+                ""
+              );
+
+              localStorage.removeItem(
+                "ozt_table_token"
+              );
+            }
           }
+        } else {
+          /*
+           * =================================================
+           * QR / NFC YOK
+           * =================================================
+           *
+           * Manuel masa seçimi kullanılabilir.
+           */
+
+          setTable(
+            null
+          );
+
+          setTableLocked(
+            false
+          );
+
+          setTableNumber(
+            ""
+          );
         }
 
-        setLoadingRestaurant(false);
-      } catch (error) {
-        console.error(error);
-
-        setError(
-          "İşletme bilgileri yüklenemedi."
+        setLoadingRestaurant(
+          false
+        );
+      } catch (err) {
+        console.error(
+          "Load restaurant error:",
+          err
         );
 
-        setLoadingRestaurant(false);
+        if (!cancelled) {
+          setError(
+            "İşletme bilgileri yüklenemedi."
+          );
+
+          setLoadingRestaurant(
+            false
+          );
+        }
       }
     }
 
     loadRestaurant();
-  }, [slug, tableToken]);
 
-  /* =====================================================
-     SİPARİŞ GÖNDER
-     ===================================================== */
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    slug,
+    tableTokenFromUrl,
+  ]);
+
+  /*
+   * =====================================================
+   * MANUEL MASA SEÇİMİ
+   * =====================================================
+   */
+
+  async function handleManualTableChange(
+    value: string
+  ) {
+    setTableNumber(
+      value
+    );
+
+    setTable(
+      null
+    );
+
+    if (!value) {
+      return;
+    }
+
+    if (!restaurant) {
+      return;
+    }
+
+    const supabase =
+      createClient();
+
+    const {
+      data,
+      error: tableError,
+    } =
+      await supabase
+        .from(
+          "restaurant_tables"
+        )
+        .select(
+          "id, table_number, public_token, is_active"
+        )
+        .eq(
+          "restaurant_id",
+          restaurant.id
+        )
+        .eq(
+          "table_number",
+          Number(value)
+        )
+        .eq(
+          "is_active",
+          true
+        )
+        .maybeSingle();
+
+    if (tableError) {
+      console.error(
+        "Manual table error:",
+        tableError
+      );
+
+      setError(
+        "Masa bilgisi alınamadı."
+      );
+
+      return;
+    }
+
+    if (!data) {
+      setError(
+        "Seçilen masa aktif değil veya bulunamadı."
+      );
+
+      setTableNumber(
+        ""
+      );
+
+      return;
+    }
+
+    setError("");
+
+    setTable(
+      data
+    );
+  }
+
+  /*
+   * =====================================================
+   * GARSON ÇAĞIR
+   * =====================================================
+   */
+
+  async function handleServiceRequest() {
+    setServiceRequestMessage("");
+
+    if (!hasPlanFeature(restaurant?.plan, "waiter_call")) {
+      setServiceRequestMessage(
+        "Bu işletmenin mevcut paketi garson çağırma özelliğini içermiyor."
+      );
+      return;
+    }
+
+    if (!restaurant) {
+      setServiceRequestMessage(
+        "İşletme bilgileri bulunamadı."
+      );
+      return;
+    }
+
+    if (!table) {
+      setServiceRequestMessage(
+        "Garson çağırmak için önce geçerli bir masa seçin."
+      );
+      return;
+    }
+
+    if (!table.is_active) {
+      setServiceRequestMessage(
+        "Bu masa şu anda aktif değil."
+      );
+      return;
+    }
+
+    setServiceRequestLoading(true);
+
+    try {
+      const supabase = createClient();
+
+      const { error: requestError } =
+        await supabase
+          .from("service_requests")
+          .insert({
+            restaurant_id: restaurant.id,
+            table_id: table.id,
+            request_type: "garson",
+            status: "pending",
+          });
+
+      if (requestError) {
+        console.error(
+          "Garson çağırma hatası:",
+          requestError
+        );
+
+        setServiceRequestMessage(
+          "Garson çağrısı gönderilemedi. Lütfen tekrar deneyin."
+        );
+
+        return;
+      }
+
+      setServiceRequestMessage(
+        `🔔 Garson çağrınız gönderildi. Masa ${table.table_number}.`
+      );
+    } catch (err) {
+      console.error(
+        "Garson çağırma beklenmeyen hata:",
+        err
+      );
+
+      setServiceRequestMessage(
+        "Garson çağrısı gönderilemedi. Lütfen tekrar deneyin."
+      );
+    } finally {
+      setServiceRequestLoading(false);
+    }
+  }
+
+  /*
+   * =====================================================
+   * SİPARİŞ GÖNDER
+   * =====================================================
+   */
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -149,36 +615,243 @@ export default function OrderPage() {
 
     setError("");
 
-    if (!tableNumber.trim()) {
+    if (!hasPlanFeature(restaurant?.plan, "orders")) {
       setError(
-        "Lütfen masa numaranızı seçin."
+        "Bu işletmenin mevcut paketi online sipariş özelliğini içermiyor."
       );
       return;
     }
+
+    /*
+     * =================================================
+     * SEPET
+     * =================================================
+     */
 
     if (items.length === 0) {
       setError(
         "Sepetiniz boş."
       );
+
       return;
     }
+
+    /*
+     * =================================================
+     * RESTORAN
+     * =================================================
+     */
 
     if (!restaurant) {
       setError(
         "İşletme bilgileri bulunamadı."
       );
+
       return;
     }
 
-    setLoading(true);
+    /*
+     * =================================================
+     * MASA
+     * =================================================
+     */
+
+    if (!tableNumber.trim()) {
+      setError(
+        "Lütfen masa numaranızı seçin."
+      );
+
+      return;
+    }
+
+    /*
+     * =================================================
+     * ÖDEME YÖNTEMİ
+     * =================================================
+     */
+
+    if (!paymentMethod) {
+      setError(
+        "Lütfen ödeme yönteminizi seçin."
+      );
+
+      return;
+    }
+
+    /*
+     * =================================================
+     * TABLE ID KONTROLÜ
+     * =================================================
+     *
+     * Artık sipariş mutlaka gerçek
+     * restaurant_tables kaydına bağlanıyor.
+     */
+
+    let verifiedTable =
+      table;
+
+    const supabase =
+      createClient();
+
+    /*
+     * QR/NFC kullanıldıysa token ile
+     * tekrar doğrula.
+     */
+
+    const tableToken =
+      tableTokenFromUrl ||
+      localStorage.getItem(
+        "ozt_table_token"
+      )?.trim() ||
+      "";
+
+    if (tableToken) {
+      const {
+        data: tokenTable,
+        error:
+          tokenTableError,
+      } =
+        await supabase
+          .from(
+            "restaurant_tables"
+          )
+          .select(
+            "id, table_number, public_token, is_active"
+          )
+          .eq(
+            "restaurant_id",
+            restaurant.id
+          )
+          .eq(
+            "public_token",
+            tableToken
+          )
+          .eq(
+            "is_active",
+            true
+          )
+          .maybeSingle();
+
+      if (
+        tokenTableError
+      ) {
+        console.error(
+          "Final table verification error:",
+          tokenTableError
+        );
+
+        setError(
+          "Masa doğrulaması yapılamadı."
+        );
+
+        return;
+      }
+
+      if (!tokenTable) {
+        setError(
+          "QR/NFC masa kodu geçersiz veya pasif."
+        );
+
+        return;
+      }
+
+      /*
+       * URL tokenı ile masa numarası
+       * birbiriyle uyuşuyor mu?
+       */
+
+      if (
+        String(
+          tokenTable.table_number
+        ) !==
+        String(
+          tableNumber
+        )
+      ) {
+        setError(
+          "Masa doğrulaması başarısız."
+        );
+
+        return;
+      }
+
+      verifiedTable =
+        tokenTable;
+    } else {
+      /*
+       * Manuel seçimde gerçek masa kaydı
+       * bulunmak zorunda.
+       */
+
+      if (
+        !verifiedTable ||
+        String(
+          verifiedTable.table_number
+        ) !==
+          String(
+            tableNumber
+          )
+      ) {
+        const {
+          data: manualTable,
+          error:
+            manualTableError,
+        } =
+          await supabase
+            .from(
+              "restaurant_tables"
+            )
+            .select(
+              "id, table_number, public_token, is_active"
+            )
+            .eq(
+              "restaurant_id",
+              restaurant.id
+            )
+            .eq(
+              "table_number",
+              Number(
+                tableNumber
+              )
+            )
+            .eq(
+              "is_active",
+              true
+            )
+            .maybeSingle();
+
+        if (
+          manualTableError ||
+          !manualTable
+        ) {
+          setError(
+            "Seçilen masa aktif değil veya bulunamadı."
+          );
+
+          return;
+        }
+
+        verifiedTable =
+          manualTable;
+      }
+    }
+
+    /*
+     * =================================================
+     * ARTIK SİPARİŞ OLUŞTUR
+     * =================================================
+     */
+
+    setLoading(
+      true
+    );
 
     try {
-      const supabase =
-        createClient();
-
-      /* =================================================
-         ANA SİPARİŞ
-         ================================================= */
+      /*
+       * =================================================
+       * ANA SİPARİŞ
+       * =================================================
+       */
 
       const {
         data: order,
@@ -190,12 +863,25 @@ export default function OrderPage() {
             restaurant_id:
               restaurant.id,
 
+            /*
+             * GERÇEK MASA ID
+             */
+
+            table_id:
+              verifiedTable.id,
+
+            /*
+             * GERÇEK MASA NUMARASI
+             */
+
+            table_number:
+              String(
+                verifiedTable.table_number
+              ),
+
             customer_name:
               customerName.trim() ||
               null,
-
-            table_number:
-              tableNumber.trim(),
 
             note:
               note.trim() ||
@@ -203,6 +889,20 @@ export default function OrderPage() {
 
             total_amount:
               total,
+
+            /*
+             * ÖDEME BİLGİLERİ
+             *
+             * cash   = Nakit
+             * card   = Kart / POS
+             * online = Online ödeme
+             */
+
+            payment_method:
+              paymentMethod,
+
+            payment_status:
+              "unpaid",
 
             status:
               "pending",
@@ -219,115 +919,175 @@ export default function OrderPage() {
           orderError
         );
 
-        setError(
-          "Sipariş oluşturulamadı: " +
-            (
-              orderError?.message ||
-              "Bilinmeyen hata"
-            )
+        const orderErrorMessage =
+          orderError?.message || "";
+
+        if (
+          orderErrorMessage.includes(
+            "ONLINE_ORDER_PLAN_REQUIRED"
+          )
+        ) {
+          setError(
+            "Bu işletmenin mevcut paketi online sipariş özelliğini içermiyor."
+          );
+        } else {
+          setError(
+            "Sipariş oluşturulamadı: " +
+              (
+                orderErrorMessage ||
+                "Bilinmeyen hata"
+              )
+          );
+        }
+
+        setLoading(
+          false
         );
 
-        setLoading(false);
         return;
       }
 
-      /* =================================================
-         SİPARİŞ ÜRÜNLERİ
-         ================================================= */
+      /*
+       * =================================================
+       * SİPARİŞ ÜRÜNLERİ
+       * =================================================
+       */
 
       const orderItems =
-        items.map((item) => ({
-          order_id:
-            order.id,
+        items.map(
+          (item) => ({
+            order_id:
+              order.id,
 
-          product_id:
-            item.id,
+            product_id:
+              item.id,
 
-          product_name:
-            item.name,
+            product_name:
+              item.name,
 
-          price:
-            item.price,
+            price:
+              Number(
+                item.price
+              ),
 
-          quantity:
-            item.quantity,
-        }));
+            quantity:
+              item.quantity,
+          })
+        );
 
       const {
         error:
           orderItemsError,
       } =
         await supabase
-          .from("order_items")
+          .from(
+            "order_items"
+          )
           .insert(
             orderItems
           );
 
-      if (orderItemsError) {
+      if (
+        orderItemsError
+      ) {
         console.error(
           "Order items error:",
           orderItemsError
         );
+
+        /*
+         * Ana siparişi de geri almaya çalış.
+         */
+
+        await supabase
+          .from("orders")
+          .delete()
+          .eq(
+            "id",
+            order.id
+          );
 
         setError(
           "Sipariş ürünleri kaydedilemedi: " +
             orderItemsError.message
         );
 
-        setLoading(false);
+        setLoading(
+          false
+        );
+
         return;
       }
 
-      /* =================================================
-         BAŞARILI
-         ================================================= */
+      /*
+       * =================================================
+       * BAŞARILI
+       * =================================================
+       */
 
-      setLoading(false);
+      /*
+       * Sepeti temizle.
+       */
 
-      alert(
-        `✅ Siparişiniz başarıyla oluşturuldu!\n\nSipariş No: ${order.id}`
+      clearCart();
+
+      setLoading(
+        false
       );
+
+      /*
+       * Sipariş takip ekranı.
+       */
 
       router.push(
         `/restoran/${slug}/siparis/takip/${order.id}`
       );
-
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(
+        "Submit error:",
+        err
+      );
 
       setError(
         "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
       );
 
-      setLoading(false);
+      setLoading(
+        false
+      );
     }
   }
 
-  /* =====================================================
-     YÜKLENİYOR
-     ===================================================== */
+  /*
+   * =====================================================
+   * YÜKLENİYOR
+   * =====================================================
+   */
 
-  if (loadingRestaurant) {
+  if (
+    loadingRestaurant
+  ) {
     return (
       <main className="restaurant-page">
-
         <section className="hero">
           <h1>
             Sipariş Ver
           </h1>
 
           <p>
-            İşletme bilgileri yükleniyor...
+            Masa bilgileri
+            kontrol ediliyor...
           </p>
         </section>
-
       </main>
     );
   }
 
-  /* =====================================================
-     MASA SAYISI
-     ===================================================== */
+  /*
+   * =====================================================
+   * MASA SAYISI
+   * =====================================================
+   */
 
   const tableCount =
     restaurant?.table_count ??
@@ -346,19 +1106,27 @@ export default function OrderPage() {
         index + 1
     );
 
-  /* =====================================================
-     EKRAN
-     ===================================================== */
+  const canOrder = hasPlanFeature(
+    restaurant?.plan,
+    "orders"
+  );
+
+  const canWaiterCall = hasPlanFeature(
+    restaurant?.plan,
+    "waiter_call"
+  );
+
+  /*
+   * =====================================================
+   * EKRAN
+   * =====================================================
+   */
 
   return (
     <main className="restaurant-page">
-
-      {/* =================================================
-          HEADER
-          ================================================= */}
+      {/* HEADER */}
 
       <section className="hero">
-
         <h1>
           Sipariş Ver
         </h1>
@@ -366,70 +1134,59 @@ export default function OrderPage() {
         <p>
           Sipariş bilgilerinizi girin.
         </p>
-
       </section>
 
-
-      {/* =================================================
-          SİPARİŞ BÖLÜMÜ
-          ================================================= */}
+      {/* SİPARİŞ */}
 
       <section className="order-section">
-
         <h2>
           Sipariş Özeti
         </h2>
 
-
-        {/* =================================================
-            ÜRÜNLER
-            ================================================= */}
+        {/* ÜRÜNLER */}
 
         <div className="order-items">
+          {items.map(
+            (item) => (
+              <div
+                className="order-item"
+                key={item.id}
+              >
+                <div>
+                  <strong>
+                    {item.name}
+                  </strong>
 
-          {items.map((item) => (
-
-            <div
-              className="order-item"
-              key={item.id}
-            >
-
-              <div>
+                  <span>
+                    {item.quantity} ×{" "}
+                    {Number(
+                      item.price
+                    ).toLocaleString(
+                      "tr-TR"
+                    )}{" "}
+                    TL
+                  </span>
+                </div>
 
                 <strong>
-                  {item.name}
+                  {(
+                    Number(
+                      item.price
+                    ) *
+                    item.quantity
+                  ).toLocaleString(
+                    "tr-TR"
+                  )}{" "}
+                  TL
                 </strong>
-
-                <span>
-                  {item.quantity} ×{" "}
-                  {item.price} TL
-                </span>
-
               </div>
-
-              <strong>
-                {(
-                  item.price *
-                  item.quantity
-                ).toLocaleString(
-                  "tr-TR"
-                )}{" "}
-                TL
-              </strong>
-
-            </div>
-
-          ))}
-
+            )
+          )}
         </div>
 
-
-        {/* =================================================
-            TOPLAM
-            ================================================= */}
+        {/* TOPLAM */}
 
         <div className="order-total">
-
           <span>
             Toplam
           </span>
@@ -440,26 +1197,125 @@ export default function OrderPage() {
             )}{" "}
             TL
           </strong>
-
         </div>
 
+        {/* GARSON ÇAĞIR */}
 
-        {/* =================================================
-            FORM
-            ================================================= */}
+        {table && canWaiterCall && (
+          <div
+            style={{
+              marginBottom: "18px",
+              padding: "16px",
+              border: "1px solid #eadfca",
+              borderRadius: "14px",
+              background: "#fffaf0",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <strong>🔔 Garson Çağır</strong>
+                <p
+                  style={{
+                    margin: "5px 0 0",
+                    fontSize: "12px",
+                    color: "#777",
+                  }}
+                >
+                  Masa {table.table_number} için garson çağırabilirsiniz.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleServiceRequest}
+                disabled={
+                  serviceRequestLoading ||
+                  !table.is_active
+                }
+                style={{
+                  border: "none",
+                  borderRadius: "10px",
+                  padding: "11px 16px",
+                  background: serviceRequestLoading
+                    ? "#b9b0a0"
+                    : "#171717",
+                  color: "white",
+                  fontWeight: 700,
+                  cursor: serviceRequestLoading
+                    ? "not-allowed"
+                    : "pointer",
+                }}
+              >
+                {serviceRequestLoading
+                  ? "Çağrılıyor..."
+                  : "🔔 Garson Çağır"}
+              </button>
+            </div>
+
+            {serviceRequestMessage && (
+              <p
+                style={{
+                  margin: "10px 0 0",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: serviceRequestMessage.startsWith("🔔")
+                    ? "#2e7d32"
+                    : "#b42318",
+                }}
+              >
+                {serviceRequestMessage}
+              </p>
+            )}
+          </div>
+        )}
+
+        {!canOrder && (
+          <div
+            style={{
+              marginBottom: "18px",
+              padding: "18px",
+              border: "1px solid #e5dccb",
+              borderRadius: "14px",
+              background: "#fffaf0",
+              textAlign: "center",
+            }}
+          >
+            <strong style={{ display: "block", fontSize: "15px" }}>
+              🔒 Online Sipariş Kapalı
+            </strong>
+            <p
+              style={{
+                margin: "7px 0 0",
+                color: "#777",
+                fontSize: "12px",
+                lineHeight: 1.5,
+              }}
+            >
+              Bu işletmenin mevcut paketi online sipariş özelliğini içermiyor.
+            </p>
+          </div>
+        )}
+
+        {canOrder && (
+          <>
+        {/* FORM */}
 
         <form
           onSubmit={
             handleSubmit
           }
         >
-
-          {/* =================================================
-              MASA
-              ================================================= */}
+          {/* MASA */}
 
           <label>
-
             Masa Numaranız
 
             {tableLocked ? (
@@ -484,48 +1340,45 @@ export default function OrderPage() {
                   onChange={(
                     event
                   ) =>
-                    setTableNumber(
+                    handleManualTableChange(
                       event.target.value
                     )
                   }
                   required
                 >
-
                   <option value="">
                     Masa seçin
                   </option>
 
                   {tables.map(
-                    (table) => (
-
+                    (tableItem) => (
                       <option
-                        key={table}
-                        value={table}
+                        key={
+                          tableItem
+                        }
+                        value={String(
+                          tableItem
+                        )}
                       >
-                        Masa {table}
+                        Masa{" "}
+                        {
+                          tableItem
+                        }
                       </option>
-
                     )
                   )}
-
                 </select>
 
                 <small>
-                  Lütfen bulunduğunuz
-                  masayı seçin.
+                  Lütfen bulunduğunuz masayı seçin.
                 </small>
               </>
             )}
-
           </label>
 
-
-          {/* =================================================
-              İSİM
-              ================================================= */}
+          {/* İSİM */}
 
           <label>
-
             Adınız
 
             <input
@@ -542,20 +1395,17 @@ export default function OrderPage() {
               }
               placeholder="İsteğe bağlı"
             />
-
           </label>
 
-
-          {/* =================================================
-              NOT
-              ================================================= */}
+          {/* NOT */}
 
           <label>
-
             Sipariş Notu
 
             <textarea
-              value={note}
+              value={
+                note
+              }
               onChange={(
                 event
               ) =>
@@ -565,46 +1415,75 @@ export default function OrderPage() {
               }
               placeholder="Örn. Soğansız olsun."
             />
-
           </label>
 
+          {/* ÖDEME YÖNTEMİ */}
 
-          {/* =================================================
-              HATA
-              ================================================= */}
+          <label>
+            Ödeme Yöntemi
+
+            <select
+              value={
+                paymentMethod
+              }
+              onChange={(
+                event
+              ) =>
+                setPaymentMethod(
+                  event.target.value as PaymentMethod
+                )
+              }
+              required
+            >
+              <option value="cash">
+                💵 Nakit
+              </option>
+
+              <option value="card">
+                💳 Kart / POS
+              </option>
+
+              <option value="online">
+                🌐 Online Ödeme
+              </option>
+            </select>
+
+            <small>
+              Ödeme yönteminizi seçin.
+              Online ödeme seçeneği şimdilik
+              siparişe ödeme yöntemi olarak kaydedilir;
+              gerçek online tahsilat için ödeme sağlayıcısı
+              entegrasyonu ayrıca yapılacaktır.
+            </small>
+          </label>
+
+          {/* HATA */}
 
           {error && (
-
             <p className="login-error">
               ❌ {error}
             </p>
-
           )}
 
-
-          {/* =================================================
-              GÖNDER
-              ================================================= */}
+          {/* GÖNDER */}
 
           <button
             type="submit"
             disabled={
               loading ||
-              items.length === 0
+              items.length === 0 ||
+              !tableNumber
             }
             className="submit-button"
           >
-
             {loading
               ? "Sipariş Gönderiliyor..."
               : "Siparişi Onayla"}
-
           </button>
-
         </form>
-
+          </>
+        )}
       </section>
-
     </main>
   );
 }

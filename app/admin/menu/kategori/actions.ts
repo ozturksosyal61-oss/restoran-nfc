@@ -1,10 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createServerSupabaseClient } from "../../../../lib/supabase-server";
+import { createSupabaseServerClient } from "../../../../lib/supabase-server";
 
 export async function deleteCategory(categoryId: number) {
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createSupabaseServerClient();
+
+  // =====================================================
+  // OTURUM
+  // =====================================================
 
   const {
     data: { user },
@@ -16,71 +20,136 @@ export async function deleteCategory(categoryId: number) {
     };
   }
 
-  // Kullanıcının restoranını bul
-  const { data: membership, error: membershipError } = await supabase
-    .from("restaurant_users")
-    .select("restaurant_id")
-    .eq("user_id", user.id)
-    .single();
+  // =====================================================
+  // KULLANICININ RESTORANINI BUL
+  // =====================================================
 
-  if (membershipError || !membership) {
+  const { data: membership, error: membershipError } =
+    await supabase
+      .from("restaurant_users")
+      .select("restaurant_id")
+      .eq("user_id", user.id)
+      .single();
+
+  if (membershipError || !membership?.restaurant_id) {
+    console.error(
+      "RESTAURAN ÜYELİĞİ BULUNAMADI:",
+      membershipError
+    );
+
     return {
       error: "İşletme bağlantısı bulunamadı.",
     };
   }
 
-  // Kategorinin gerçekten bu restorana ait olduğunu kontrol et
-  const { data: category, error: categoryError } = await supabase
-    .from("categories")
-    .select("id, restaurant_id, name")
-    .eq("id", categoryId)
-    .eq("restaurant_id", membership.restaurant_id)
-    .single();
+  const restaurantId = membership.restaurant_id;
 
-  if (categoryError || !category) {
+  // =====================================================
+  // KATEGORİYİ BUL
+  // =====================================================
+
+  const { data: category, error: categoryError } =
+    await supabase
+      .from("categories")
+      .select("id, restaurant_id, name")
+      .eq("id", categoryId)
+      .eq("restaurant_id", restaurantId)
+      .maybeSingle();
+
+  if (categoryError) {
+    console.error(
+      "KATEGORİ BULMA HATASI:",
+      categoryError
+    );
+
     return {
-      error: "Kategori bulunamadı veya bu kategoriye erişim yetkiniz yok.",
+      error: "Kategori kontrol edilemedi.",
     };
   }
 
-  // Kategoride ürün var mı?
-  const { count, error: productsError } = await supabase
-    .from("products")
-    .select("id", {
-      count: "exact",
-      head: true,
-    })
-    .eq("category_id", categoryId);
-
-  if (productsError) {
-    console.error("KATEGORİ ÜRÜN KONTROLÜ:", productsError);
-
-    return {
-      error: "Kategorideki ürünler kontrol edilemedi.",
-    };
-  }
-
-  if ((count ?? 0) > 0) {
+  if (!category) {
     return {
       error:
-        "Bu kategoride ürünler bulunuyor. Önce ürünleri silin veya başka bir kategoriye taşıyın.",
+        "Kategori bulunamadı veya bu kategoriye erişim yetkiniz yok.",
     };
   }
 
-  // Kategori sil
-  const { error: deleteError } = await supabase
-    .from("categories")
-    .delete()
-    .eq("id", categoryId)
-    .eq("restaurant_id", membership.restaurant_id);
+  // =====================================================
+  // KATEGORİDE ÜRÜN VAR MI?
+  //
+  // Ürünleri otomatik olarak silmiyoruz.
+  // Böylece yanlışlıkla ürün kaybı yaşanmaz.
+  // =====================================================
 
-  if (deleteError) {
-    console.error("KATEGORİ SİLME HATASI:", deleteError);
+  const {
+    data: products,
+    error: productsError,
+  } = await supabase
+    .from("products")
+    .select("id")
+    .eq("category_id", categoryId)
+    .limit(1);
+
+  if (productsError) {
+    console.error(
+      "KATEGORİ ÜRÜN KONTROLÜ:",
+      productsError
+    );
 
     return {
-      error: "Kategori silinemedi.",
+      error:
+        "Kategorideki ürünler kontrol edilemedi. Kategori silinemedi.",
     };
   }
+
+  if (products && products.length > 0) {
+    return {
+      error:
+        `"${category.name}" kategorisinde ürünler bulunuyor. Önce ürünleri silin veya başka bir kategoriye taşıyın.`,
+    };
+  }
+
+  // =====================================================
+  // KATEGORİYİ SİL
+  // =====================================================
+
+  const { data: deletedCategory, error: deleteError } =
+    await supabase
+      .from("categories")
+      .delete()
+      .eq("id", categoryId)
+      .eq("restaurant_id", restaurantId)
+      .select("id")
+      .maybeSingle();
+
+  if (deleteError) {
+    console.error(
+      "KATEGORİ SİLME HATASI:",
+      deleteError
+    );
+
+    return {
+      error:
+        `Kategori silinemedi: ${deleteError.message}`,
+    };
+  }
+
+  // RLS nedeniyle işlem başarılı görünse bile satır
+  // silinmemiş olabilir. Bunu kullanıcıya açıkça bildir.
+  if (!deletedCategory) {
+    console.error(
+      "KATEGORİ SİLİNEMEDİ: Supabase DELETE sonucunda satır dönmedi."
+    );
+
+    return {
+      error:
+        "Kategori silinemedi. Supabase RLS izinlerini kontrol edin.",
+    };
+  }
+
+  // =====================================================
+  // ÖNBELLEĞİ YENİLE
+  // =====================================================
 
   revalidatePath("/admin/menu");
 

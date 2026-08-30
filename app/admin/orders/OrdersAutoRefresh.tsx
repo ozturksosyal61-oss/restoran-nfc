@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "../../../lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 type Props = {
   restaurantId: number;
@@ -11,8 +10,6 @@ type Props = {
 export default function OrdersAutoRefresh({
   restaurantId,
 }: Props) {
-  const router = useRouter();
-
   const [newOrders, setNewOrders] = useState<number[]>([]);
   const [notificationEnabled, setNotificationEnabled] =
     useState(false);
@@ -20,49 +17,53 @@ export default function OrdersAutoRefresh({
   const lastOrderId = useRef<number | null>(null);
   const firstCheck = useRef(true);
   const mountedRef = useRef(true);
+  const reloadingRef = useRef(false);
 
   // --------------------------------------------------
-  // SİPARİŞLERİ KONTROL ET
+  // SİPARİŞ KABUL EDİLDİ EVENTİ
   // --------------------------------------------------
-useEffect(() => {
-  function handleOrderAccepted(
-    event: Event
-  ) {
-    const customEvent =
-      event as CustomEvent<{
-        orderId: number;
-      }>;
 
-    const orderId =
-      customEvent.detail?.orderId;
+  useEffect(() => {
+    function handleOrderAccepted(event: Event) {
+      const customEvent =
+        event as CustomEvent<{ orderId: number }>;
 
-    if (!orderId) {
-      return;
+      const orderId = customEvent.detail?.orderId;
+
+      if (!orderId) {
+        return;
+      }
+
+      setNewOrders((current) =>
+        current.filter((id) => id !== orderId)
+      );
     }
 
-    setNewOrders((current) =>
-      current.filter(
-        (id) => id !== orderId
-      )
-    );
-  }
-
-  window.addEventListener(
-    "order-accepted",
-    handleOrderAccepted
-  );
-
-  return () => {
-    window.removeEventListener(
+    window.addEventListener(
       "order-accepted",
       handleOrderAccepted
     );
-  };
-}, []);
+
+    return () => {
+      window.removeEventListener(
+        "order-accepted",
+        handleOrderAccepted
+      );
+    };
+  }, []);
+
+  // --------------------------------------------------
+  // YENİ SİPARİŞ KONTROLÜ
+  // --------------------------------------------------
+
   useEffect(() => {
     mountedRef.current = true;
 
     async function checkOrders() {
+      if (reloadingRef.current) {
+        return;
+      }
+
       const supabase = createClient();
 
       const { data, error } = await supabase
@@ -89,32 +90,34 @@ useEffect(() => {
 
       const currentOrderId = Number(data.id);
 
-      // İlk kontrolde mevcut son siparişi kaydet.
+      // İlk kontrolde mevcut siparişi kaydet.
       if (firstCheck.current) {
         lastOrderId.current = currentOrderId;
         firstCheck.current = false;
+
+        console.log(
+          "İlk sipariş ID:",
+          currentOrderId
+        );
+
         return;
       }
 
-      // Yeni sipariş geldi.
+      // ------------------------------------------------
+      // YENİ SİPARİŞ GELDİ
+      // ------------------------------------------------
+
       if (
         lastOrderId.current !== null &&
         currentOrderId > lastOrderId.current
       ) {
-        const previousOrderId =
-          lastOrderId.current;
-
-        lastOrderId.current = currentOrderId;
+        reloadingRef.current = true;
 
         console.log(
-          "🔔 Yeni sipariş:",
+          "🔔 YENİ SİPARİŞ ALGILANDI:",
           currentOrderId
         );
 
-        // Ekranı yenile
-        router.refresh();
-
-        // Yeni sipariş listesini güncelle
         setNewOrders((current) => {
           if (current.includes(currentOrderId)) {
             return current;
@@ -131,18 +134,17 @@ useEffect(() => {
           new Notification(
             "🔔 Yeni Sipariş!",
             {
-              body: `Yeni bir sipariş geldi. Sipariş No: #${currentOrderId}`,
+              body:
+                `Yeni bir sipariş geldi. Sipariş No: #${currentOrderId}`,
               icon: "/favicon.ico",
             }
           );
         }
 
-        console.log(
-          "Yeni sipariş algılandı:",
-          currentOrderId,
-          "Önceki:",
-          previousOrderId
-        );
+        lastOrderId.current = currentOrderId;
+
+        // Önce Server Component'in yenilenmesini dene
+        window.location.reload();
       }
     }
 
@@ -159,7 +161,7 @@ useEffect(() => {
       mountedRef.current = false;
       clearInterval(interval);
     };
-  }, [restaurantId, router]);
+  }, [restaurantId]);
 
   // --------------------------------------------------
   // SESLİ UYARI
@@ -170,10 +172,7 @@ useEffect(() => {
       return;
     }
 
-    let audioContext:
-      | AudioContext
-      | null = null;
-
+    let audioContext: AudioContext | null = null;
     let cancelled = false;
 
     async function playNotificationSound() {
@@ -194,8 +193,7 @@ useEffect(() => {
           return;
         }
 
-        audioContext =
-          new AudioContextClass();
+        audioContext = new AudioContextClass();
 
         if (audioContext.state === "suspended") {
           await audioContext.resume();
@@ -373,7 +371,8 @@ useEffect(() => {
             right: "20px",
             zIndex: 99999,
             width: "340px",
-            maxWidth: "calc(100vw - 40px)",
+            maxWidth:
+              "calc(100vw - 40px)",
           }}
         >
           <div
@@ -410,8 +409,6 @@ useEffect(() => {
                 : `${newOrders.length} yeni sipariş geldi.`}
             </div>
 
-            {/* SİPARİŞ NUMARALARI */}
-
             <div
               style={{
                 display: "flex",
@@ -426,8 +423,7 @@ useEffect(() => {
                     key={orderId}
                     style={{
                       display: "flex",
-                      alignItems:
-                        "center",
+                      alignItems: "center",
                       justifyContent:
                         "space-between",
                       padding: "10px 12px",
@@ -455,8 +451,7 @@ useEffect(() => {
                         borderRadius: "8px",
                         padding:
                           "6px 10px",
-                        cursor:
-                          "pointer",
+                        cursor: "pointer",
                         fontWeight: 700,
                       }}
                     >
@@ -466,8 +461,6 @@ useEffect(() => {
                 )
               )}
             </div>
-
-            {/* TÜMÜNÜ KAPAT */}
 
             <button
               type="button"

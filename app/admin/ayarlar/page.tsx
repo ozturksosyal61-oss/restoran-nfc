@@ -1,742 +1,1323 @@
-import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
-import Link from "next/link";
-import { createServerSupabaseClient } from "../../../lib/supabase-server";
+"use client";
 
-export default async function SettingsPage() {
-  const supabase = await createServerSupabaseClient();
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties, ChangeEvent } from "react";
+import { createClient } from "../../../lib/supabase/client";
 
-  /* =====================================================
-     KULLANICI
-     ===================================================== */
+type Restaurant = {
+  id: number;
+  name: string;
+  slug: string;
+  table_count: number | null;
+  description: string | null;
+  phone: string | null;
+  address: string | null;
+  logo_url: string | null;
+  cover_image_url: string | null;
+  instagram_url: string | null;
+  google_review_url: string | null;
+  is_open: boolean | null;
+  opening_time: string | null;
+  closing_time: string | null;
+};
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+type ImageType = "logo" | "cover";
 
-  if (!user) {
-    redirect("/admin/login");
+export default function RestaurantSettingsPage() {
+  const supabase = createClient();
+
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const coverInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+
+  const [logoUrl, setLogoUrl] = useState("");
+  const [coverImageUrl, setCoverImageUrl] = useState("");
+
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [googleReviewUrl, setGoogleReviewUrl] = useState("");
+
+  const [isOpen, setIsOpen] = useState(true);
+
+  const [openingTime, setOpeningTime] = useState("");
+  const [closingTime, setClosingTime] = useState("");
+
+  /*
+   * =====================================================
+   * RESTORAN BİLGİLERİNİ GETİR
+   * =====================================================
+   */
+
+  async function loadRestaurant() {
+    setLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        setError("Oturum bulunamadı.");
+        return;
+      }
+
+      const { data: membership, error: membershipError } =
+        await supabase
+          .from("restaurant_users")
+          .select("restaurant_id")
+          .eq("user_id", user.id)
+          .single();
+
+      if (membershipError || !membership?.restaurant_id) {
+        console.error(membershipError);
+
+        setError(
+          "Hesabınıza bağlı bir işletme bulunamadı."
+        );
+
+        return;
+      }
+
+      const { data, error: restaurantError } =
+        await supabase
+          .from("restaurants")
+          .select(
+            `
+              id,
+              name,
+              slug,
+              table_count,
+              description,
+              phone,
+              address,
+              logo_url,
+              cover_image_url,
+              instagram_url,
+              google_review_url,
+              is_open,
+              opening_time,
+              closing_time
+            `
+          )
+          .eq("id", membership.restaurant_id)
+          .single();
+
+      if (restaurantError || !data) {
+        console.error(restaurantError);
+
+        setError(
+          "İşletme bilgileri yüklenemedi."
+        );
+
+        return;
+      }
+
+      fillForm(data as Restaurant);
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        "İşletme bilgileri yüklenirken beklenmeyen bir hata oluştu."
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
-  /* =====================================================
-     RESTORAN BAĞLANTISI
-     ===================================================== */
+  /*
+   * =====================================================
+   * FORMU DOLDUR
+   * =====================================================
+   */
 
-  const { data: membership } = await supabase
-    .from("restaurant_users")
-    .select("restaurant_id")
-    .eq("user_id", user.id)
-    .single();
+  function fillForm(data: Restaurant) {
+    setRestaurant(data);
 
-  if (!membership) {
-    return (
-      <main className="admin-page">
-        <section className="admin-header">
-          <a href="/admin">
-            ← Admin Paneli
-          </a>
+    setName(data.name || "");
+    setDescription(data.description || "");
+    setPhone(data.phone || "");
+    setAddress(data.address || "");
 
-          <h1>İşletme Ayarları</h1>
+    setLogoUrl(data.logo_url || "");
+    setCoverImageUrl(data.cover_image_url || "");
 
-          <p>
-            İşletme bağlantısı bulunamadı.
-          </p>
-        </section>
-      </main>
+    setInstagramUrl(data.instagram_url || "");
+    setGoogleReviewUrl(data.google_review_url || "");
+
+    setIsOpen(data.is_open !== false);
+
+    setOpeningTime(
+      data.opening_time
+        ? String(data.opening_time).slice(0, 5)
+        : ""
+    );
+
+    setClosingTime(
+      data.closing_time
+        ? String(data.closing_time).slice(0, 5)
+        : ""
     );
   }
 
-  /* =====================================================
-     RESTORAN
-     ===================================================== */
+  /*
+   * =====================================================
+   * İLK YÜKLEME
+   * =====================================================
+   */
 
-  const {
-    data: restaurant,
-    error: restaurantError,
-  } = await supabase
-    .from("restaurants")
-    .select(
-      `
-      id,
-      name,
-      slug,
-      description,
-      instagram_url,
-      google_review_url,
-      logo_url,
-      table_count
-      `
-    )
-    .eq("id", membership.restaurant_id)
-    .single();
+  useEffect(() => {
+    loadRestaurant();
+  }, []);
 
-  if (restaurantError || !restaurant) {
-    return (
-      <main className="admin-page">
-        <section className="admin-header">
-          <a href="/admin">
-            ← Admin Paneli
-          </a>
+  /*
+   * =====================================================
+   * GÖRSEL YÜKLE
+   * =====================================================
+   */
 
-          <h1>İşletme Ayarları</h1>
-
-          <p>
-            İşletme bulunamadı.
-          </p>
-        </section>
-      </main>
-    );
-  }
-
-  /* =====================================================
-     RESTORAN GÜNCELLE
-     ===================================================== */
-
-  async function updateRestaurant(formData: FormData) {
-    "use server";
-
-    /* ===================================================
-       FORM VERİLERİ
-       =================================================== */
-
-    const name =
-      formData
-        .get("name")
-        ?.toString()
-        .trim() || "";
-
-    const description =
-      formData
-        .get("description")
-        ?.toString()
-        .trim() || "";
-
-    const instagramUrl =
-      formData
-        .get("instagram_url")
-        ?.toString()
-        .trim() || "";
-
-    const googleReviewUrl =
-      formData
-        .get("google_review_url")
-        ?.toString()
-        .trim() || "";
-
-    const logoFile =
-      formData.get("logo") as File | null;
-
-    const tableCountValue =
-      formData
-        .get("table_count")
-        ?.toString()
-        .trim() || "20";
-
-    const tableCount =
-      Number(tableCountValue);
-
-    /* ===================================================
-       KONTROLLER
-       =================================================== */
-
-    if (!name) {
-      throw new Error(
-        "İşletme adı zorunludur."
-      );
+  async function uploadImage(
+    file: File,
+    type: ImageType
+  ) {
+    if (!restaurant) {
+      setError("Önce işletme bilgileri yüklenmelidir.");
+      return;
     }
 
-    if (
-      !Number.isInteger(tableCount) ||
-      tableCount < 1 ||
-      tableCount > 500
-    ) {
-      throw new Error(
-        "Masa sayısı 1 ile 500 arasında olmalıdır."
-      );
+    setError("");
+    setMessage("");
+
+    if (!file.type.startsWith("image/")) {
+      setError("Lütfen bir görsel dosyası seçin.");
+      return;
     }
 
-    /* ===================================================
-       SUPABASE
-       =================================================== */
-
-    const supabase =
-      await createServerSupabaseClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      redirect("/admin/login");
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Görsel en fazla 5 MB olabilir.");
+      return;
     }
 
-    /* ===================================================
-       MEMBERSHIP
-       =================================================== */
-
-    const { data: membership } =
-      await supabase
-        .from("restaurant_users")
-        .select("restaurant_id")
-        .eq("user_id", user.id)
-        .single();
-
-    if (!membership) {
-      throw new Error(
-        "İşletme bağlantısı bulunamadı."
-      );
+    if (type === "logo") {
+      setUploadingLogo(true);
+    } else {
+      setUploadingCover(true);
     }
 
-    /* ===================================================
-       MEVCUT RESTORAN
-       =================================================== */
-
-    const {
-      data: currentRestaurant,
-    } = await supabase
-      .from("restaurants")
-      .select(
-        `
-        id,
-        slug,
-        logo_url
-        `
-      )
-      .eq(
-        "id",
-        membership.restaurant_id
-      )
-      .single();
-
-    if (!currentRestaurant) {
-      throw new Error(
-        "İşletme bulunamadı."
-      );
-    }
-
-    /* ===================================================
-       LOGO
-       =================================================== */
-
-    let logoUrl =
-      currentRestaurant.logo_url ||
-      null;
-
-    /* ===================================================
-       YENİ LOGO YÜKLE
-       =================================================== */
-
-    if (
-      logoFile &&
-      logoFile.size > 0
-    ) {
-      /* 5 MB */
-
-      if (
-        logoFile.size >
-        5 * 1024 * 1024
-      ) {
-        throw new Error(
-          "Logo en fazla 5 MB olabilir."
-        );
-      }
-
-      /* DOSYA TİPİ */
-
-      const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-      ];
-
-      if (
-        !allowedTypes.includes(
-          logoFile.type
-        )
-      ) {
-        throw new Error(
-          "Logo sadece JPG, PNG veya WEBP olabilir."
-        );
-      }
-
-      /* UZANTI */
-
-      const fileExtension =
-        logoFile.name
+    try {
+      const extension =
+        file.name
           .split(".")
           .pop()
-          ?.toLowerCase() ||
-        "png";
+          ?.toLowerCase() || "jpg";
 
-      /* DOSYA YOLU */
+      const fileName =
+        `${type}-${Date.now()}.${extension}`;
 
       const filePath =
-        `logos/${membership.restaurant_id}-${Date.now()}.${fileExtension}`;
+        `${restaurant.id}/${fileName}`;
 
-      /* STORAGE */
-
-      const {
-        error: uploadError,
-      } =
+      const { error: uploadError } =
         await supabase.storage
-          .from("product-images")
+          .from("restaurant-assets")
           .upload(
             filePath,
-            logoFile,
+            file,
             {
-              upsert: true,
-              contentType:
-                logoFile.type,
+              cacheControl: "3600",
+              upsert: false,
             }
           );
 
       if (uploadError) {
-        throw new Error(
-          "Logo yüklenemedi: " +
+        console.error(uploadError);
+
+        setError(
+          "Görsel yüklenemedi: " +
             uploadError.message
         );
+
+        return;
       }
 
-      /* PUBLIC URL */
+      const { data: publicData } =
+        supabase.storage
+          .from("restaurant-assets")
+          .getPublicUrl(filePath);
+
+      const publicUrl =
+        publicData.publicUrl;
+
+      const updateData =
+        type === "logo"
+          ? {
+              logo_url: publicUrl,
+            }
+          : {
+              cover_image_url: publicUrl,
+            };
 
       const {
-        data: {
-          publicUrl,
-        },
-      } =
-        supabase.storage
-          .from("product-images")
-          .getPublicUrl(
-            filePath
-          );
-
-      logoUrl =
-        publicUrl;
-    }
-
-    /* ===================================================
-       RESTORANI GÜNCELLE
-       =================================================== */
-
-    const {
-      error: updateError,
-    } =
-      await supabase
+        data,
+        error: updateError,
+      } = await supabase
         .from("restaurants")
-        .update({
-          name,
+        .update(updateData)
+        .eq("id", restaurant.id)
+        .select(
+          `
+            id,
+            name,
+            slug,
+            table_count,
+            description,
+            phone,
+            address,
+            logo_url,
+            cover_image_url,
+            instagram_url,
+            google_review_url,
+            is_open,
+            opening_time,
+            closing_time
+          `
+        )
+        .single();
 
-          description:
-            description ||
-            null,
+      if (updateError) {
+        console.error(updateError);
 
-          instagram_url:
-            instagramUrl ||
-            null,
-
-          google_review_url:
-            googleReviewUrl ||
-            null,
-
-          logo_url:
-            logoUrl,
-
-          table_count:
-            tableCount,
-        })
-        .eq(
-          "id",
-          membership.restaurant_id
+        setError(
+          "Görsel bağlantısı kaydedilemedi: " +
+            updateError.message
         );
 
-    if (updateError) {
-      throw new Error(
-        "İşletme güncellenemedi: " +
-          updateError.message
+        return;
+      }
+
+      if (data) {
+        fillForm(data as Restaurant);
+      }
+
+      setMessage(
+        type === "logo"
+          ? "✓ Logo başarıyla yüklendi."
+          : "✓ Kapak görseli başarıyla yüklendi."
       );
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        "Görsel yüklenirken beklenmeyen bir hata oluştu."
+      );
+    } finally {
+      setUploadingLogo(false);
+      setUploadingCover(false);
+    }
+  }
+
+  /*
+   * =====================================================
+   * LOGO SEÇ
+   * =====================================================
+   */
+
+  function handleLogoChange(
+    event: ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      event.target.files?.[0];
+
+    if (file) {
+      uploadImage(file, "logo");
     }
 
-    /* ===================================================
-       CACHE YENİLE
-       =================================================== */
+    event.target.value = "";
+  }
 
-    revalidatePath(
-      "/admin"
-    );
+  /*
+   * =====================================================
+   * KAPAK SEÇ
+   * =====================================================
+   */
 
-    revalidatePath(
-      "/admin/ayarlar"
-    );
+  function handleCoverChange(
+    event: ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      event.target.files?.[0];
 
-    revalidatePath(
-      `/restoran/${currentRestaurant.slug}`
-    );
+    if (file) {
+      uploadImage(file, "cover");
+    }
 
-    revalidatePath(
-      `/restoran/${currentRestaurant.slug}/menu`
-    );
+    event.target.value = "";
+  }
 
-    /* ===================================================
-       GERİ DÖN
-       =================================================== */
+  /*
+   * =====================================================
+   * AYARLARI KAYDET
+   * =====================================================
+   */
 
-    redirect(
-      "/admin/ayarlar?success=1"
+  async function saveSettings() {
+    if (!restaurant) {
+      setError("İşletme bilgileri bulunamadı.");
+      return;
+    }
+
+    if (!name.trim()) {
+      setError("Restoran adı boş bırakılamaz.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const {
+        data,
+        error: updateError,
+      } = await supabase
+        .from("restaurants")
+        .update({
+          name: name.trim(),
+
+          description:
+            description.trim() || null,
+
+          phone:
+            phone.trim() || null,
+
+          address:
+            address.trim() || null,
+
+          logo_url:
+            logoUrl.trim() || null,
+
+          cover_image_url:
+            coverImageUrl.trim() || null,
+
+          instagram_url:
+            instagramUrl.trim() || null,
+
+          google_review_url:
+            googleReviewUrl.trim() || null,
+
+          is_open: isOpen,
+
+          opening_time:
+            openingTime || null,
+
+          closing_time:
+            closingTime || null,
+        })
+        .eq("id", restaurant.id)
+        .select(
+          `
+            id,
+            name,
+            slug,
+            table_count,
+            description,
+            phone,
+            address,
+            logo_url,
+            cover_image_url,
+            instagram_url,
+            google_review_url,
+            is_open,
+            opening_time,
+            closing_time
+          `
+        )
+        .single();
+
+      if (updateError) {
+        console.error(updateError);
+
+        setError(
+          "Ayarlar kaydedilemedi: " +
+            updateError.message
+        );
+
+        return;
+      }
+
+      if (data) {
+        fillForm(data as Restaurant);
+      }
+
+      setMessage(
+        "✓ Restoran ayarları başarıyla kaydedildi."
+      );
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        "Ayarlar kaydedilirken beklenmeyen bir hata oluştu."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /*
+   * =====================================================
+   * YÜKLENİYOR
+   * =====================================================
+   */
+
+  if (loading) {
+    return (
+      <main style={pageStyle}>
+        <div style={loadingCardStyle}>
+          İşletme bilgileri yükleniyor...
+        </div>
+      </main>
     );
   }
 
-  /* =====================================================
-     EKRAN
-     ===================================================== */
+  /*
+   * =====================================================
+   * EKRAN
+   * =====================================================
+   */
 
   return (
-    <main className="admin-page">
+    <main style={pageStyle}>
+      <div style={containerStyle}>
 
-      {/* =================================================
-          HEADER
-          ================================================= */}
+        {/* HEADER */}
 
-      <section className="admin-header">
+        <header style={headerStyle}>
+          <div style={eyebrowStyle}>
+            İŞLETME YÖNETİMİ
+          </div>
 
-        <a href="/admin">
-          ← Admin Paneli
-        </a>
+          <h1 style={headerTitleStyle}>
+            Restoran Ayarları
+          </h1>
 
-        <h1>
-          İşletme Ayarları
-        </h1>
+          <p style={headerDescriptionStyle}>
+            Müşterilerinizin göreceği işletme
+            bilgilerini buradan yönetin.
+          </p>
 
-        <p>
-          İşletmenizin müşterilere
-          gösterilen bilgilerini
-          buradan düzenleyebilirsiniz.
-        </p>
+          {restaurant && (
+            <div style={headerButtonsStyle}>
 
-      </section>
-
-      {/* =================================================
-          FORM
-          ================================================= */}
-
-      <section className="admin-form">
-
-        <form
-          action={updateRestaurant}
-          encType="multipart/form-data"
-        >
-
-          {/* =================================================
-              İŞLETME ADI
-              ================================================= */}
-
-          <label>
-
-            İşletme Adı
-
-            <input
-              type="text"
-              name="name"
-              defaultValue={
-                restaurant.name
-              }
-              placeholder="Örn. OZT Kafe"
-              required
-            />
-
-            <small>
-              Müşterilerin göreceği
-              işletme adı.
-            </small>
-
-          </label>
-
-          {/* =================================================
-              AÇIKLAMA
-              ================================================= */}
-
-          <label>
-
-            İşletme Açıklaması
-
-            <textarea
-              name="description"
-              defaultValue={
-                restaurant.description ||
-                ""
-              }
-              placeholder="İşletmeniz hakkında kısa bir açıklama"
-            />
-
-            <small>
-              Bu açıklama işletmenizin
-              herkese açık sayfasında
-              gösterilir.
-            </small>
-
-          </label>
-
-          {/* =================================================
-              MASA SAYISI
-              ================================================= */}
-
-          <label>
-
-            Masa Sayısı
-
-            <input
-              type="number"
-              name="table_count"
-              min="1"
-              max="500"
-              defaultValue={
-                restaurant.table_count ??
-                20
-              }
-              required
-            />
-
-            <small>
-              İşletmenizde bulunan toplam
-              masa sayısını girin.
-              <br />
-              Örneğin 20.
-            </small>
-
-          </label>
-
-          {/* =================================================
-              İŞLETME LOGOSU
-              ================================================= */}
-
-          <label>
-
-            İşletme Logosu
-
-            {restaurant.logo_url && (
-              <div
-                style={{
-                  marginTop: "10px",
-                  marginBottom: "15px",
-                }}
+              <a
+                href={`/restoran/${restaurant.slug}/menu`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={primaryHeaderButtonStyle}
               >
+                ↗ Müşteri Menüsünü Aç
+              </a>
 
-                <p
-                  style={{
-                    marginBottom: "8px",
-                  }}
-                >
-                  Mevcut logo:
-                </p>
+              <a
+                href="/admin/tables"
+                style={secondaryHeaderButtonStyle}
+              >
+                🪑 Masaları Yönet
+              </a>
 
-                <img
-                  src={
-                    restaurant.logo_url
-                  }
-                  alt={`${restaurant.name} logosu`}
-                  style={{
-                    width: "140px",
-                    height: "140px",
-                    objectFit: "contain",
-                    borderRadius: "16px",
-                    border:
-                      "1px solid #eee",
-                    background: "#fff",
-                    padding: "10px",
-                  }}
+            </div>
+          )}
+        </header>
+
+        {/* HATA */}
+
+        {error && (
+          <div style={errorStyle}>
+            ❌ {error}
+          </div>
+        )}
+
+        {/* BAŞARILI */}
+
+        {message && (
+          <div style={successStyle}>
+            {message}
+          </div>
+        )}
+
+        {!restaurant ? (
+          <section style={sectionStyle}>
+            <h2 style={{ marginTop: 0 }}>
+              İşletme bulunamadı
+            </h2>
+
+            <p style={{ color: "#666" }}>
+              Bu kullanıcıya bağlı bir işletme
+              bulunamadı.
+            </p>
+          </section>
+        ) : (
+          <>
+            {/* =========================================
+                İŞLETME BİLGİLERİ
+            ========================================= */}
+
+            <section style={sectionStyle}>
+              <SectionTitle
+                eyebrow="İŞLETME"
+                title="Restoran Bilgileri"
+              />
+
+              <div style={restaurantInfoStyle}>
+                İşletme:{" "}
+                <strong>
+                  {restaurant.name}
+                </strong>
+              </div>
+
+              <div style={gridStyle}>
+
+                <Field
+                  label="Restoran Adı"
+                  value={name}
+                  onChange={setName}
+                  placeholder="OZT KAFE"
+                />
+
+                <div>
+                  <label style={labelStyle}>
+                    Slug
+                  </label>
+
+                  <input
+                    value={restaurant.slug}
+                    readOnly
+                    style={{
+                      ...inputStyle,
+                      background: "#f1efeb",
+                      color: "#888",
+                    }}
+                  />
+
+                  <small style={hintStyle}>
+                    QR bağlantılarının bozulmaması
+                    için değiştirilemez.
+                  </small>
+                </div>
+
+                <Field
+                  label="Telefon"
+                  value={phone}
+                  onChange={setPhone}
+                  placeholder="0555 555 55 55"
+                />
+
+                <Field
+                  label="Adres"
+                  value={address}
+                  onChange={setAddress}
+                  placeholder="İşletme adresi"
                 />
 
               </div>
-            )}
 
-            <input
-              type="file"
-              name="logo"
-              accept="image/jpeg,image/png,image/webp"
-            />
+              <div style={{ marginTop: "16px" }}>
+                <label style={labelStyle}>
+                  İşletme Açıklaması
+                </label>
 
-            <small>
-              Yeni logo seçerseniz
-              mevcut logo
-              değiştirilecektir.
-              <br />
-              JPG, PNG veya WEBP —
-              maksimum 5 MB
-            </small>
+                <textarea
+                  value={description}
+                  onChange={(event) =>
+                    setDescription(
+                      event.target.value
+                    )
+                  }
+                  rows={4}
+                  placeholder="Müşterilerinizin göreceği kısa işletme açıklaması..."
+                  style={{
+                    ...inputStyle,
+                    resize: "vertical",
+                    minHeight: "110px",
+                  }}
+                />
+              </div>
+            </section>
 
-          </label>
+            {/* =========================================
+                LOGO / KAPAK
+            ========================================= */}
 
-          {/* =================================================
-              INSTAGRAM
-              ================================================= */}
+            <section style={sectionStyle}>
+              <SectionTitle
+                eyebrow="GÖRSEL KİMLİK"
+                title="Logo & Kapak"
+              />
 
-          <label>
+              <div style={imageGridStyle}>
 
-            Instagram URL
+                {/* LOGO */}
 
-            <input
-              type="url"
-              name="instagram_url"
-              defaultValue={
-                restaurant.instagram_url ||
-                ""
-              }
-              placeholder="https://instagram.com/oztkafe"
-            />
+                <div style={uploadCardStyle}>
+                  <div style={uploadTitleStyle}>
+                    LOGO
+                  </div>
 
-            <small>
-              Müşterinin Instagram
-              butonuna bastığında
-              gideceği adres.
-            </small>
+                  {logoUrl ? (
+                    <img
+                      src={logoUrl}
+                      alt="Restoran logosu"
+                      style={logoPreviewStyle}
+                    />
+                  ) : (
+                    <div style={emptyImageStyle}>
+                      LOGO
+                    </div>
+                  )}
 
-          </label>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    style={{
+                      display: "none",
+                    }}
+                  />
 
-          {/* =================================================
-              GOOGLE
-              ================================================= */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      logoInputRef.current?.click()
+                    }
+                    disabled={uploadingLogo}
+                    style={secondaryButtonStyle}
+                  >
+                    {uploadingLogo
+                      ? "Yükleniyor..."
+                      : "📷 Logo Yükle"}
+                  </button>
+                </div>
 
-          <label>
+                {/* KAPAK */}
 
-            Google Yorum URL
+                <div style={uploadCardStyle}>
+                  <div style={uploadTitleStyle}>
+                    KAPAK GÖRSELİ
+                  </div>
 
-            <input
-              type="url"
-              name="google_review_url"
-              defaultValue={
-                restaurant.google_review_url ||
-                ""
-              }
-              placeholder="https://g.page/..."
-            />
+                  {coverImageUrl ? (
+                    <img
+                      src={coverImageUrl}
+                      alt="Kapak görseli"
+                      style={coverPreviewStyle}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        ...emptyImageStyle,
+                        width: "100%",
+                        height: "150px",
+                      }}
+                    >
+                      KAPAK
+                    </div>
+                  )}
 
-            <small>
-              Müşterinin Google'da
-              yorum bırakacağı
-              bağlantı.
-            </small>
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverChange}
+                    style={{
+                      display: "none",
+                    }}
+                  />
 
-          </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      coverInputRef.current?.click()
+                    }
+                    disabled={uploadingCover}
+                    style={secondaryButtonStyle}
+                  >
+                    {uploadingCover
+                      ? "Yükleniyor..."
+                      : "🖼️ Kapak Yükle"}
+                  </button>
+                </div>
 
-          {/* =================================================
-              İŞLETME SAYFASI
-              ================================================= */}
+              </div>
 
-          <div
-            style={{
-              marginTop: "8px",
-              padding: "18px",
-              background: "#faf8f2",
-              border:
-                "1px solid #eee4cc",
-              borderRadius: "14px",
-            }}
-          >
+              <div style={{ marginTop: "18px" }}>
 
-            <strong
-              style={{
-                display: "block",
-                marginBottom: "7px",
-              }}
-            >
-              🔗 Herkese Açık İşletme Sayfanız
-            </strong>
+                <Field
+                  label="Logo URL — İsteğe bağlı"
+                  value={logoUrl}
+                  onChange={setLogoUrl}
+                  placeholder="https://..."
+                />
 
-            <p
-              style={{
-                margin:
-                  "0 0 12px",
-                color: "#777",
-                fontSize: "12px",
-              }}
-            >
-              Müşterileriniz bu
-              sayfadan menü, sipariş,
-              değerlendirme, Instagram
-              ve ödeme seçeneklerine
-              ulaşabilir.
-            </p>
+                <div style={{ height: "14px" }} />
 
-            <Link
-              href={`/restoran/${restaurant.slug}`}
-              target="_blank"
-              style={{
-                display: "inline-block",
-                padding: "10px 14px",
-                borderRadius: "9px",
-                background: "#111",
-                color: "#fff",
-                textDecoration: "none",
-                fontWeight: 800,
-                fontSize: "12px",
-              }}
-            >
-              👁️ İşletme Sayfasını Gör
-            </Link>
+                <Field
+                  label="Kapak URL — İsteğe bağlı"
+                  value={coverImageUrl}
+                  onChange={setCoverImageUrl}
+                  placeholder="https://..."
+                />
 
-          </div>
+              </div>
 
-          {/* =================================================
-              İŞLETME ADRESİ
-              ================================================= */}
+              <p style={hintStyle}>
+                Maksimum görsel boyutu: 5 MB.
+              </p>
+            </section>
 
-          <div
-            style={{
-              marginTop: "18px",
-              padding: "18px",
-              background: "#f7f7f7",
-              borderRadius: "14px",
-            }}
-          >
+            {/* =========================================
+                SOSYAL MEDYA
+            ========================================= */}
 
-            <strong
-              style={{
-                display: "block",
-                marginBottom: "6px",
-              }}
-            >
-              🔗 İşletme Adresi
-            </strong>
+            <section style={sectionStyle}>
+              <SectionTitle
+                eyebrow="BAĞLANTILAR"
+                title="Sosyal Medya & Yorum"
+              />
 
-            <code
-              style={{
-                fontSize: "12px",
-                color: "#666",
-                wordBreak: "break-all",
-              }}
-            >
-              /restoran/
-              {restaurant.slug}
-            </code>
+              <div style={gridStyle}>
 
-            <p
-              style={{
-                margin:
-                  "8px 0 0",
-                fontSize: "11px",
-                color: "#999",
-              }}
-            >
-              Bu adres işletmenizin
-              QR/NFC sistemi için
-              kullanılacak.
-            </p>
+                <Field
+                  label="Instagram URL"
+                  value={instagramUrl}
+                  onChange={setInstagramUrl}
+                  placeholder="https://instagram.com/..."
+                />
 
-          </div>
+                <Field
+                  label="Google Yorum URL"
+                  value={googleReviewUrl}
+                  onChange={setGoogleReviewUrl}
+                  placeholder="https://g.page/..."
+                />
 
-          {/* =================================================
-              KAYDET
-              ================================================= */}
+              </div>
+            </section>
 
-          <button
-            type="submit"
-          >
-            💾 Değişiklikleri Kaydet
-          </button>
+            {/* =========================================
+                ÇALIŞMA DURUMU
+            ========================================= */}
 
-        </form>
+            <section style={sectionStyle}>
+              <SectionTitle
+                eyebrow="ÇALIŞMA DURUMU"
+                title="Açık / Kapalı"
+              />
 
-      </section>
+              <div style={statusBoxStyle}>
 
+                <div>
+                  <strong
+                    style={{
+                      display: "block",
+                      fontSize: "16px",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    İşletme Durumu
+                  </strong>
+
+                  <span
+                    style={{
+                      color: isOpen
+                        ? "#16803b"
+                        : "#c62828",
+                      fontWeight: 800,
+                      fontSize: "12px",
+                    }}
+                  >
+                    {isOpen
+                      ? "● Sipariş almaya açık"
+                      : "● Sipariş almaya kapalı"}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setIsOpen((current) => !current)
+                  }
+                  style={{
+                    border: "none",
+                    background: isOpen
+                      ? "#eaf8ef"
+                      : "#fff0f0",
+                    color: isOpen
+                      ? "#16743a"
+                      : "#b42318",
+                    padding: "13px 20px",
+                    borderRadius: "11px",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                  }}
+                >
+                  {isOpen
+                    ? "🟢 AÇIK"
+                    : "🔴 KAPALI"}
+                </button>
+
+              </div>
+
+              <div style={timeGridStyle}>
+
+                <div>
+                  <label style={labelStyle}>
+                    Açılış Saati
+                  </label>
+
+                  <input
+                    type="time"
+                    value={openingTime}
+                    onChange={(event) =>
+                      setOpeningTime(
+                        event.target.value
+                      )
+                    }
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>
+                    Kapanış Saati
+                  </label>
+
+                  <input
+                    type="time"
+                    value={closingTime}
+                    onChange={(event) =>
+                      setClosingTime(
+                        event.target.value
+                      )
+                    }
+                    style={inputStyle}
+                  />
+                </div>
+
+              </div>
+
+              <div style={infoBoxStyle}>
+                ℹ️ İşletme kapatıldığında
+                müşteriler menüyü görebilir ancak
+                yeni sipariş oluşturamaz.
+              </div>
+            </section>
+
+            {/* =========================================
+                KAYDET
+            ========================================= */}
+
+            <div style={saveContainerStyle}>
+              <button
+                type="button"
+                onClick={saveSettings}
+                disabled={
+                  saving ||
+                  uploadingLogo ||
+                  uploadingCover
+                }
+                style={{
+                  ...saveButtonStyle,
+                  background: saving
+                    ? "#777"
+                    : "#d4a017",
+                  cursor: saving
+                    ? "not-allowed"
+                    : "pointer",
+                }}
+              >
+                {saving
+                  ? "Kaydediliyor..."
+                  : "✓ Ayarları Kaydet"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </main>
   );
 }
+
+/*
+ * =====================================================
+ * FIELD
+ * =====================================================
+ */
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label style={labelStyle}>
+        {label}
+      </label>
+
+      <input
+        value={value}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
+        placeholder={placeholder}
+        style={inputStyle}
+      />
+    </div>
+  );
+}
+
+/*
+ * =====================================================
+ * SECTION TITLE
+ * =====================================================
+ */
+
+function SectionTitle({
+  eyebrow,
+  title,
+}: {
+  eyebrow: string;
+  title: string;
+}) {
+  return (
+    <div style={sectionTitleContainerStyle}>
+      <div style={sectionEyebrowStyle}>
+        {eyebrow}
+      </div>
+
+      <h2 style={sectionTitleStyle}>
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+/*
+ * =====================================================
+ * STYLES
+ * =====================================================
+ */
+
+const pageStyle: CSSProperties = {
+  minHeight: "100vh",
+  background: "#f5f3ef",
+  padding: "30px 16px 70px",
+  color: "#171717",
+};
+
+const containerStyle: CSSProperties = {
+  maxWidth: "1000px",
+  margin: "0 auto",
+};
+
+const loadingCardStyle: CSSProperties = {
+  maxWidth: "1000px",
+  margin: "0 auto",
+  background: "#fff",
+  borderRadius: "20px",
+  padding: "40px",
+  textAlign: "center",
+};
+
+const headerStyle: CSSProperties = {
+  background:
+    "linear-gradient(135deg,#171717,#29251b)",
+  color: "#fff",
+  borderRadius: "22px",
+  padding: "32px 26px",
+  marginBottom: "18px",
+};
+
+const eyebrowStyle: CSSProperties = {
+  color: "#d4a017",
+  fontSize: "10px",
+  fontWeight: 900,
+  letterSpacing: "2px",
+  marginBottom: "7px",
+};
+
+const headerTitleStyle: CSSProperties = {
+  margin: 0,
+  fontSize: "30px",
+  fontWeight: 950,
+};
+
+const headerDescriptionStyle: CSSProperties = {
+  margin: "9px 0 0",
+  color: "rgba(255,255,255,.68)",
+  fontSize: "13px",
+  lineHeight: 1.5,
+};
+
+const headerButtonsStyle: CSSProperties = {
+  display: "flex",
+  gap: "10px",
+  flexWrap: "wrap",
+  marginTop: "18px",
+};
+
+const primaryHeaderButtonStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "11px 16px",
+  borderRadius: "10px",
+  background: "#d4a017",
+  color: "#fff",
+  textDecoration: "none",
+  fontSize: "12px",
+  fontWeight: 900,
+};
+
+const secondaryHeaderButtonStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "11px 16px",
+  borderRadius: "10px",
+  background: "rgba(255,255,255,.10)",
+  border: "1px solid rgba(255,255,255,.20)",
+  color: "#fff",
+  textDecoration: "none",
+  fontSize: "12px",
+  fontWeight: 900,
+};
+
+const errorStyle: CSSProperties = {
+  background: "#fff0f0",
+  border: "1px solid #efb1b1",
+  color: "#b42318",
+  borderRadius: "12px",
+  padding: "13px 15px",
+  marginBottom: "15px",
+  fontSize: "13px",
+  fontWeight: 700,
+};
+
+const successStyle: CSSProperties = {
+  background: "#eefbf2",
+  border: "1px solid #b7e3c2",
+  color: "#16743a",
+  borderRadius: "12px",
+  padding: "13px 15px",
+  marginBottom: "15px",
+  fontSize: "13px",
+  fontWeight: 700,
+};
+
+const sectionStyle: CSSProperties = {
+  background: "#fff",
+  border: "1px solid #e5e0d8",
+  borderRadius: "19px",
+  padding: "22px",
+  marginBottom: "16px",
+};
+
+const sectionTitleContainerStyle: CSSProperties = {
+  marginBottom: "18px",
+};
+
+const sectionEyebrowStyle: CSSProperties = {
+  color: "#c58d08",
+  fontSize: "10px",
+  fontWeight: 900,
+  letterSpacing: "1.6px",
+  marginBottom: "5px",
+};
+
+const sectionTitleStyle: CSSProperties = {
+  margin: 0,
+  fontSize: "21px",
+  fontWeight: 900,
+};
+
+const restaurantInfoStyle: CSSProperties = {
+  background: "#f8f6f1",
+  border: "1px solid #e5e0d8",
+  borderRadius: "12px",
+  padding: "13px 15px",
+  marginBottom: "18px",
+  color: "#555",
+  fontSize: "13px",
+  fontWeight: 700,
+};
+
+const gridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns:
+    "repeat(auto-fit,minmax(280px,1fr))",
+  gap: "16px",
+};
+
+const timeGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns:
+    "repeat(auto-fit,minmax(200px,1fr))",
+  gap: "16px",
+};
+
+const imageGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns:
+    "repeat(auto-fit,minmax(280px,1fr))",
+  gap: "18px",
+};
+
+const labelStyle: CSSProperties = {
+  display: "block",
+  fontSize: "12px",
+  fontWeight: 800,
+  marginBottom: "7px",
+  color: "#292929",
+};
+
+const inputStyle: CSSProperties = {
+  width: "100%",
+  boxSizing: "border-box",
+  padding: "12px 13px",
+  border: "1px solid #d9d4cc",
+  borderRadius: "10px",
+  background: "#fff",
+  color: "#171717",
+  fontSize: "14px",
+  outline: "none",
+};
+
+const hintStyle: CSSProperties = {
+  display: "block",
+  marginTop: "6px",
+  color: "#888",
+  fontSize: "11px",
+  lineHeight: 1.5,
+};
+
+const uploadCardStyle: CSSProperties = {
+  border: "1px solid #e5e0d8",
+  borderRadius: "16px",
+  padding: "18px",
+  background: "#faf9f7",
+  textAlign: "center",
+};
+
+const uploadTitleStyle: CSSProperties = {
+  fontSize: "10px",
+  fontWeight: 900,
+  letterSpacing: "1.5px",
+  color: "#8b877f",
+  marginBottom: "15px",
+};
+
+const logoPreviewStyle: CSSProperties = {
+  width: "130px",
+  height: "130px",
+  objectFit: "contain",
+  borderRadius: "24px",
+  background: "#fff",
+  border: "1px solid #e5e0d8",
+  display: "block",
+  margin: "0 auto 16px",
+};
+
+const coverPreviewStyle: CSSProperties = {
+  width: "100%",
+  height: "150px",
+  objectFit: "cover",
+  borderRadius: "16px",
+  background: "#eee",
+  display: "block",
+  marginBottom: "16px",
+};
+
+const emptyImageStyle: CSSProperties = {
+  width: "130px",
+  height: "130px",
+  borderRadius: "24px",
+  background: "#ece9e3",
+  color: "#aaa",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "12px",
+  fontWeight: 900,
+  margin: "0 auto 16px",
+};
+
+const secondaryButtonStyle: CSSProperties = {
+  border: "1px solid #d9d4cc",
+  background: "#fff",
+  color: "#171717",
+  padding: "11px 16px",
+  borderRadius: "10px",
+  fontWeight: 800,
+  cursor: "pointer",
+};
+
+const statusBoxStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "20px",
+  flexWrap: "wrap",
+  padding: "18px",
+  border: "1px solid #e5e0d8",
+  borderRadius: "15px",
+  marginBottom: "18px",
+};
+
+const infoBoxStyle: CSSProperties = {
+  marginTop: "15px",
+  padding: "13px 15px",
+  background: "#faf8f4",
+  borderRadius: "11px",
+  fontSize: "11px",
+  color: "#777",
+  lineHeight: 1.6,
+};
+
+const saveContainerStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "flex-end",
+};
+
+const saveButtonStyle: CSSProperties = {
+  border: "none",
+  color: "#fff",
+  padding: "15px 30px",
+  borderRadius: "12px",
+  fontSize: "14px",
+  fontWeight: 900,
+  boxShadow:
+    "0 10px 25px rgba(0,0,0,.12)",
+};
