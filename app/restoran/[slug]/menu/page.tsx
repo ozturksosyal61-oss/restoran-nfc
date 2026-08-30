@@ -2,9 +2,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { supabase } from "../../../../lib/supabase";
 
-import ProductCard from "./ProductCard";
 import Cart from "./Cart";
-import { hasPlanFeature, normalizePlan, type Plan } from "../../../../lib/plan";
+import MenuLayouts from "./MenuLayouts";
 
 type Category = {
   id: number;
@@ -45,7 +44,12 @@ type Restaurant = {
 
   opening_time: string | null;
   closing_time: string | null;
-  plan: Plan;
+  menu_layout:
+    | "classic"
+    | "editorial"
+    | "grid"
+    | "luxury"
+    | "minimal";
 };
 
 export const dynamic =
@@ -78,19 +82,13 @@ async function callWaiter(
     data: restaurant,
   } = await supabase
     .from("restaurants")
-    .select("id, plan")
+    .select("id")
     .eq("slug", slug)
     .maybeSingle();
 
   if (!restaurant) {
     redirect(
       `/restoran/${slug}/menu?masa=${encodeURIComponent(masa)}&garson=hata`
-    );
-  }
-
-  if (!hasPlanFeature(restaurant.plan, "waiter_call")) {
-    redirect(
-      `/restoran/${slug}/menu?masa=${encodeURIComponent(masa)}&garson=paket`
     );
   }
 
@@ -193,7 +191,7 @@ export default async function RestaurantMenuPage({
       is_open,
       opening_time,
       closing_time,
-      plan
+      menu_layout
     `)
     .eq(
       "slug",
@@ -210,21 +208,6 @@ export default async function RestaurantMenuPage({
 
   const restaurantData =
     restaurant as Restaurant;
-
-  const restaurantPlan =
-    normalizePlan(restaurantData.plan);
-
-  const canOrder =
-    hasPlanFeature(
-      restaurantPlan,
-      "orders"
-    );
-
-  const canCallWaiter =
-    hasPlanFeature(
-      restaurantPlan,
-      "waiter_call"
-    );
 
   /*
    * =====================================================
@@ -417,7 +400,6 @@ export default async function RestaurantMenuPage({
 
   return (
       <main
-        className="restaurant-menu-page"
         style={{
           minHeight:
             "100vh",
@@ -610,7 +592,6 @@ export default async function RestaurantMenuPage({
 
         {!isOpen && (
           <section
-            className="menu-closed-section"
             style={{
               width:
                 "100%",
@@ -1024,7 +1005,7 @@ export default async function RestaurantMenuPage({
                   rel="noreferrer"
                   style={
                     infoButtonStyle
-                  }
+}
                 >
                   ⭐ Yorum Yap
                 </a>
@@ -1068,7 +1049,7 @@ export default async function RestaurantMenuPage({
             GARSON ÇAĞIR
         ================================================= */}
 
-        {tableNumber && canCallWaiter && (
+        {tableNumber && (
           <section
             style={{
               width:
@@ -1277,153 +1258,11 @@ export default async function RestaurantMenuPage({
               "0 18px",
           }}
         >
-          {categories.map(
-            (category) => {
-              const categoryProducts =
-                products.filter(
-                  (product) =>
-                    product.category_id ===
-                    category.id
-                );
-
-              return (
-                <section
-                  key={
-                    category.id
-                  }
-                  id={`category-${category.id}`}
-                  style={{
-                    marginBottom:
-                      "34px",
-                    scrollMarginTop:
-                      "85px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display:
-                        "flex",
-                      alignItems:
-                        "center",
-                      gap:
-                        "12px",
-                      marginBottom:
-                        "14px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width:
-                          "5px",
-                        height:
-                          "28px",
-                        borderRadius:
-                          "999px",
-                        background:
-                          "#d4a017",
-                      }}
-                    />
-
-                    <div>
-                      <h2
-                        style={{
-                          margin:
-                            0,
-                          fontSize:
-                            "22px",
-                          fontWeight:
-                            950,
-                        }}
-                      >
-                        {
-                          category.name
-                        }
-                      </h2>
-
-                      <p
-                        style={{
-                          margin:
-                            "3px 0 0",
-                          fontSize:
-                            "11px",
-                          color:
-                            "#999",
-                        }}
-                      >
-                        {
-                          categoryProducts.length
-                        }{" "}
-                        ürün
-                      </p>
-                    </div>
-                  </div>
-
-                  {categoryProducts.length ===
-                  0 ? (
-                    <div
-                      style={{
-                        background:
-                          "#fff",
-                        border:
-                          "1px solid #e7e2da",
-                        borderRadius:
-                          "18px",
-                        padding:
-                          "22px",
-                        color:
-                          "#999",
-                        fontSize:
-                          "13px",
-                      }}
-                    >
-                      Bu kategoride
-                      şu anda ürün
-                      bulunmuyor.
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        display:
-                          "flex",
-                        flexDirection:
-                          "column",
-                        gap:
-                          "12px",
-                      }}
-                    >
-                      {categoryProducts.map(
-                        (product) => (
-                          <ProductCard
-                            key={
-                              product.id
-                            }
-                            product={{
-                              id:
-                                product.id,
-                              name:
-                                product.name,
-                              description:
-                                product.description,
-                              ingredients:
-                                product.ingredients,
-                              allergens:
-                                product.allergens,
-                              price:
-                                Number(
-                                  product.price
-                                ),
-                              image_url:
-                                product.image_url,
-                            }}
-                          />
-                        )
-                      )}
-                    </div>
-                  )}
-                </section>
-              );
-            }
-          )}
+          <MenuLayouts
+            categories={categories}
+            products={products}
+            layout={restaurantData.menu_layout || "grid"}
+          />
 
           {/* BOŞ MENÜ */}
 
@@ -1488,7 +1327,7 @@ export default async function RestaurantMenuPage({
             SEPET
         ================================================= */}
 
-        {isOpen && canOrder ? (
+        {isOpen ? (
           <Cart />
         ) : (
           <section
@@ -1523,9 +1362,9 @@ export default async function RestaurantMenuPage({
                   800,
               }}
             >
-              {!canOrder
-                ? "🔒 Bu işletmenin paketinde online sipariş özelliği bulunmuyor."
-                : "🔴 Restoran şu anda kapalı. Yeni sipariş alınmıyor."}
+              🔴 Restoran şu anda
+              kapalı. Yeni sipariş
+              alınmıyor.
             </div>
           </section>
         )}

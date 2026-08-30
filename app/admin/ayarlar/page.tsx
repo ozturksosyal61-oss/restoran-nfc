@@ -19,7 +19,15 @@ type Restaurant = {
   is_open: boolean | null;
   opening_time: string | null;
   closing_time: string | null;
+  menu_layout: MenuLayout;
 };
+
+type MenuLayout =
+  | "classic"
+  | "editorial"
+  | "grid"
+  | "luxury"
+  | "minimal";
 
 type ImageType = "logo" | "cover";
 
@@ -55,6 +63,7 @@ export default function RestaurantSettingsPage() {
 
   const [openingTime, setOpeningTime] = useState("");
   const [closingTime, setClosingTime] = useState("");
+  const [menuLayout, setMenuLayout] = useState<MenuLayout>("grid");
 
   /*
    * =====================================================
@@ -113,7 +122,8 @@ export default function RestaurantSettingsPage() {
               google_review_url,
               is_open,
               opening_time,
-              closing_time
+              closing_time,
+              menu_layout
             `
           )
           .eq("id", membership.restaurant_id)
@@ -173,6 +183,20 @@ export default function RestaurantSettingsPage() {
       data.closing_time
         ? String(data.closing_time).slice(0, 5)
         : ""
+    );
+
+    const allowedLayouts: MenuLayout[] = [
+      "classic",
+      "editorial",
+      "grid",
+      "luxury",
+      "minimal",
+    ];
+
+    setMenuLayout(
+      allowedLayouts.includes(data.menu_layout)
+        ? data.menu_layout
+        : "grid"
     );
   }
 
@@ -428,6 +452,8 @@ export default function RestaurantSettingsPage() {
 
           closing_time:
             closingTime || null,
+
+          menu_layout: menuLayout,
         })
         .eq("id", restaurant.id)
         .select(
@@ -929,6 +955,101 @@ export default function RestaurantSettingsPage() {
             </section>
 
             {/* =========================================
+                MENÜ TASARIMI
+            ========================================= */}
+
+            <section style={sectionStyle}>
+              <SectionTitle
+                eyebrow="MÜŞTERİ DENEYİMİ"
+                title="Menü Tasarımı"
+              />
+
+              <p style={menuLayoutDescriptionStyle}>
+                Müşterilerinizin göreceği dijital menü tasarımını
+                seçin. Ürün ve kategori verileriniz aynı kalır;
+                yalnızca menünün görsel yerleşimi değişir.
+              </p>
+
+              <div style={menuLayoutGridStyle}>
+                {menuLayoutOptions.map((option) => {
+                  const selected = menuLayout === option.id;
+
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setMenuLayout(option.id)}
+                      style={{
+                        ...menuLayoutCardStyle,
+                        border: selected
+                          ? "2px solid #d4a017"
+                          : "1px solid #e5e0d8",
+                        boxShadow: selected
+                          ? "0 8px 25px rgba(212,160,23,.16)"
+                          : "none",
+                      }}
+                    >
+                      <div
+                        style={{
+                          ...menuLayoutPreviewStyle,
+                          ...option.preview,
+                        }}
+                      >
+                        <div style={menuLayoutPreviewHeaderStyle}>
+                          <span />
+                          <span />
+                          <span />
+                        </div>
+
+                        <div style={menuLayoutPreviewContentStyle}>
+                          <div style={menuLayoutPreviewImageStyle} />
+                          <div style={menuLayoutPreviewLinesStyle}>
+                            <span />
+                            <span />
+                            <span />
+                          </div>
+                        </div>
+
+                        <div style={menuLayoutPreviewCardsStyle}>
+                          <span />
+                          <span />
+                          <span />
+                        </div>
+                      </div>
+
+                      <div style={menuLayoutCardContentStyle}>
+                        <div>
+                          <strong style={menuLayoutNameStyle}>
+                            {option.name}
+                          </strong>
+
+                          <span style={menuLayoutDescriptionSmallStyle}>
+                            {option.description}
+                          </span>
+                        </div>
+
+                        <span
+                          style={{
+                            ...menuLayoutSelectBadgeStyle,
+                            background: selected ? "#d4a017" : "#f4f1eb",
+                            color: selected ? "#fff" : "#555",
+                          }}
+                        >
+                          {selected ? "✓ Seçili" : "Seç"}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div style={menuLayoutHintStyle}>
+                💡 Seçim, <strong>Ayarları Kaydet</strong> butonuna
+                bastığınızda müşterilerin menüsüne uygulanır.
+              </div>
+            </section>
+
+            {/* =========================================
                 KAYDET
             ========================================= */}
 
@@ -1029,6 +1150,163 @@ function SectionTitle({
  * STYLES
  * =====================================================
  */
+
+const menuLayoutOptions: Array<{
+  id: MenuLayout;
+  name: string;
+  description: string;
+  preview: CSSProperties;
+}> = [
+  {
+    id: "classic",
+    name: "Classic",
+    description: "Sade, temiz ve zamansız menü.",
+    preview: {
+      background: "#f8f6f1",
+      color: "#171717",
+    },
+  },
+  {
+    id: "editorial",
+    name: "Editorial",
+    description: "Premium dergi tarzı yerleşim.",
+    preview: {
+      background: "#efe8dc",
+      color: "#171717",
+    },
+  },
+  {
+    id: "grid",
+    name: "Grid",
+    description: "Modern iki kolonlu ürün kartları.",
+    preview: {
+      background: "#071018",
+      color: "#fff",
+    },
+  },
+  {
+    id: "luxury",
+    name: "Luxury",
+    description: "Koyu ve sofistike restoran görünümü.",
+    preview: {
+      background: "linear-gradient(135deg,#15110b,#332712)",
+      color: "#fff",
+    },
+  },
+  {
+    id: "minimal",
+    name: "Minimal",
+    description: "Beyaz alanlı, sade fine-dining görünümü.",
+    preview: {
+      background: "#fff",
+      color: "#171717",
+    },
+  },
+];
+
+const menuLayoutDescriptionStyle: CSSProperties = {
+  margin: "-8px 0 18px",
+  color: "#777",
+  fontSize: "12px",
+  lineHeight: 1.6,
+};
+
+const menuLayoutGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))",
+  gap: "14px",
+};
+
+const menuLayoutCardStyle: CSSProperties = {
+  appearance: "none",
+  width: "100%",
+  padding: 0,
+  borderRadius: "17px",
+  background: "#fff",
+  overflow: "hidden",
+  textAlign: "left",
+  cursor: "pointer",
+};
+
+const menuLayoutPreviewStyle: CSSProperties = {
+  height: "130px",
+  padding: "13px",
+  transition: "all .2s ease",
+};
+
+const menuLayoutPreviewHeaderStyle: CSSProperties = {
+  display: "flex",
+  gap: "5px",
+  marginBottom: "14px",
+};
+
+const menuLayoutPreviewContentStyle: CSSProperties = {
+  display: "flex",
+  gap: "9px",
+  alignItems: "center",
+};
+
+const menuLayoutPreviewImageStyle: CSSProperties = {
+  width: "65px",
+  height: "65px",
+  borderRadius: "10px",
+  background: "linear-gradient(135deg,#ddd,#999)",
+  flexShrink: 0,
+};
+
+const menuLayoutPreviewLinesStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "7px",
+  flex: 1,
+};
+
+const menuLayoutPreviewCardsStyle: CSSProperties = {
+  display: "flex",
+  gap: "7px",
+  marginTop: "12px",
+};
+
+const menuLayoutCardContentStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "12px",
+  padding: "13px 14px",
+};
+
+const menuLayoutNameStyle: CSSProperties = {
+  display: "block",
+  fontSize: "14px",
+  fontWeight: 900,
+  color: "#171717",
+  marginBottom: "3px",
+};
+
+const menuLayoutDescriptionSmallStyle: CSSProperties = {
+  display: "block",
+  color: "#888",
+  fontSize: "10px",
+  lineHeight: 1.4,
+};
+
+const menuLayoutSelectBadgeStyle: CSSProperties = {
+  flexShrink: 0,
+  padding: "7px 9px",
+  borderRadius: "9px",
+  fontSize: "10px",
+  fontWeight: 900,
+};
+
+const menuLayoutHintStyle: CSSProperties = {
+  marginTop: "15px",
+  padding: "12px 14px",
+  borderRadius: "11px",
+  background: "#faf8f3",
+  color: "#777",
+  fontSize: "11px",
+  lineHeight: 1.5,
+};
 
 const pageStyle: CSSProperties = {
   minHeight: "100vh",

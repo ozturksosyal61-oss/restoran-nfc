@@ -1,12 +1,85 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+
+async function callWaiter(formData: FormData) {
+  "use server";
+
+  const slug = String(formData.get("slug") || "").trim();
+  const masa = String(formData.get("masa") || "").trim();
+
+  if (!slug || !masa) {
+    return;
+  }
+
+  const { data: restaurant } = await supabase
+    .from("restaurants")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (!restaurant) {
+    redirect(
+      `/restoran/${slug}?masa=${encodeURIComponent(masa)}&garson=hata`
+    );
+  }
+
+  const { data: table } = await supabase
+    .from("restaurant_tables")
+    .select("id, table_number")
+    .eq("restaurant_id", restaurant.id)
+    .eq("public_token", masa)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!table) {
+    redirect(
+      `/restoran/${slug}?masa=${encodeURIComponent(masa)}&garson=hata`
+    );
+  }
+
+  // Aynı masa için bekleyen çağrıyı tekrar oluşturma.
+  const { data: existingRequest } = await supabase
+    .from("service_requests")
+    .select("id")
+    .eq("restaurant_id", restaurant.id)
+    .eq("table_id", table.id)
+    .eq("request_type", "garson")
+    .eq("status", "pending")
+    .maybeSingle();
+
+  if (!existingRequest) {
+    const { error: insertError } = await supabase
+      .from("service_requests")
+      .insert({
+        restaurant_id: restaurant.id,
+        table_id: table.id,
+        request_type: "garson",
+        status: "pending",
+      });
+
+    if (insertError) {
+      console.error("Ana sayfa garson çağrısı hatası:", insertError);
+
+      redirect(
+        `/restoran/${slug}?masa=${encodeURIComponent(masa)}&garson=hata`
+      );
+    }
+  }
+
+  redirect(
+    `/restoran/${slug}?masa=${encodeURIComponent(masa)}&garson=ok`
+  );
+}
 
 export default async function RestaurantPage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ masa?: string | string[] }>;
+  searchParams: Promise<{
+    masa?: string | string[];
+    garson?: string | string[];
+  }>;
 }) {
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
@@ -14,6 +87,11 @@ export default async function RestaurantPage({
   const tableToken = Array.isArray(rawTableToken)
     ? rawTableToken[0]
     : rawTableToken;
+
+  const rawGarsonStatus = resolvedSearchParams.garson;
+  const garsonStatus = Array.isArray(rawGarsonStatus)
+    ? rawGarsonStatus[0]
+    : rawGarsonStatus;
 
   // --------------------------------------------------
   // RESTORANI GETİR
@@ -210,12 +288,33 @@ export default async function RestaurantPage({
           </a>
         )}
 
-        <a
-          href={`/restoran/${restaurant.slug}/siparis${tableQuery}`}
-          className="action-button"
-        >
-          🛎️ Sipariş Ver
-        </a>
+        {table && (
+          <form action={callWaiter} style={{ margin: 0 }}>
+            <input
+              type="hidden"
+              name="slug"
+              value={restaurant.slug}
+            />
+            <input
+              type="hidden"
+              name="masa"
+              value={table.public_token}
+            />
+
+            <button
+              type="submit"
+              className="action-button"
+              style={{
+                width: "100%",
+                border: "none",
+                cursor: "pointer",
+                font: "inherit",
+              }}
+            >
+              🔔 Garsonu Çağır
+            </button>
+          </form>
+        )}
 
         <a
           href={`/restoran/${restaurant.slug}/calisan${tableQuery}`}
@@ -232,6 +331,48 @@ export default async function RestaurantPage({
         </a>
 
       </section>
+
+      {garsonStatus === "ok" && (
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "520px",
+            margin: "10px auto 0",
+            padding: "12px 16px",
+            borderRadius: "12px",
+            background: "#edf9f0",
+            border: "1px solid #b9e3c2",
+            color: "#17652a",
+            fontSize: "13px",
+            fontWeight: 800,
+            textAlign: "center",
+            boxSizing: "border-box",
+          }}
+        >
+          ✅ Garson çağrınız gönderildi. Masa {table?.table_number}.
+        </div>
+      )}
+
+      {garsonStatus === "hata" && (
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "520px",
+            margin: "10px auto 0",
+            padding: "12px 16px",
+            borderRadius: "12px",
+            background: "#fff1f1",
+            border: "1px solid #efc1c1",
+            color: "#9d2424",
+            fontSize: "13px",
+            fontWeight: 800,
+            textAlign: "center",
+            boxSizing: "border-box",
+          }}
+        >
+          ❌ Garson çağrısı gönderilemedi. Lütfen tekrar deneyin.
+        </div>
+      )}
 
 
       {/* ==================================================

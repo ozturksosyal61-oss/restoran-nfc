@@ -4,6 +4,25 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RESTAURANT_THEMES, normalizeRestaurantTheme } from "../../../lib/themes";
 
+type RestaurantTheme = (typeof RESTAURANT_THEMES)[number]["value"];
+
+type NewRestaurantForm = {
+  name: string;
+  slug: string;
+  description: string;
+  instagram_url: string;
+  google_review_url: string;
+  manager_email: string;
+  manager_password: string;
+  table_count: string;
+  theme: RestaurantTheme;
+};
+
+type CreateRestaurantResponse = {
+  error?: string;
+  message?: string;
+};
+
 export default function YeniRestoranPage() {
   const router = useRouter();
 
@@ -11,7 +30,7 @@ export default function YeniRestoranPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<NewRestaurantForm>({
     name: "",
     slug: "",
     description: "",
@@ -20,10 +39,13 @@ export default function YeniRestoranPage() {
     manager_email: "",
     manager_password: "",
     table_count: "20",
-    theme: "classic",
+    theme: normalizeRestaurantTheme("classic"),
   });
 
-  function updateField(name: string, value: string) {
+  function updateField<K extends keyof NewRestaurantForm>(
+    name: K,
+    value: NewRestaurantForm[K]
+  ) {
     setForm((prev) => ({
       ...prev,
       [name]: value,
@@ -62,6 +84,7 @@ export default function YeniRestoranPage() {
     const restaurantSlug = form.slug.trim();
     const managerEmail = form.manager_email.trim();
     const tableCount = Number(form.table_count);
+    const selectedTheme = normalizeRestaurantTheme(form.theme);
 
     if (!restaurantName) {
       setError("Restoran adı zorunludur.");
@@ -92,6 +115,11 @@ export default function YeniRestoranPage() {
       return;
     }
 
+    if (!RESTAURANT_THEMES.some((theme) => theme.value === selectedTheme)) {
+      setError("Geçersiz restoran teması seçildi.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -109,14 +137,21 @@ export default function YeniRestoranPage() {
           manager_email: managerEmail,
           manager_password: form.manager_password,
           table_count: tableCount,
-          theme: normalizeRestaurantTheme(form.theme),
+          theme: selectedTheme,
         }),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const data: CreateRestaurantResponse = contentType.includes("application/json")
+        ? await response.json()
+        : {};
 
       if (!response.ok) {
-        throw new Error(data.error || "Restoran oluşturulamadı.");
+        throw new Error(
+          data.error ||
+            data.message ||
+            "Restoran oluşturulamadı. Sunucu tarafındaki ayrıntıyı kontrol edin."
+        );
       }
 
       setSuccess("Restoran başarıyla oluşturuldu.");
@@ -334,7 +369,12 @@ export default function YeniRestoranPage() {
                       name="theme"
                       value={theme.value}
                       checked={form.theme === theme.value}
-                      onChange={(e) => updateField("theme", e.target.value)}
+                      onChange={(e) =>
+                        updateField(
+                          "theme",
+                          normalizeRestaurantTheme(e.target.value)
+                        )
+                      }
                     />
 
                     <div className="theme-option-preview">
