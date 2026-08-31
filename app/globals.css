@@ -13444,3 +13444,94 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     font-size: 15px;
   }
 }
+/* =========================================================
+   MOBİL ÜRÜN MODALI - SEPETE EKLE SABİT BUTON
+   ========================================================= */
+
+@media screen and (max-width: 480px) {
+
+  .product-modal {
+    max-height: calc(100dvh - 20px) !important;
+    overflow-y: auto !important;
+    padding-bottom: 95px !important;
+  }
+
+  .product-modal-content {
+    padding-bottom: 110px !important;
+  }
+
+  .product-modal-add {
+    position: fixed !important;
+
+    left: 18px !important;
+    right: 18px !important;
+    bottom: 18px !important;
+
+    width: calc(100vw - 36px) !important;
+    max-width: 444px !important;
+
+    height: 58px !important;
+    min-height: 58px !important;
+
+    margin: 0 !important;
+    padding: 0 20px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    background: #171717 !important;
+    color: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 999px !important;
+
+    font-size: 16px !important;
+    font-weight: 800 !important;
+
+    z-index: 999999 !important;
+
+    box-shadow:
+      0 10px 30px rgba(0,0,0,0.45) !important;
+
+    transform: none !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .product-modal-add span {
+    display: inline-block !important;
+    margin-right: 8px !important;
+  }
+
+  .product-modal-add:active {
+    transform: scale(0.97) !important;
+  }
+}
+
+
+/* =========================================================
+   ÇOK KÜÇÜK TELEFONLAR
+   ========================================================= */
+
+@media screen and (max-width: 360px) {
+
+  .product-modal-add {
+    left: 14px !important;
+    right: 14px !important;
+
+    width: calc(100vw - 28px) !important;
+
+    bottom: 14px !important;
+
+    height: 54px !important;
+    min-height: 54px !important;
+
+    font-size: 15px !important;
+  }
+
+  .product-modal-content {
+    padding-bottom: 100px !important;
+  }
+}
