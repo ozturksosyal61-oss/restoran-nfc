@@ -12988,3 +12988,180 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .restaurant-shell[data-theme="luxury-gold"] .restaurant-menu-page [style*="background: #111"] {
   background: #171108 !important;
 }
+/* =========================================================
+   MOBİL ÜRÜN DETAYI — SEPETE EKLE FIX
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+  .product-modal-overlay {
+    padding: 8px;
+    align-items: center;
+  }
+
+  .product-modal {
+    width: 100%;
+    max-width: 100%;
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    border-radius: 20px;
+  }
+
+  /* Ürün fotoğrafını biraz küçült */
+  .product-modal-image-area {
+    flex: 0 0 175px;
+
+    height: 175px;
+    min-height: 175px;
+    max-height: 175px;
+
+    overflow: hidden;
+  }
+
+  .product-modal-image {
+    width: 100%;
+    height: 175px;
+
+    min-height: 175px;
+    max-height: 175px;
+
+    object-fit: cover;
+  }
+
+  .product-modal-no-image {
+    min-height: 175px;
+    height: 175px;
+  }
+
+  /* İçerik artık kendi içinde kayacak */
+  .product-modal-content {
+    flex: 1 1 auto;
+
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: 22px 18px 100px;
+
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .product-modal-heading h2 {
+    font-size: 27px;
+    line-height: 1.1;
+  }
+
+  .product-modal-line {
+    margin: 14px 0 18px;
+  }
+
+  .product-modal-price {
+    margin-bottom: 8px;
+    font-size: 25px;
+  }
+
+  .product-modal-description {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .product-modal-divider {
+    margin: 20px 0;
+  }
+
+  .quantity-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .quantity-selector button {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+  }
+
+  .product-modal-total {
+    margin-top: 18px;
+    padding: 14px 15px;
+  }
+
+  /* SEPETE EKLE HER ZAMAN GÖRÜNÜR */
+  .product-modal-add {
+    position: sticky;
+
+    bottom: 8px;
+
+    z-index: 20;
+
+    width: 100%;
+    min-height: 58px;
+
+    margin-top: 14px;
+
+    border-radius: 999px;
+
+    font-size: 16px;
+
+    box-shadow:
+      0 8px 25px rgba(0, 0, 0, 0.25);
+  }
+
+  .product-modal-note {
+    padding-bottom: 10px;
+  }
+
+  .product-modal-close {
+    top: 10px;
+    right: 10px;
+
+    width: 38px;
+    height: 38px;
+
+    z-index: 30;
+  }
+}
+
+/* =========================================================
+   ÇOK KÜÇÜK TELEFON
+   ========================================================= */
+
+@media (max-width: 360px) {
+
+  .product-modal-image-area {
+    flex-basis: 155px;
+
+    height: 155px;
+    min-height: 155px;
+    max-height: 155px;
+  }
+
+  .product-modal-image {
+    height: 155px;
+    min-height: 155px;
+    max-height: 155px;
+  }
+
+  .product-modal-content {
+    padding: 18px 15px 95px;
+  }
+
+  .product-modal-heading h2 {
+    font-size: 24px;
+  }
+
+  .product-modal-price {
+    font-size: 23px;
+  }
+
+  .product-modal-add {
+    min-height: 55px;
+    font-size: 15px;
+  }
+}
