@@ -13535,3 +13535,48 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     padding-bottom: 100px !important;
   }
 }
+@media screen and (max-width: 480px) {
+
+  .product-modal-add {
+    background: #c99a3d !important;
+    color: #111111 !important;
+
+    left: 28px !important;
+    right: 28px !important;
+    width: calc(100vw - 56px) !important;
+
+    height: 52px !important;
+    min-height: 52px !important;
+
+    bottom: 14px !important;
+
+    font-size: 15px !important;
+    font-weight: 800 !important;
+
+    border: none !important;
+    border-radius: 999px !important;
+
+    box-shadow: 0 8px 24px rgba(0,0,0,0.30) !important;
+  }
+
+  .product-modal-add span {
+    font-size: 17px !important;
+    margin-right: 7px !important;
+  }
+}
+
+@media screen and (max-width: 360px) {
+
+  .product-modal-add {
+    left: 22px !important;
+    right: 22px !important;
+    width: calc(100vw - 44px) !important;
+
+    height: 50px !important;
+    min-height: 50px !important;
+
+    bottom: 12px !important;
+
+    font-size: 14px !important;
+  }
+}
