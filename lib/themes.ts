@@ -1,4 +1,8 @@
-export type RestaurantTheme = "classic" | "dark-modern" | "luxury-gold";
+export type RestaurantTheme =
+  | "classic"
+  | "dark-modern"
+  | "luxury-gold"
+  | "ozt-glass-premium";
 
 export type RestaurantThemeMeta = {
   value: RestaurantTheme;
@@ -30,11 +34,19 @@ export const RESTAURANT_THEMES: readonly RestaurantThemeMeta[] = [
     accent: "#d5a72c",
     surface: "#090806",
   },
+  {
+    value: "ozt-glass-premium",
+    label: "OZT App Premium",
+    description: "Mobil uygulama hissi veren, görsel ağırlıklı premium restoran deneyimi.",
+    accent: "#e4bd7a",
+    surface: "#0b0b0d",
+  },
 ];
 
 export function normalizeRestaurantTheme(value: unknown): RestaurantTheme {
   if (value === "dark-modern") return "dark-modern";
   if (value === "luxury-gold") return "luxury-gold";
+  if (value === "ozt-glass-premium") return "ozt-glass-premium";
   return "classic";
 }
 

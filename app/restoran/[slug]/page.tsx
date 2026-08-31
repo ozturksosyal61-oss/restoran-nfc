@@ -100,7 +100,7 @@ export default async function RestaurantPage({
   const { data: restaurant, error } = await supabase
     .from("restaurants")
     .select(
-      "id, name, slug, description, instagram_url, google_review_url, logo_url"
+      "id, name, slug, description, instagram_url, google_review_url, logo_url, theme"
     )
     .eq("slug", slug)
     .single();
@@ -199,8 +199,86 @@ export default async function RestaurantPage({
       ).length ?? 0,
   };
 
+  const isGlassPremium = restaurant.theme === "ozt-glass-premium";
+
   return (
-    <main className="restaurant-page">
+    <>
+      {isGlassPremium && (
+        <style>{`
+          .ozt-glass-home {
+            min-height: 100vh !important;
+            background:
+              radial-gradient(circle at 10% 0%, rgba(255,255,255,.98), transparent 30%),
+              radial-gradient(circle at 100% 8%, rgba(214,194,157,.30), transparent 28%),
+              linear-gradient(180deg, #f5f1e9 0%, #ece5d9 100%) !important;
+            color: #272118 !important;
+          }
+
+          .ozt-glass-home .hero {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(242,235,224,.80)) !important;
+            border: 1px solid rgba(182,151,97,.28) !important;
+            box-shadow: 18px 20px 40px rgba(91,72,43,.12), -8px -8px 22px rgba(255,255,255,.85), inset 0 1px 0 rgba(255,255,255,.95) !important;
+            backdrop-filter: blur(14px);
+          }
+
+          .ozt-glass-home .hero::after {
+            content: "";
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            right: -65px;
+            top: -80px;
+            border-radius: 50%;
+            border: 1px solid rgba(167,130,67,.25);
+            box-shadow: 0 0 0 22px rgba(255,255,255,.16), 0 0 0 44px rgba(167,130,67,.07);
+            pointer-events: none;
+          }
+
+          .ozt-glass-home .hero h1,
+          .ozt-glass-home .hero p,
+          .ozt-glass-home .hero > span {
+            color: #292218 !important;
+          }
+
+          .ozt-glass-home .actions .action-button {
+            background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(236,229,218,.92)) !important;
+            border: 1px solid rgba(183,157,112,.28) !important;
+            color: #30281d !important;
+            box-shadow: 7px 8px 17px rgba(92,72,43,.10), -5px -5px 12px rgba(255,255,255,.78), inset 1px 1px 2px rgba(255,255,255,.85) !important;
+          }
+
+          .ozt-glass-home .actions .primary-action {
+            background: linear-gradient(145deg, #d9c08f, #b8914b) !important;
+            color: #fff !important;
+            border-color: #b99659 !important;
+          }
+
+          .ozt-glass-home .actions form button {
+            color: #6f4d18 !important;
+          }
+
+          .ozt-glass-home section:not(.hero):not(.actions) {
+            color: #292218;
+          }
+
+          .ozt-glass-home section:not(.hero):not(.actions) > div {
+            box-shadow: 10px 11px 22px rgba(92,72,43,.08), -5px -5px 13px rgba(255,255,255,.72);
+          }
+
+          .ozt-glass-home .restaurant-footer {
+            color: #756752 !important;
+          }
+
+          .ozt-glass-home .restaurant-logo,
+          .ozt-glass-home .logo {
+            box-shadow: 8px 10px 18px rgba(75,56,32,.14), -5px -5px 12px rgba(255,255,255,.85) !important;
+          }
+        `}</style>
+      )}
+
+      <main className={isGlassPremium ? "restaurant-page ozt-glass-home" : "restaurant-page"}>
 
       {/* ==================================================
           HERO
@@ -288,55 +366,33 @@ export default async function RestaurantPage({
           </a>
         )}
 
-        <div style={{ margin: 0 }}>
-  {table ? (
-    <form
-      action={callWaiter}
-      style={{ margin: 0 }}
-    >
-      <input
-        type="hidden"
-        name="slug"
-        value={restaurant.slug}
-      />
+        {table && (
+          <form action={callWaiter} style={{ margin: 0 }}>
+            <input
+              type="hidden"
+              name="slug"
+              value={restaurant.slug}
+            />
+            <input
+              type="hidden"
+              name="masa"
+              value={table.public_token}
+            />
 
-      <input
-        type="hidden"
-        name="masa"
-        value={table.public_token}
-      />
-
-      <button
-        type="submit"
-        className="action-button"
-        style={{
-          width: "100%",
-          border: "none",
-          cursor: "pointer",
-          font: "inherit",
-        }}
-      >
-        🔔 Garsonu Çağır
-      </button>
-    </form>
-  ) : (
-    <button
-      type="button"
-      className="action-button"
-      disabled
-      title="Garson çağırmak için masa QR veya NFC kodunu kullanın."
-      style={{
-        width: "100%",
-        border: "none",
-        font: "inherit",
-        opacity: 0.55,
-        cursor: "not-allowed",
-      }}
-    >
-      🔔 Garsonu Çağır
-    </button>
-  )}
-</div>
+            <button
+              type="submit"
+              className="action-button"
+              style={{
+                width: "100%",
+                border: "none",
+                cursor: "pointer",
+                font: "inherit",
+              }}
+            >
+              🔔 Garsonu Çağır
+            </button>
+          </form>
+        )}
 
         <a
           href={`/restoran/${restaurant.slug}/calisan${tableQuery}`}
@@ -775,7 +831,8 @@ export default async function RestaurantPage({
         </p>
       </footer>
 
-    </main>
+      </main>
+    </>
   );
 
 }

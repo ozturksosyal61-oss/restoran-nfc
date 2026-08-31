@@ -1,6 +1,7 @@
 "use client";
 
 import ProductCard from "./ProductCard";
+import { useCart } from "./CartContext";
 
 type Product = {
   id: number;
@@ -21,7 +22,14 @@ type Category = {
 type MenuLayoutsProps = {
   categories: Category[];
   products: Product[];
-  layout?: "classic" | "editorial" | "grid" | "ivory";
+  layout?: "classic" | "editorial" | "grid" | "ivory" | "ozt-glass-premium";
+  showCart?: boolean;
+  restaurantName?: string;
+  tableNumber?: number | null;
+  slug?: string;
+  masa?: string;
+  garson?: string;
+  waiterAction?: (formData: FormData) => void | Promise<void>;
 };
 
 /* =========================================================
@@ -324,6 +332,223 @@ function IvoryLuxury3DLayout({
   );
 }
 
+
+/* =========================================================
+   OZT GLASS PREMIUM
+   Cam / blur / soft 3D / premium modern restoran menüsü
+========================================================= */
+
+function OztGlassPremiumLayout({
+  categories,
+  products,
+  restaurantName = "Restoran",
+  tableNumber = null,
+  slug = "",
+  masa = "",
+  garson = "",
+  waiterAction,
+}: MenuLayoutsProps) {
+  const { items, itemCount, total, addToCart, increaseQuantity, decreaseQuantity, removeFromCart } = useCart();
+
+  const featuredProducts = products.slice(0, Math.min(3, products.length));
+  const firstCategoryId = categories[0]?.id;
+
+  function categoryImage(categoryId: number) {
+    return products.find((product) => product.category_id === categoryId)?.image_url || null;
+  }
+
+  return (
+    <div id="ozt-premium-top" className="ozt-layout ozt-layout-glass-premium ozt-app-shell">
+      <header className="ozt-app-header">
+        <div className="ozt-app-brand">
+          <div className="ozt-app-logo">OZT</div>
+          <div>
+            <strong>{restaurantName}</strong>
+            <span>PREMIUM MENU EXPERIENCE</span>
+          </div>
+        </div>
+        {tableNumber ? <div className="ozt-app-table">🪑 Masa {tableNumber}</div> : null}
+      </header>
+
+      <section className="ozt-glass-hero ozt-app-hero">
+        <div className="ozt-glass-hero-top">
+          <div className="ozt-glass-brand-mark">OZT</div>
+          <div className="ozt-glass-status"><span /> {"AÇIK"}</div>
+        </div>
+        <div className="ozt-app-hero-photo" />
+        <div className="ozt-app-hero-overlay" />
+        <div className="ozt-app-hero-content">
+          <div className="ozt-glass-eyebrow">{restaurantName.toUpperCase()}</div>
+          <div className="ozt-glass-hero-title">Hoş Geldiniz ♥</div>
+          <div className="ozt-glass-hero-copy">Lezzet, şimdi bir tık uzağınızda. Menünüzü keşfedin ve favorinizi seçin.</div>
+          <div className="ozt-app-search">⌕ <span>Menüde ara...</span></div>
+        </div>
+      </section>
+
+      {categories.length > 0 && (
+        <div className="ozt-app-category-strip">
+          <div className="ozt-app-categories" aria-label="Kategoriler">
+          {categories.map((category) => {
+            const img = categoryImage(category.id);
+            return (
+              <a key={category.id} href={`#category-${category.id}`} className="ozt-app-category">
+                <div className="ozt-app-category-image">
+                  {img ? <img src={img} alt="" /> : <span>🍽️</span>}
+                </div>
+                <span>{category.name}</span>
+              </a>
+            );
+          })}
+          </div>
+        </div>
+      )}
+
+      {tableNumber && waiterAction && (
+        <section className="ozt-app-quick-actions">
+          <form action={waiterAction} className="ozt-app-waiter-form">
+            <input type="hidden" name="slug" value={slug} />
+            <input type="hidden" name="masa" value={masa} />
+            <button type="submit" className="ozt-app-action-button">
+              <span>♙</span>
+              <strong>Garsonu Çağır</strong>
+              <small>{garson === "ok" ? "Çağrı gönderildi" : garson === "hata" ? "Tekrar deneyin" : `Masa ${tableNumber}`}</small>
+            </button>
+          </form>
+          <a href={firstCategoryId ? `#category-${firstCategoryId}` : "#ozt-premium-top"} className="ozt-app-action-button">
+            <span>⌑</span>
+            <strong>Menü Ürünleri</strong>
+            <small>{products.length} ürün</small>
+          </a>
+          <a href="#ozt-premium-cart" className="ozt-app-action-button">
+            <span>🛒</span>
+            <strong>Sepet</strong>
+            <small>{itemCount} ürün · {total.toLocaleString("tr-TR")} TL</small>
+          </a>
+        </section>
+      )}
+
+      {!tableNumber && (
+        <section className="ozt-app-quick-actions">
+          <a href={firstCategoryId ? `#category-${firstCategoryId}` : "#ozt-premium-top"} className="ozt-app-action-button">
+            <span>⌑</span><strong>Menü Ürünleri</strong><small>{products.length} ürün</small>
+          </a>
+          <a href="#ozt-premium-cart" className="ozt-app-action-button">
+            <span>🛒</span><strong>Sepet</strong><small>{itemCount} ürün</small>
+          </a>
+        </section>
+      )}
+
+      {garson === "ok" && <div className="ozt-app-message success">✓ Garson çağrınız gönderildi.</div>}
+      {garson === "hata" && <div className="ozt-app-message error">Garson çağrısı gönderilemedi. Lütfen tekrar deneyin.</div>}
+
+      {featuredProducts.length > 0 && (
+        <section className="ozt-app-section">
+          <div className="ozt-app-section-heading">
+            <div><span>ÖNE ÇIKANLAR 🔥</span><h2>Favoriler</h2></div>
+            <small>{products.length} ürün</small>
+          </div>
+          <div className="ozt-app-featured-row">
+            {featuredProducts.map((product) => (
+              <article key={product.id} className="ozt-app-feature-card">
+                <ProductItem product={product} />
+                <button
+                  type="button"
+                  className="ozt-app-quick-add"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    addToCart({ id: product.id, name: product.name, price: Number(product.price), image_url: product.image_url, quantity: 1 });
+                  }}
+                >＋</button>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {categories.map((category) => {
+        const categoryProducts = getCategoryProducts(category.id, products);
+        return (
+          <section key={category.id} id={`category-${category.id}`} className="ozt-app-section">
+            <div className="ozt-glass-section-heading">
+              <div>
+                <div className="ozt-glass-section-kicker">MENÜ</div>
+                <h2>{category.name}</h2>
+                <p>{categoryProducts.length} ürün</p>
+              </div>
+              <div className="ozt-glass-section-badge">{String(categoryProducts.length).padStart(2, "0")}</div>
+            </div>
+            {categoryProducts.length === 0 ? <EmptyCategory /> : (
+              <div className="ozt-app-product-list">
+                {categoryProducts.map((product) => (
+                  <article key={product.id} className="ozt-app-product-row">
+                    <ProductItem product={product} />
+                    <button
+                      type="button"
+                      className="ozt-app-quick-add ozt-app-row-add"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        addToCart({ id: product.id, name: product.name, price: Number(product.price), image_url: product.image_url, quantity: 1 });
+                      }}
+                    >＋</button>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        );
+      })}
+
+      <nav className="ozt-app-bottom-nav" aria-label="Menü kısayolları">
+        <a href="#ozt-premium-top" className="active"><span>⌂</span>Menü</a>
+        <a href="#ozt-premium-cart"><span>🛒</span>Sepet{itemCount > 0 ? ` (${itemCount})` : ""}</a>
+      </nav>
+
+      <section id="ozt-premium-cart" className={`ozt-app-cart-panel${items.length === 0 ? " is-empty" : ""}`}>
+        <div className="ozt-app-section-heading">
+          <div><span>SEPET</span><h2>{items.length > 0 ? "Siparişiniz" : "Sepetiniz"}</h2></div>
+          <strong>{itemCount > 0 ? `${itemCount} ürün` : "Boş"}</strong>
+        </div>
+
+        {items.length === 0 ? (
+          <div className="ozt-app-cart-empty">
+            <div className="ozt-app-cart-empty-icon">🛒</div>
+            <strong>Sepetiniz şu anda boş</strong>
+            <span>Favori ürünlerinizi ekleyin, siparişinizi buradan tamamlayın.</span>
+            <a href={firstCategoryId ? `#category-${firstCategoryId}` : "#ozt-premium-top"}>Menüye Dön →</a>
+          </div>
+        ) : (
+          <>
+            <div className="ozt-app-cart-items">
+              {items.map((item) => (
+                <div key={item.id} className="ozt-app-cart-item">
+                  {item.image_url ? <img src={item.image_url} alt="" /> : <div className="ozt-app-cart-placeholder">🍽️</div>}
+                  <div className="ozt-app-cart-info">
+                    <strong>{item.name}</strong>
+                    <span>{Number(item.price).toLocaleString("tr-TR")} TL</span>
+                  </div>
+                  <div className="ozt-app-cart-controls">
+                    <button type="button" onClick={() => decreaseQuantity(item.id)}>−</button>
+                    <b>{item.quantity}</b>
+                    <button type="button" onClick={() => increaseQuantity(item.id)}>+</button>
+                  </div>
+                  <button type="button" className="ozt-app-cart-remove" onClick={() => removeFromCart(item.id)}>×</button>
+                </div>
+              ))}
+            </div>
+            <div className="ozt-app-cart-total"><span>Toplam</span><strong>{total.toLocaleString("tr-TR")} TL</strong></div>
+            <a
+              className="ozt-app-order-button"
+              href={slug ? `/restoran/${slug}/siparis${masa ? `?masa=${encodeURIComponent(masa)}` : ""}` : "#"}
+            >Siparişi Tamamla · {total.toLocaleString("tr-TR")} TL</a>
+          </>
+        )}
+      </section>
+
+      <footer className="ozt-app-footer">OZT DIGITAL · PREMIUM MENU</footer>
+    </div>
+  );
+}
+
 /* =========================================================
    MAIN
 ========================================================= */
@@ -332,6 +557,13 @@ export default function MenuLayouts({
   categories,
   products,
   layout = "classic",
+  showCart = false,
+  restaurantName,
+  tableNumber,
+  slug,
+  masa,
+  garson,
+  waiterAction,
 }: MenuLayoutsProps) {
   return (
     <>
@@ -1281,6 +1513,417 @@ export default function MenuLayouts({
           font-size: 18px !important;
         }
 
+
+        /* =====================================================
+           OZT APP PREMIUM — FINAL COMMERCIAL UI
+        ===================================================== */
+
+        .ozt-layout-glass-premium {
+          position: relative !important;
+          isolation: isolate !important;
+          scroll-behavior: smooth;
+          width: 100% !important;
+          max-width: 900px !important;
+          min-height: 100vh !important;
+          margin: 0 auto !important;
+          padding: 0 18px 108px !important;
+          color: #f7f2e9 !important;
+          background:
+            radial-gradient(circle at 10% 0%, rgba(255,255,255,.045), transparent 24%),
+            radial-gradient(circle at 92% 18%, rgba(224,180,100,.07), transparent 26%),
+            linear-gradient(180deg, #0f1012 0%, #0a0b0c 100%) !important;
+          border-radius: 0 !important;
+          overflow: visible !important;
+        }
+
+        .ozt-layout-glass-premium::before {
+          content: "";
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          background:
+            radial-gradient(circle at 50% -10%, rgba(255,220,160,.07), transparent 32%),
+            linear-gradient(180deg, rgba(255,255,255,.015), transparent 20%);
+          z-index: -1;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-header {
+          position: sticky !important;
+          top: 0 !important;
+          z-index: 80 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          gap: 12px !important;
+          min-height: 58px !important;
+          padding: 8px 4px !important;
+          margin-bottom: 10px !important;
+          background: rgba(10,11,12,.88) !important;
+          color: #f7f2e9 !important;
+          border-bottom: 1px solid rgba(255,255,255,.07) !important;
+          backdrop-filter: blur(18px) !important;
+          -webkit-backdrop-filter: blur(18px) !important;
+        }
+
+        .ozt-layout-glass-premium {
+          width:100% !important;
+          max-width:920px !important;
+          margin:0 auto !important;
+          padding:10px 16px 120px !important;
+          background:linear-gradient(180deg,#0a0b0d 0%,#0d0f12 55%,#090a0c 100%) !important;
+          color:#f7f2e9 !important;
+          border-radius:28px !important;
+          box-shadow:0 24px 60px rgba(0,0,0,.34) !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-header {
+          position:sticky !important;
+          top:0 !important;
+          z-index:110 !important;
+          margin:0 0 12px !important;
+          min-height:58px !important;
+          padding:8px 4px !important;
+          background:rgba(10,11,13,.94) !important;
+          color:#f7f2e9 !important;
+          border:0 !important;
+          border-bottom:1px solid rgba(255,255,255,.07) !important;
+          backdrop-filter:blur(18px) !important;
+          -webkit-backdrop-filter:blur(18px) !important;
+        }
+
+        .ozt-app-brand { display:flex; align-items:center; gap:10px; min-width:0; }
+        .ozt-app-logo {
+          width: 38px; height: 38px; flex:0 0 auto;
+          display:grid; place-items:center;
+          border-radius:12px;
+          background: radial-gradient(circle at 35% 25%, #4b3c22, #151313 58%, #0b0b0c 100%);
+          border:1px solid #8f7040;
+          color:#ebd19b;
+          font-family:Georgia,serif;
+          font-size:11px;
+          font-weight:800;
+          box-shadow: 0 7px 20px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        .ozt-app-brand strong { display:block; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .ozt-app-brand span { display:block; margin-top:2px; color:#8b8680; font-size:7px; letter-spacing:1.4px; }
+        .ozt-app-table {
+          flex:0 0 auto; padding:8px 11px; border-radius:999px;
+          background:linear-gradient(145deg,#24201b,#151311);
+          color:#ecd29b; border:1px solid rgba(220,186,117,.32);
+          font-size:9px; font-weight:900;
+        }
+        .ozt-app-header-cart {
+          position:relative;
+          width:36px; height:36px; flex:0 0 auto;
+          display:grid; place-items:center;
+          margin-left:auto;
+          border-radius:11px;
+          text-decoration:none;
+          color:#f2e4c6;
+          background:#17181a;
+          border:1px solid rgba(255,255,255,.08);
+        }
+        .ozt-app-header-cart > span { font-size:14px; }
+        .ozt-app-header-cart b {
+          position:absolute; right:-4px; top:-5px;
+          min-width:16px; height:16px; padding:0 4px;
+          display:grid; place-items:center;
+          border-radius:999px; background:#e2b86e; color:#171515;
+          border:2px solid #0f1012; font-size:7px; line-height:1;
+        }
+
+        .ozt-app-hero {
+          position: relative !important;
+          min-height: 360px !important;
+          margin: 8px 0 12px !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+          border: 1px solid rgba(255,255,255,.11) !important;
+          border-radius: 28px !important;
+          background:#161719 !important;
+          box-shadow: 0 22px 50px rgba(0,0,0,.30), 0 1px 0 rgba(255,255,255,.05) inset !important;
+        }
+
+        .ozt-app-hero-photo {
+          position:absolute;
+          inset:0;
+          background:
+            linear-gradient(180deg, rgba(0,0,0,.08) 18%, rgba(0,0,0,.42) 48%, rgba(0,0,0,.92) 100%),
+            url("https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=85") center/cover;
+          transform: scale(1.01);
+        }
+
+        .ozt-app-hero-overlay {
+          position:absolute; inset:0;
+          background:
+            radial-gradient(circle at 78% 15%, rgba(255,228,171,.12), transparent 25%),
+            linear-gradient(180deg, transparent 25%, rgba(5,5,6,.18) 46%, rgba(6,6,7,.90) 100%);
+        }
+
+        .ozt-app-hero-content { position:absolute; inset:auto 22px 22px; z-index:5; }
+        .ozt-app-hero .ozt-glass-hero-top { position:absolute; inset:16px 16px auto; z-index:5; }
+        .ozt-app-hero .ozt-glass-brand-mark {
+          width:48px; height:48px; border-radius:15px;
+          background:rgba(8,8,9,.55); border:1px solid rgba(255,255,255,.18);
+          color:#f1d79f; box-shadow:none; backdrop-filter:blur(10px);
+          font-size:14px;
+        }
+        .ozt-app-hero .ozt-glass-status {
+          padding:8px 10px; color:#f1d79f;
+          background:rgba(10,10,11,.55); border:1px solid rgba(230,193,123,.24);
+          box-shadow:none; backdrop-filter:blur(10px);
+        }
+        .ozt-app-hero .ozt-glass-status span { width:7px; height:7px; background:#54d394; box-shadow:0 0 0 4px rgba(84,211,148,.12); }
+        .ozt-app-hero .ozt-glass-eyebrow { margin-top:0 !important; color:#e8c981; font-size:8px; letter-spacing:2.6px; }
+        .ozt-app-hero .ozt-glass-hero-title {
+          margin-top:7px; max-width:none; color:#fff;
+          font-size:clamp(42px,9vw,70px); line-height:.92;
+          text-shadow:0 8px 35px rgba(0,0,0,.35);
+        }
+        .ozt-app-hero .ozt-glass-hero-copy { color:rgba(255,255,255,.76); font-size:10px; max-width:480px; line-height:1.55; }
+        .ozt-app-search {
+          margin-top:14px; padding:13px 14px;
+          border:1px solid rgba(255,255,255,.16);
+          border-radius:15px;
+          background:rgba(10,10,11,.55);
+          color:#fff; font-size:11px;
+          backdrop-filter:blur(14px);
+          box-shadow:0 8px 24px rgba(0,0,0,.22);
+        }
+        .ozt-app-search span { color:#aaa; margin-left:7px; }
+
+        .ozt-layout-glass-premium .ozt-app-category-strip {
+          position:sticky !important; top:58px !important; z-index:65 !important;
+          margin:0 -12px; padding:8px 12px 4px;
+          background:linear-gradient(180deg,rgba(15,16,18,.96),rgba(15,16,18,.78),transparent);
+          backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+        }
+        .ozt-app-categories {
+          display:flex; gap:12px; overflow-x:auto;
+          padding:2px 3px 15px;
+          scrollbar-width:none;
+          scroll-snap-type:x proximity;
+        }
+        .ozt-app-categories::-webkit-scrollbar { display:none; }
+        .ozt-app-category {
+          flex:0 0 66px; scroll-snap-align:start;
+          text-decoration:none; color:#f4efe6; text-align:center;
+          font-size:8px; font-weight:800;
+        }
+        .ozt-app-category-image {
+          width:62px; height:62px; margin:0 auto 6px;
+          border-radius:50%; overflow:hidden;
+          border:1.5px solid rgba(221,185,111,.75);
+          background:#1c1d20;
+          display:grid; place-items:center;
+          box-shadow:0 9px 20px rgba(0,0,0,.28), 0 1px 0 rgba(255,255,255,.08) inset;
+        }
+        .ozt-app-category-image img { width:100%;height:100%;object-fit:cover;display:block; }
+        .ozt-app-category span { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+        .ozt-layout-glass-premium .ozt-app-quick-actions {
+          display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:10px !important; margin:12px 0 26px !important;
+        }
+        .ozt-layout-glass-premium .ozt-app-waiter-form {
+          display:contents !important;
+          margin:0 !important;
+          padding:0 !important;
+          background:transparent !important;
+          border:0 !important;
+        }
+        .ozt-layout-glass-premium .ozt-app-action-button {
+          min-width:0 !important; min-height:78px !important;
+          display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important;
+          gap:5px !important; padding:9px 7px !important;
+          border-radius:17px !important; text-decoration:none !important;
+          background:linear-gradient(145deg,#1a1b1e,#121315) !important;
+          border:1px solid rgba(255,255,255,.10) !important;
+          box-shadow:0 10px 24px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.05) !important;
+          color:#f4eee4 !important; cursor:pointer !important;
+          transition:transform .16s ease, border-color .16s ease !important;
+        }
+        .ozt-app-action-button:hover { transform:translateY(-2px); border-color:rgba(223,188,118,.28); }
+        .ozt-app-action-button span { font-size:16px; color:#e9c987; }
+        .ozt-app-action-button strong { font-size:9px; }
+        .ozt-app-action-button small { font-size:7px; color:#89857f; }
+
+        .ozt-app-message { margin:0 0 14px; padding:10px 12px; border-radius:13px; text-align:center; font-size:9px; font-weight:800; }
+        .ozt-app-message.success { background:#153322;color:#8be0aa;border:1px solid #2d704a; }
+        .ozt-app-message.error { background:#3a1717;color:#ffb0b0;border:1px solid #754040; }
+
+        .ozt-app-section { width:100%; margin-bottom:30px; scroll-margin-top:82px; }
+        .ozt-app-section-heading { display:flex; justify-content:space-between; align-items:end; gap:10px; margin-bottom:11px; padding:0 2px; }
+        .ozt-app-section-heading > div > span { color:#d7b56e; font-size:7px; letter-spacing:2.7px; font-weight:900; }
+        .ozt-app-section-heading h2 { margin:4px 0 0; color:#fff; font-family:Georgia,serif; font-size:31px; line-height:1; }
+        .ozt-app-section-heading small,.ozt-app-section-heading > strong { color:#89857e; font-size:8px; }
+
+        .ozt-app-featured-row {
+          display:flex; gap:11px; overflow-x:auto;
+          scroll-snap-type:x mandatory; padding:0 0 7px;
+          scrollbar-width:none;
+        }
+        .ozt-app-featured-row::-webkit-scrollbar { display:none; }
+        .ozt-app-feature-card {
+          position:relative; flex:0 0 min(78%, 690px); scroll-snap-align:start; min-width:0;
+        }
+        .ozt-app-feature-card .customer-product {
+          border:1px solid rgba(255,255,255,.09)!important;
+          background:linear-gradient(150deg,#252328,#151619)!important;
+          color:#fff!important; border-radius:24px!important;
+          box-shadow:0 18px 36px rgba(0,0,0,.30)!important; overflow:hidden!important;
+        }
+        .ozt-app-feature-card .customer-product-image-wrap { height:255px!important; border-radius:0!important; }
+        .ozt-app-feature-card .customer-product-info { padding:13px 14px 5px!important; }
+        .ozt-app-feature-card .customer-product-info h3 { color:#fff!important; font-family:Georgia,serif!important; font-size:22px!important; }
+        .ozt-app-feature-card .customer-product-info p { color:#a4a09c!important; font-size:9px!important; }
+        .ozt-app-feature-card .customer-product-price { color:#f0cb83!important; padding:0 14px 14px!important; font-size:18px!important; }
+        .ozt-app-feature-card .customer-product-right { opacity:0!important; pointer-events:none!important; }
+        .ozt-app-quick-add {
+          position:absolute; right:14px; bottom:14px; z-index:8;
+          width:44px; height:44px; border-radius:14px;
+          border:1px solid #f6e4c4; background:linear-gradient(145deg,#fff5e4,#e9ca94);
+          color:#151515; font-size:24px; display:grid; place-items:center;
+          cursor:pointer; box-shadow:0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.75);
+        }
+
+        .ozt-glass-section-heading {
+          display:flex; align-items:flex-end; justify-content:space-between; gap:14px;
+          margin-bottom:12px; padding:0 2px;
+        }
+        .ozt-glass-section-kicker { margin-bottom:4px; color:#ba9a61; font-size:8px; font-weight:950; letter-spacing:2.4px; }
+        .ozt-glass-section-heading h2 { margin:0!important; color:#fff!important; font-family:Georgia,"Times New Roman",serif!important; font-size:31px!important; line-height:.96!important; font-weight:600!important; }
+        .ozt-glass-section-heading p { margin:5px 0 0!important; color:#7f7b76!important; font-size:9px!important; }
+        .ozt-glass-section-badge { display:grid; place-items:center; min-width:44px; height:30px; border:1px solid rgba(219,181,111,.18); border-radius:10px; background:#17181a; color:#bda778; font-size:8px; font-weight:900; }
+
+        .ozt-app-product-list { display:grid; gap:9px; }
+        .ozt-app-product-row { position:relative; min-width:0; }
+        .ozt-app-product-row .customer-product {
+          display:grid!important; grid-template-columns:92px minmax(0,1fr)!important; align-items:center!important;
+          width:100%!important; min-height:102px!important; padding:7px!important;
+          background:linear-gradient(145deg,#1b1c20,#131416)!important;
+          border:1px solid rgba(255,255,255,.07)!important; border-radius:17px!important;
+          color:#fff!important; box-shadow:0 9px 20px rgba(0,0,0,.20)!important; overflow:hidden!important;
+          transition:transform .15s ease, border-color .15s ease;
+        }
+        .ozt-app-product-row .customer-product:hover { transform:translateY(-2px); border-color:rgba(220,183,113,.18)!important; }
+        .ozt-app-product-row .customer-product-image-wrap { width:92px!important; height:88px!important; border-radius:11px!important; }
+        .ozt-app-product-row .customer-product-info { padding:7px 12px!important; }
+        .ozt-app-product-row .customer-product-info h3 { color:#fff!important; font-size:14px!important; }
+        .ozt-app-product-row .customer-product-info p { color:#8e8b87!important; font-size:8px!important; }
+        .ozt-app-product-row .customer-product-price { color:#edc97f!important; padding:0!important; font-size:13px!important; }
+        .ozt-app-product-row .customer-product-right { opacity:0!important; pointer-events:none!important; }
+        .ozt-app-row-add { right:10px; bottom:10px; width:36px; height:36px; border-radius:12px; font-size:20px; }
+
+        .ozt-layout-glass-premium .ozt-app-bottom-nav {
+          position:fixed !important; left:50% !important; bottom:12px !important; z-index:120 !important;
+          width:min(796px, calc(100vw - 24px));
+          transform:translateX(-50%);
+          display:grid; grid-template-columns:1fr 1fr; gap:6px;
+          padding:6px;
+          border-radius:19px;
+          background:rgba(18,19,21,.94);
+          border:1px solid rgba(255,255,255,.10);
+          backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+          box-shadow:0 16px 34px rgba(0,0,0,.44);
+        }
+        .ozt-app-bottom-nav a {
+          position:relative; min-height:46px;
+          display:flex; align-items:center; justify-content:center; gap:7px;
+          border-radius:14px; text-decoration:none;
+          color:#eee8de; font-size:9px; font-weight:900;
+        }
+        .ozt-app-bottom-nav a.active { background:linear-gradient(145deg,#fff2d9,#dcb776); color:#181616; }
+        .ozt-app-bottom-nav a span { font-size:14px; }
+
+        .ozt-layout-glass-premium .ozt-app-cart-panel {
+          margin:18px 0 24px !important; padding:16px !important;
+          border-radius:23px;
+          background:linear-gradient(160deg,#202126,#121316);
+          border:1px solid rgba(255,255,255,.10);
+          box-shadow:0 16px 35px rgba(0,0,0,.28);
+          scroll-margin-top:84px;
+        }
+        .ozt-app-cart-panel.is-empty { padding-bottom:18px; }
+        .ozt-app-cart-empty {
+          display:flex; flex-direction:column; align-items:center; justify-content:center;
+          gap:7px; padding:22px 14px 10px; text-align:center;
+        }
+        .ozt-app-cart-empty-icon {
+          width:48px; height:48px; display:grid; place-items:center;
+          border-radius:15px; background:#191a1d; border:1px solid rgba(255,255,255,.08);
+          font-size:21px; box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+        }
+        .ozt-app-cart-empty strong { color:#fff; font-size:12px; }
+        .ozt-app-cart-empty span { max-width:270px; color:#85817c; font-size:8px; line-height:1.5; }
+        .ozt-app-cart-empty a { color:#edc97f; text-decoration:none; font-size:9px; font-weight:900; margin-top:2px; }
+        .ozt-app-cart-items { display:grid; gap:8px; }
+        .ozt-app-cart-item {
+          display:grid; grid-template-columns:50px minmax(0,1fr) auto auto; gap:8px; align-items:center;
+          padding:8px; border-radius:14px; background:#18191c; border:1px solid rgba(255,255,255,.06);
+        }
+        .ozt-app-cart-item img,.ozt-app-cart-placeholder { width:50px;height:50px;border-radius:10px;object-fit:cover;background:#25252a;display:grid;place-items:center; }
+        .ozt-app-cart-info strong { display:block;color:#fff;font-size:10px; }
+        .ozt-app-cart-info span { display:block;color:#e2bd75;font-size:9px;margin-top:3px; }
+        .ozt-app-cart-controls { display:flex;align-items:center;gap:5px; }
+        .ozt-app-cart-controls button { width:24px;height:24px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#25252a;color:#fff; }
+        .ozt-app-cart-controls b { min-width:14px;text-align:center;font-size:9px; }
+        .ozt-app-cart-remove { width:26px;height:26px;border:0;border-radius:8px;background:#2a1a1a;color:#f08c8c; }
+        .ozt-app-cart-total { display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:11px;border-top:1px solid rgba(255,255,255,.08);color:#aaa;font-size:10px; }
+        .ozt-app-cart-total strong { color:#fff;font-size:17px; }
+        .ozt-app-order-button { display:flex;align-items:center;justify-content:center;min-height:50px;margin-top:10px;border-radius:15px;background:linear-gradient(145deg,#fff3dc,#dcb777);color:#171515;text-decoration:none;font-size:11px;font-weight:950;box-shadow:0 9px 22px rgba(0,0,0,.22); }
+
+        /* PREMIUM — PRODUCT DETAIL MODAL */
+        .ozt-layout-glass-premium .product-modal-overlay {
+          background:rgba(0,0,0,.78)!important;
+          backdrop-filter:blur(12px)!important;
+          -webkit-backdrop-filter:blur(12px)!important;
+        }
+        .ozt-layout-glass-premium .product-modal {
+          background:linear-gradient(160deg,#202126,#101113)!important;
+          color:#fff!important;
+          border:1px solid rgba(255,255,255,.10)!important;
+          border-radius:26px!important;
+          box-shadow:0 30px 80px rgba(0,0,0,.55)!important;
+          overflow:hidden!important;
+        }
+        .ozt-layout-glass-premium .product-modal-image-area { background:#151619!important; }
+        .ozt-layout-glass-premium .product-modal-content { background:linear-gradient(180deg,#202126,#141518)!important; }
+        .ozt-layout-glass-premium .product-modal-heading h2 { color:#fff!important; font-family:Georgia,serif!important; }
+        .ozt-layout-glass-premium .product-modal-price { color:#f0cb83!important; }
+        .ozt-layout-glass-premium .product-modal-description { color:#b0aca6!important; }
+        .ozt-layout-glass-premium .product-modal-info-box,
+        .ozt-layout-glass-premium .product-modal-allergen-box { background:#18191c!important; border-color:rgba(255,255,255,.08)!important; color:#c4beb4!important; }
+        .ozt-layout-glass-premium .product-modal-divider { background:rgba(255,255,255,.08)!important; }
+        .ozt-layout-glass-premium .quantity-title { color:#aaa!important; }
+        .ozt-layout-glass-premium .quantity-selector { background:#18191c!important; border-color:rgba(255,255,255,.08)!important; }
+        .ozt-layout-glass-premium .quantity-selector button { background:#292a2e!important; color:#fff!important; }
+        .ozt-layout-glass-premium .quantity-selector strong { color:#fff!important; }
+        .ozt-layout-glass-premium .product-modal-total { color:#aaa!important; }
+        .ozt-layout-glass-premium .product-modal-total strong { color:#fff!important; }
+        .ozt-layout-glass-premium .product-modal-add { background:linear-gradient(145deg,#fff3dc,#dcb777)!important; color:#171515!important; }
+        .ozt-layout-glass-premium .product-modal-note { color:#827c74!important; }
+        .ozt-layout-glass-premium .product-modal-close { background:rgba(0,0,0,.52)!important; color:#fff!important; border-color:rgba(255,255,255,.14)!important; }
+
+        .ozt-app-footer { padding:24px 0 8px; text-align:center; color:#65615c; font-size:7px; letter-spacing:2.1px; }
+
+        @media (max-width: 520px) {
+          .ozt-layout-glass-premium { padding-left:10px !important; padding-right:10px !important; padding-bottom:104px !important; max-width:520px !important; }
+          .ozt-app-header { padding-left:2px; padding-right:2px; }
+          .ozt-app-category-strip { top:56px; margin:0 -8px; padding-left:8px; padding-right:8px; }
+          .ozt-app-hero { min-height:380px !important; border-radius:24px !important; }
+          .ozt-app-hero-content { inset:auto 18px 18px; }
+          .ozt-app-quick-actions { gap:7px; }
+          .ozt-app-action-button { min-height:72px; }
+          .ozt-app-feature-card { flex-basis:92%; }
+          .ozt-layout-glass-premium { border-radius:18px !important; padding-top:6px !important; }
+          .ozt-app-feature-card .customer-product-image-wrap { height:238px !important; }
+          .ozt-app-bottom-nav { width:calc(100vw - 18px); bottom:9px; }
+          .ozt-app-cart-item { grid-template-columns:44px minmax(0,1fr) auto; }
+          .ozt-app-cart-item img, .ozt-app-cart-placeholder { width:44px; height:44px; }
+          .ozt-app-cart-remove { grid-column:3; }
+          .ozt-app-cart-controls { grid-column:2; justify-self:start; margin-top:4px; }
+        }
+
         /* =====================================================
            TABLET
         ===================================================== */
@@ -1635,6 +2278,21 @@ export default function MenuLayouts({
           categories={categories}
           products={products}
           layout="ivory"
+        />
+      )}
+
+      {layout === "ozt-glass-premium" && (
+        <OztGlassPremiumLayout
+          categories={categories}
+          products={products}
+          layout="ozt-glass-premium"
+          showCart={showCart}
+          restaurantName={restaurantName}
+          tableNumber={tableNumber}
+          slug={slug}
+          masa={masa}
+          garson={garson}
+          waiterAction={waiterAction}
         />
       )}
     </>

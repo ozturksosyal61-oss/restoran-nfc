@@ -2,8 +2,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { supabase } from "../../../../lib/supabase";
 
-import Cart from "./Cart";
 import MenuLayouts from "./MenuLayouts";
+import Cart from "./Cart";
 
 type Category = {
   id: number;
@@ -44,6 +44,7 @@ type Restaurant = {
 
   opening_time: string | null;
   closing_time: string | null;
+  theme: string | null;
 };
 
 export const dynamic =
@@ -166,42 +167,32 @@ export default async function RestaurantMenuPage({
    * MENÜ TASARIMI
    * =====================================================
    *
-   * Varsayılan tasarım mevcut çalışan GRID tasarımıdır.
-   * Böylece mevcut müşteri deneyimini değiştirmiyoruz.
-   *
-   * Test için URL üzerinden tasarım seçilebilir:
-   * ?layout=classic
-   * ?layout=editorial
-   * ?layout=grid
-   * ?layout=ivory
-   * Eski luxury/minimal değerleri de Ivory olarak açılır.
-   *
-   * Daha sonra bunu restoran ayarlarından yönetebiliriz.
+   * Eski menu_layout değerleri korunur.
+   * Sistem sahibi tarafından seçilen restaurants.theme
+   * ozt-glass-premium ise yeni uygulama tipi tema önceliklidir.
    */
   type MenuLayout =
     | "classic"
     | "editorial"
     | "grid"
-    | "ivory";
+    | "ivory"
+    | "ozt-glass-premium";
 
-  const normalizedRequestedLayout =
-    requestedLayout?.trim().toLowerCase();
-
-  /*
-   * "luxury" ve "minimal" eski kayıt/URL değerleri olabilir.
-   * Bunları yeni Ivory / Luxury 3D tasarımına yönlendiriyoruz.
-   */
-  const menuLayout: MenuLayout =
-    normalizedRequestedLayout === "classic"
+  const requestedLegacyLayout: MenuLayout =
+    requestedLayout === "classic"
       ? "classic"
-      : normalizedRequestedLayout === "editorial"
+      : requestedLayout === "editorial"
       ? "editorial"
-      : normalizedRequestedLayout === "ivory"
+      : requestedLayout === "grid"
+      ? "grid"
+      : requestedLayout === "ivory"
       ? "ivory"
-      : normalizedRequestedLayout === "luxury"
+      : requestedLayout === "ozt-glass-premium"
+      ? "ozt-glass-premium"
+      : requestedLayout === "luxury"
       ? "ivory"
-      : normalizedRequestedLayout === "minimal"
-      ? "ivory"
+      : requestedLayout === "minimal"
+      ? "grid"
       : "grid";
 
   /*
@@ -228,7 +219,8 @@ export default async function RestaurantMenuPage({
       google_review_url,
       is_open,
       opening_time,
-      closing_time
+      closing_time,
+      theme
     `)
     .eq(
       "slug",
@@ -245,6 +237,11 @@ export default async function RestaurantMenuPage({
 
   const restaurantData =
     restaurant as Restaurant;
+
+  const menuLayout: MenuLayout =
+    restaurantData.theme === "ozt-glass-premium"
+      ? "ozt-glass-premium"
+      : requestedLegacyLayout;
 
   /*
    * =====================================================
@@ -428,6 +425,54 @@ export default async function RestaurantMenuPage({
           restaurantData.closing_time
         ).slice(0, 5)
       : "";
+
+  /*
+   * =====================================================
+   * OZT APP PREMIUM — AYRI EKRAN
+   * =====================================================
+   * Premium tema aktifken eski restoran hero/bilgi/garson
+   * kabuğunu tekrar render etmiyoruz. Böylece iki tasarım
+   * birbirinin içine girmez.
+   */
+
+  if (menuLayout === "ozt-glass-premium") {
+    return (
+      <main
+        className="ozt-premium-page"
+        style={{
+          minHeight: "100vh",
+          width: "100%",
+          margin: 0,
+          padding: 0,
+          background:
+            "radial-gradient(circle at 50% -10%, rgba(241,203,130,.08), transparent 28%), linear-gradient(180deg, #07090b 0%, #0b0d10 55%, #090a0c 100%)",
+          color: "#f7f2e9",
+          overflowX: "hidden",
+        }}
+      >
+        <section
+          style={{
+            width: "100%",
+            maxWidth: "980px",
+            minHeight: "100vh",
+            margin: "0 auto",
+          }}
+        >
+          <MenuLayouts
+            categories={categories}
+            products={products}
+            layout="ozt-glass-premium"
+            restaurantName={restaurantData.name}
+            tableNumber={tableNumber}
+            slug={slug}
+            masa={masa || ""}
+            garson={garson || ""}
+            waiterAction={callWaiter}
+          />
+        </section>
+      </main>
+    );
+  }
 
   /*
    * =====================================================
@@ -1365,7 +1410,9 @@ export default async function RestaurantMenuPage({
         ================================================= */}
 
         {isOpen ? (
-          <Cart />
+          <div id="cart">
+            <Cart />
+          </div>
         ) : (
           <section
             style={{
