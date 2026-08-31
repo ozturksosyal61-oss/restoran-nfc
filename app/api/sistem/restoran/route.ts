@@ -23,24 +23,16 @@ export async function POST(request: Request) {
       theme,
     } = body;
 
-    /* -------------------------------------------------
-       1. FORM KONTROLLERİ
-    ------------------------------------------------- */
-
     if (!name || !slug || !manager_email || !manager_password) {
       return NextResponse.json(
-        {
-          error: "Restoran adı, slug, yönetici e-posta ve şifre zorunludur.",
-        },
+        { error: "Restoran adı, slug, yönetici e-posta ve şifre zorunludur." },
         { status: 400 }
       );
     }
 
     if (manager_password.length < 8) {
       return NextResponse.json(
-        {
-          error: "Yönetici şifresi en az 8 karakter olmalıdır.",
-        },
+        { error: "Yönetici şifresi en az 8 karakter olmalıdır." },
         { status: 400 }
       );
     }
@@ -53,26 +45,26 @@ export async function POST(request: Request) {
       tableCount > 500
     ) {
       return NextResponse.json(
-        {
-          error: "Masa sayısı 1 ile 500 arasında olmalıdır.",
-        },
+        { error: "Masa sayısı 1 ile 500 arasında olmalıdır." },
         { status: 400 }
       );
     }
 
     const restaurantTheme = String(theme || "classic").toLowerCase();
 
-    if (!(["classic", "dark-modern", "luxury-gold"] as string[]).includes(restaurantTheme)) {
+    const allowedThemes = [
+      "classic",
+      "dark-modern",
+      "luxury-gold",
+      "ozt-glass-premium",
+    ];
+
+    if (!allowedThemes.includes(restaurantTheme)) {
       return NextResponse.json(
         { error: "Geçersiz restoran teması." },
         { status: 400 }
       );
     }
-
-    /* -------------------------------------------------
-       2. OTURUM KONTROLÜ
-       SADECE SİSTEM SAHİBİ İŞLEM YAPABİLİR
-    ------------------------------------------------- */
 
     const cookieStore = await cookies();
 
@@ -90,7 +82,7 @@ export async function POST(request: Request) {
                 cookieStore.set(name, value, options);
               });
             } catch {
-              // Server Component / Route Handler cookie hatası
+              // Route Handler cookie yazma hatası görmezden gelinir.
             }
           },
         },
@@ -108,10 +100,6 @@ export async function POST(request: Request) {
       );
     }
 
-    /* -------------------------------------------------
-       3. SERVICE ROLE CLIENT
-    ------------------------------------------------- */
-
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -122,10 +110,6 @@ export async function POST(request: Request) {
         },
       }
     );
-
-    /* -------------------------------------------------
-       4. SİSTEM SAHİBİ KONTROLÜ
-    ------------------------------------------------- */
 
     const { data: systemAdmin, error: systemAdminError } =
       await supabaseAdmin
@@ -150,10 +134,6 @@ export async function POST(request: Request) {
       );
     }
 
-    /* -------------------------------------------------
-       5. SLUG KONTROLÜ
-    ------------------------------------------------- */
-
     const { data: existingRestaurant } = await supabaseAdmin
       .from("restaurants")
       .select("id")
@@ -162,16 +142,10 @@ export async function POST(request: Request) {
 
     if (existingRestaurant) {
       return NextResponse.json(
-        {
-          error: `"${slug}" slug adresi zaten kullanılıyor.`,
-        },
+        { error: `"${slug}" slug adresi zaten kullanılıyor.` },
         { status: 409 }
       );
     }
-
-    /* -------------------------------------------------
-       6. RESTORANI OLUŞTUR
-    ------------------------------------------------- */
 
     const { data: restaurant, error: restaurantError } =
       await supabaseAdmin
@@ -193,8 +167,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            restaurantError?.message ||
-            "Restoran oluşturulamadı.",
+            restaurantError?.message || "Restoran oluşturulamadı.",
         },
         { status: 500 }
       );
@@ -202,23 +175,16 @@ export async function POST(request: Request) {
 
     restaurantId = restaurant.id;
 
-    /* -------------------------------------------------
-       7. YÖNETİCİ AUTH HESABI OLUŞTUR
-    ------------------------------------------------- */
-
-    const {
-      data: authData,
-      error: authError,
-    } = await supabaseAdmin.auth.admin.createUser({
-      email: manager_email,
-      password: manager_password,
-      email_confirm: true,
-    });
+    const { data: authData, error: authError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email: manager_email,
+        password: manager_password,
+        email_confirm: true,
+      });
 
     if (authError || !authData.user) {
       console.error("Auth kullanıcı hatası:", authError);
 
-      // Restoran oluşturuldu fakat kullanıcı oluşturulamadı.
       await supabaseAdmin
         .from("restaurants")
         .delete()
@@ -227,18 +193,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            authError?.message ||
-            "Yönetici hesabı oluşturulamadı.",
+            authError?.message || "Yönetici hesabı oluşturulamadı.",
         },
         { status: 500 }
       );
     }
 
     createdUserId = authData.user.id;
-
-    /* -------------------------------------------------
-       8. RESTORAN YÖNETİCİSİNİ BAĞLA
-    ------------------------------------------------- */
 
     const { error: managerError } = await supabaseAdmin
       .from("restaurant_users")
@@ -249,13 +210,9 @@ export async function POST(request: Request) {
       });
 
     if (managerError) {
-      console.error(
-        "Restaurant manager bağlantı hatası:",
-        managerError
-      );
+      console.error("Restaurant manager bağlantı hatası:", managerError);
 
       await supabaseAdmin.auth.admin.deleteUser(createdUserId);
-
       await supabaseAdmin
         .from("restaurants")
         .delete()
@@ -264,16 +221,11 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            managerError.message ||
-            "Restoran yöneticisi bağlanamadı.",
+            managerError.message || "Restoran yöneticisi bağlanamadı.",
         },
         { status: 500 }
       );
     }
-
-    /* -------------------------------------------------
-       9. MASALARI OLUŞTUR
-    ------------------------------------------------- */
 
     const tables = Array.from(
       { length: tableCount },
@@ -290,12 +242,8 @@ export async function POST(request: Request) {
       .insert(tables);
 
     if (tablesError) {
-      console.error(
-        "Masa oluşturma hatası:",
-        tablesError
-      );
+      console.error("Masa oluşturma hatası:", tablesError);
 
-      // Temizlik
       await supabaseAdmin
         .from("restaurant_users")
         .delete()
@@ -319,23 +267,18 @@ export async function POST(request: Request) {
       );
     }
 
-    /* -------------------------------------------------
-       10. BAŞARILI
-    ------------------------------------------------- */
-
     return NextResponse.json({
       success: true,
       restaurant_id: restaurantId,
       manager_user_id: createdUserId,
       table_count: tableCount,
+      theme: normalizeRestaurantTheme(restaurantTheme),
     });
   } catch (error) {
     console.error("Yeni restoran API hatası:", error);
 
     return NextResponse.json(
-      {
-        error: "Sunucu tarafında beklenmeyen bir hata oluştu.",
-      },
+      { error: "Sunucu tarafında beklenmeyen bir hata oluştu." },
       { status: 500 }
     );
   }
