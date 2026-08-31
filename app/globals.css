@@ -13678,3 +13678,83 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     font-size: 16px !important;
   }
 }
+/* =========================================================
+   MOBİL MODAL — SEPETE EKLE SON OVERRIDE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .restaurant-page .product-modal .product-modal-add {
+    position: fixed !important;
+
+    left: 50% !important;
+    bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+
+    transform: translateX(-50%) !important;
+
+    width: 300px !important;
+    max-width: calc(100vw - 70px) !important;
+
+    height: 48px !important;
+    min-height: 48px !important;
+
+    margin: 0 !important;
+    padding: 0 18px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 8px !important;
+
+    border: 0 !important;
+    border-radius: 999px !important;
+
+    background: #d4a52c !important;
+    background-image: linear-gradient(
+      135deg,
+      #e6bd55 0%,
+      #c89520 100%
+    ) !important;
+
+    color: #17130d !important;
+
+    font-size: 14px !important;
+    font-weight: 800 !important;
+
+    opacity: 1 !important;
+    visibility: visible !important;
+
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.35),
+      0 3px 10px rgba(212, 165, 44, 0.30) !important;
+
+    z-index: 999999 !important;
+  }
+
+  .restaurant-page .product-modal .product-modal-add span {
+    color: #17130d !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
+  }
+
+  .restaurant-page .product-modal .product-modal-add:active {
+    transform: translateX(-50%) scale(0.96) !important;
+  }
+}
+
+
+/* Küçük telefonlarda biraz daha dar */
+
+@media (max-width: 390px) {
+
+  .restaurant-page .product-modal .product-modal-add {
+    width: 280px !important;
+    max-width: calc(100vw - 55px) !important;
+
+    height: 46px !important;
+    min-height: 46px !important;
+
+    font-size: 13px !important;
+  }
+}
