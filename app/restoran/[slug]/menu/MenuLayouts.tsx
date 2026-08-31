@@ -358,7 +358,7 @@ function OztGlassPremiumLayout({
   }
 
   return (
-    <div id="ozt-premium-top" className="ozt-layout ozt-layout-glass-premium ozt-app-shell">
+    <div id="ozt-premium-top" className="ozt-layout ozt-layout-glass-premium">
       <header className="ozt-app-header">
         <div className="ozt-app-brand">
           <div className="ozt-app-logo">OZT</div>
@@ -367,14 +367,14 @@ function OztGlassPremiumLayout({
             <span>PREMIUM MENU EXPERIENCE</span>
           </div>
         </div>
+        <a href="#ozt-premium-cart" className="ozt-app-header-cart" aria-label="Sepeti görüntüle">
+          <span>🛒</span>
+          {itemCount > 0 ? <b>{itemCount}</b> : null}
+        </a>
         {tableNumber ? <div className="ozt-app-table">🪑 Masa {tableNumber}</div> : null}
       </header>
 
       <section className="ozt-glass-hero ozt-app-hero">
-        <div className="ozt-glass-hero-top">
-          <div className="ozt-glass-brand-mark">OZT</div>
-          <div className="ozt-glass-status"><span /> {"AÇIK"}</div>
-        </div>
         <div className="ozt-app-hero-photo" />
         <div className="ozt-app-hero-overlay" />
         <div className="ozt-app-hero-content">
@@ -405,7 +405,7 @@ function OztGlassPremiumLayout({
 
       {tableNumber && waiterAction && (
         <section className="ozt-app-quick-actions">
-          <form action={waiterAction} className="ozt-app-waiter-form">
+          <form action={waiterAction}>
             <input type="hidden" name="slug" value={slug} />
             <input type="hidden" name="masa" value={masa} />
             <button type="submit" className="ozt-app-action-button">
@@ -1565,32 +1565,6 @@ export default function MenuLayouts({
           -webkit-backdrop-filter: blur(18px) !important;
         }
 
-        .ozt-layout-glass-premium {
-          width:100% !important;
-          max-width:920px !important;
-          margin:0 auto !important;
-          padding:10px 16px 120px !important;
-          background:linear-gradient(180deg,#0a0b0d 0%,#0d0f12 55%,#090a0c 100%) !important;
-          color:#f7f2e9 !important;
-          border-radius:28px !important;
-          box-shadow:0 24px 60px rgba(0,0,0,.34) !important;
-        }
-
-        .ozt-layout-glass-premium .ozt-app-header {
-          position:sticky !important;
-          top:0 !important;
-          z-index:110 !important;
-          margin:0 0 12px !important;
-          min-height:58px !important;
-          padding:8px 4px !important;
-          background:rgba(10,11,13,.94) !important;
-          color:#f7f2e9 !important;
-          border:0 !important;
-          border-bottom:1px solid rgba(255,255,255,.07) !important;
-          backdrop-filter:blur(18px) !important;
-          -webkit-backdrop-filter:blur(18px) !important;
-        }
-
         .ozt-app-brand { display:flex; align-items:center; gap:10px; min-width:0; }
         .ozt-app-logo {
           width: 38px; height: 38px; flex:0 0 auto;
@@ -1661,17 +1635,7 @@ export default function MenuLayouts({
         }
 
         .ozt-app-hero-content { position:absolute; inset:auto 22px 22px; z-index:5; }
-        .ozt-app-hero .ozt-glass-hero-top { position:absolute; inset:16px 16px auto; z-index:5; }
-        .ozt-app-hero .ozt-glass-brand-mark {
-          width:48px; height:48px; border-radius:15px;
-          background:rgba(8,8,9,.55); border:1px solid rgba(255,255,255,.18);
-          color:#f1d79f; box-shadow:none; backdrop-filter:blur(10px);
-          font-size:14px;
-        }
-        .ozt-app-hero .ozt-glass-status {
-          padding:8px 10px; color:#f1d79f;
-          background:rgba(10,10,11,.55); border:1px solid rgba(230,193,123,.24);
-          box-shadow:none; backdrop-filter:blur(10px);
+        .ozt-layout-glass-premium .ozt-glass-status { display:none !important; }
         }
         .ozt-app-hero .ozt-glass-status span { width:7px; height:7px; background:#54d394; box-shadow:0 0 0 4px rgba(84,211,148,.12); }
         .ozt-app-hero .ozt-glass-eyebrow { margin-top:0 !important; color:#e8c981; font-size:8px; letter-spacing:2.6px; }
@@ -1722,14 +1686,7 @@ export default function MenuLayouts({
         .ozt-app-category span { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
         .ozt-layout-glass-premium .ozt-app-quick-actions {
-          display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:10px !important; margin:12px 0 26px !important;
-        }
-        .ozt-layout-glass-premium .ozt-app-waiter-form {
-          display:contents !important;
-          margin:0 !important;
-          padding:0 !important;
-          background:transparent !important;
-          border:0 !important;
+          display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:8px !important; margin:10px 0 22px !important;
         }
         .ozt-layout-glass-premium .ozt-app-action-button {
           min-width:0 !important; min-height:78px !important;
@@ -1751,7 +1708,7 @@ export default function MenuLayouts({
         .ozt-app-message.success { background:#153322;color:#8be0aa;border:1px solid #2d704a; }
         .ozt-app-message.error { background:#3a1717;color:#ffb0b0;border:1px solid #754040; }
 
-        .ozt-app-section { width:100%; margin-bottom:30px; scroll-margin-top:82px; }
+        .ozt-app-section { margin-bottom:30px; scroll-margin-top:82px; }
         .ozt-app-section-heading { display:flex; justify-content:space-between; align-items:end; gap:10px; margin-bottom:11px; padding:0 2px; }
         .ozt-app-section-heading > div > span { color:#d7b56e; font-size:7px; letter-spacing:2.7px; font-weight:900; }
         .ozt-app-section-heading h2 { margin:4px 0 0; color:#fff; font-family:Georgia,serif; font-size:31px; line-height:1; }
@@ -1764,19 +1721,19 @@ export default function MenuLayouts({
         }
         .ozt-app-featured-row::-webkit-scrollbar { display:none; }
         .ozt-app-feature-card {
-          position:relative; flex:0 0 min(78%, 690px); scroll-snap-align:start; min-width:0;
+          position:relative; flex:0 0 72%; scroll-snap-align:start; min-width:0;
         }
         .ozt-app-feature-card .customer-product {
           border:1px solid rgba(255,255,255,.09)!important;
           background:linear-gradient(150deg,#252328,#151619)!important;
-          color:#fff!important; border-radius:24px!important;
-          box-shadow:0 18px 36px rgba(0,0,0,.30)!important; overflow:hidden!important;
+          color:#fff!important; border-radius:21px!important;
+          box-shadow:0 14px 28px rgba(0,0,0,.27)!important; overflow:hidden!important;
         }
-        .ozt-app-feature-card .customer-product-image-wrap { height:255px!important; border-radius:0!important; }
-        .ozt-app-feature-card .customer-product-info { padding:13px 14px 5px!important; }
-        .ozt-app-feature-card .customer-product-info h3 { color:#fff!important; font-family:Georgia,serif!important; font-size:22px!important; }
-        .ozt-app-feature-card .customer-product-info p { color:#a4a09c!important; font-size:9px!important; }
-        .ozt-app-feature-card .customer-product-price { color:#f0cb83!important; padding:0 14px 14px!important; font-size:18px!important; }
+        .ozt-app-feature-card .customer-product-image-wrap { height:190px!important; border-radius:0!important; }
+        .ozt-app-feature-card .customer-product-info { padding:11px 12px 4px!important; }
+        .ozt-app-feature-card .customer-product-info h3 { color:#fff!important; font-family:Georgia,serif!important; font-size:18px!important; }
+        .ozt-app-feature-card .customer-product-info p { color:#a4a09c!important; font-size:8px!important; }
+        .ozt-app-feature-card .customer-product-price { color:#f0cb83!important; padding:0 12px 12px!important; font-size:15px!important; }
         .ozt-app-feature-card .customer-product-right { opacity:0!important; pointer-events:none!important; }
         .ozt-app-quick-add {
           position:absolute; right:14px; bottom:14px; z-index:8;
@@ -1914,9 +1871,8 @@ export default function MenuLayouts({
           .ozt-app-hero-content { inset:auto 18px 18px; }
           .ozt-app-quick-actions { gap:7px; }
           .ozt-app-action-button { min-height:72px; }
-          .ozt-app-feature-card { flex-basis:92%; }
-          .ozt-layout-glass-premium { border-radius:18px !important; padding-top:6px !important; }
-          .ozt-app-feature-card .customer-product-image-wrap { height:238px !important; }
+          .ozt-app-feature-card { flex-basis:78%; }
+          .ozt-app-feature-card .customer-product-image-wrap { height:172px !important; }
           .ozt-app-bottom-nav { width:calc(100vw - 18px); bottom:9px; }
           .ozt-app-cart-item { grid-template-columns:44px minmax(0,1fr) auto; }
           .ozt-app-cart-item img, .ozt-app-cart-placeholder { width:44px; height:44px; }
