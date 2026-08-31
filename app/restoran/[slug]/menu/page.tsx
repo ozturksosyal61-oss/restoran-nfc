@@ -44,12 +44,6 @@ type Restaurant = {
 
   opening_time: string | null;
   closing_time: string | null;
-  menu_layout:
-    | "classic"
-    | "editorial"
-    | "grid"
-    | "luxury"
-    | "minimal";
 };
 
 export const dynamic =
@@ -158,13 +152,57 @@ export default async function RestaurantMenuPage({
   searchParams: Promise<{
     masa?: string;
     garson?: string;
+    layout?: string;
   }>;
 }) {
   const { slug } =
     await params;
 
-  const { masa, garson } =
+  const { masa, garson, layout: requestedLayout } =
     await searchParams;
+
+  /*
+   * =====================================================
+   * MENÜ TASARIMI
+   * =====================================================
+   *
+   * Varsayılan tasarım mevcut çalışan GRID tasarımıdır.
+   * Böylece mevcut müşteri deneyimini değiştirmiyoruz.
+   *
+   * Test için URL üzerinden tasarım seçilebilir:
+   * ?layout=classic
+   * ?layout=editorial
+   * ?layout=grid
+   * ?layout=ivory
+   * Eski luxury/minimal değerleri de Ivory olarak açılır.
+   *
+   * Daha sonra bunu restoran ayarlarından yönetebiliriz.
+   */
+  type MenuLayout =
+    | "classic"
+    | "editorial"
+    | "grid"
+    | "ivory";
+
+  const normalizedRequestedLayout =
+    requestedLayout?.trim().toLowerCase();
+
+  /*
+   * "luxury" ve "minimal" eski kayıt/URL değerleri olabilir.
+   * Bunları yeni Ivory / Luxury 3D tasarımına yönlendiriyoruz.
+   */
+  const menuLayout: MenuLayout =
+    normalizedRequestedLayout === "classic"
+      ? "classic"
+      : normalizedRequestedLayout === "editorial"
+      ? "editorial"
+      : normalizedRequestedLayout === "ivory"
+      ? "ivory"
+      : normalizedRequestedLayout === "luxury"
+      ? "ivory"
+      : normalizedRequestedLayout === "minimal"
+      ? "ivory"
+      : "grid";
 
   /*
    * =====================================================
@@ -190,8 +228,7 @@ export default async function RestaurantMenuPage({
       google_review_url,
       is_open,
       opening_time,
-      closing_time,
-      menu_layout
+      closing_time
     `)
     .eq(
       "slug",
@@ -1261,7 +1298,7 @@ export default async function RestaurantMenuPage({
           <MenuLayouts
             categories={categories}
             products={products}
-            layout={restaurantData.menu_layout || "grid"}
+            layout={menuLayout}
           />
 
           {/* BOŞ MENÜ */}

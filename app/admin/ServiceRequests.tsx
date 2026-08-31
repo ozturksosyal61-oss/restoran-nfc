@@ -51,7 +51,9 @@ function formatTime(value: string) {
 function getWaitingSeconds(createdAt: string, now: number) {
   return Math.max(
     0,
-    Math.floor((now - new Date(createdAt).getTime()) / 1000)
+    Math.floor(
+      (now - new Date(createdAt).getTime()) / 1000
+    )
   );
 }
 
@@ -80,6 +82,19 @@ export default function ServiceRequests({
   const audioContextRef = useRef<AudioContext | null>(null);
   const firstLoadRef = useRef(true);
 
+  /*
+   * IMPORTANT:
+   * Realtime callback'inin her zaman güncel ses durumunu
+   * görmesi için state'e ek olarak ref kullanıyoruz.
+   */
+  const soundEnabledRef = useRef(false);
+
+  /*
+   * =====================================================
+   * SESİ ETKİNLEŞTİR
+   * =====================================================
+   */
+
   async function enableNotificationSound() {
     try {
       const AudioContextClass =
@@ -91,26 +106,96 @@ export default function ServiceRequests({
         ).webkitAudioContext;
 
       if (!AudioContextClass) {
-        setError("Tarayıcınız ses bildirimini desteklemiyor.");
+        setError(
+          "Tarayıcınız ses bildirimini desteklemiyor."
+        );
+
         return;
       }
 
       if (!audioContextRef.current) {
-        audioContextRef.current = new AudioContextClass();
+        audioContextRef.current =
+          new AudioContextClass();
       }
 
-      const context = audioContextRef.current;
+      const context =
+        audioContextRef.current;
 
       if (context.state === "suspended") {
         await context.resume();
       }
 
-      setSoundEnabled(context.state === "running");
+      const enabled =
+        context.state === "running";
+
+      soundEnabledRef.current =
+        enabled;
+
+      setSoundEnabled(enabled);
+
+      if (!enabled) {
+        setError(
+          "Bildirim sesi etkinleşmedi. Tarayıcı ses izinlerini kontrol edin."
+        );
+
+        return;
+      }
+
+      /*
+       * Kullanıcı "Sesi Aç" butonuna bastığında
+       * kısa test sesi çal.
+       */
+      const oscillator =
+        context.createOscillator();
+
+      const gain =
+        context.createGain();
+
+      oscillator.type = "sine";
+
+      oscillator.frequency.setValueAtTime(
+        880,
+        context.currentTime
+      );
+
+      oscillator.frequency.setValueAtTime(
+        660,
+        context.currentTime + 0.12
+      );
+
+      gain.gain.setValueAtTime(
+        0.0001,
+        context.currentTime
+      );
+
+      gain.gain.exponentialRampToValueAtTime(
+        0.18,
+        context.currentTime + 0.02
+      );
+
+      gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        context.currentTime + 0.45
+      );
+
+      oscillator.connect(gain);
+      gain.connect(
+        context.destination
+      );
+
+      oscillator.start();
+
+      oscillator.stop(
+        context.currentTime + 0.45
+      );
     } catch (soundError) {
       console.error(
         "Bildirim sesi etkinleştirilemedi:",
         soundError
       );
+
+      soundEnabledRef.current = false;
+      setSoundEnabled(false);
 
       setError(
         "Bildirim sesi etkinleştirilemedi. Tarayıcı ses izinlerini kontrol edin."
@@ -118,8 +203,21 @@ export default function ServiceRequests({
     }
   }
 
+  /*
+   * =====================================================
+   * BİLDİRİM SESİ ÇAL
+   * =====================================================
+   */
+
   async function playNotificationSound() {
-    if (!soundEnabled) return;
+    /*
+     * Burada state yerine REF kullanıyoruz.
+     * Böylece Realtime callback eski state değerini
+     * kullanmayacak.
+     */
+    if (!soundEnabledRef.current) {
+      return;
+    }
 
     try {
       const AudioContextClass =
@@ -130,43 +228,72 @@ export default function ServiceRequests({
           }
         ).webkitAudioContext;
 
-      if (!AudioContextClass) return;
-
-      if (!audioContextRef.current) {
-        audioContextRef.current = new AudioContextClass();
+      if (!AudioContextClass) {
+        return;
       }
 
-      const context = audioContextRef.current;
+      if (!audioContextRef.current) {
+        audioContextRef.current =
+          new AudioContextClass();
+      }
+
+      const context =
+        audioContextRef.current;
 
       if (context.state === "suspended") {
         await context.resume();
       }
 
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
+      if (context.state !== "running") {
+        return;
+      }
+
+      const oscillator =
+        context.createOscillator();
+
+      const gain =
+        context.createGain();
 
       oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(880, context.currentTime);
+
+      /*
+       * Çift tonlu kısa bildirim.
+       */
+      oscillator.frequency.setValueAtTime(
+        880,
+        context.currentTime
+      );
+
       oscillator.frequency.setValueAtTime(
         660,
         context.currentTime + 0.12
       );
 
-      gain.gain.setValueAtTime(0.0001, context.currentTime);
+      gain.gain.setValueAtTime(
+        0.0001,
+        context.currentTime
+      );
+
       gain.gain.exponentialRampToValueAtTime(
         0.18,
         context.currentTime + 0.02
       );
+
       gain.gain.exponentialRampToValueAtTime(
         0.0001,
         context.currentTime + 0.45
       );
 
       oscillator.connect(gain);
-      gain.connect(context.destination);
+      gain.connect(
+        context.destination
+      );
 
       oscillator.start();
-      oscillator.stop(context.currentTime + 0.45);
+
+      oscillator.stop(
+        context.currentTime + 0.45
+      );
     } catch (soundError) {
       console.error(
         "Bildirim sesi oynatılamadı:",
@@ -175,12 +302,21 @@ export default function ServiceRequests({
     }
   }
 
+  /*
+   * =====================================================
+   * ÇAĞRILARI YÜKLE
+   * =====================================================
+   */
+
   async function loadRequests(
     playSoundForNewRequests = false
   ) {
     setError("");
 
-    const { data, error: loadError } = await supabase
+    const {
+      data,
+      error: loadError,
+    } = await supabase
       .from("service_requests")
       .select(
         `
@@ -196,8 +332,14 @@ export default function ServiceRequests({
           )
         `
       )
-      .eq("restaurant_id", restaurantId)
-      .in("status", ["pending", "acknowledged"])
+      .eq(
+        "restaurant_id",
+        restaurantId
+      )
+      .in("status", [
+        "pending",
+        "acknowledged",
+      ])
       .order("created_at", {
         ascending: true,
       });
@@ -214,49 +356,85 @@ export default function ServiceRequests({
       );
 
       setLoading(false);
+
       return;
     }
 
-    const nextRequests = (data || []) as ServiceRequest[];
+    const nextRequests =
+      (data || []) as ServiceRequest[];
 
-    if (!firstLoadRef.current && playSoundForNewRequests) {
-      const hasNewRequest = nextRequests.some(
-        (request) => !knownRequestIds.current.has(request.id)
-      );
+    /*
+     * İlk sayfa yüklenirken ses çalma.
+     *
+     * Sonraki INSERT olaylarında yeni ID varsa
+     * bildirim sesi çal.
+     */
+    if (
+      !firstLoadRef.current &&
+      playSoundForNewRequests
+    ) {
+      const hasNewRequest =
+        nextRequests.some(
+          (request) =>
+            !knownRequestIds.current.has(
+              request.id
+            )
+        );
 
       if (hasNewRequest) {
         await playNotificationSound();
       }
     }
 
-    knownRequestIds.current = new Set(
-      nextRequests.map((request) => request.id)
-    );
+    knownRequestIds.current =
+      new Set(
+        nextRequests.map(
+          (request) => request.id
+        )
+      );
 
     setRequests(nextRequests);
     setLoading(false);
     firstLoadRef.current = false;
   }
 
-  useEffect(() => {
-    loadRequests();
+  /*
+   * =====================================================
+   * REALTIME + ZAMANLAYICI
+   * =====================================================
+   */
 
-    const timer = window.setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
+  useEffect(() => {
+    void loadRequests();
+
+    const timer =
+      window.setInterval(() => {
+        setNow(Date.now());
+      }, 1000);
 
     const channel = supabase
-      .channel(`service-requests-${restaurantId}`)
+      .channel(
+        `service-requests-${restaurantId}`
+      )
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "service_requests",
-          filter: `restaurant_id=eq.${restaurantId}`,
+          filter:
+            `restaurant_id=eq.${restaurantId}`,
         },
         async (payload) => {
-          if (payload.eventType === "INSERT") {
+          /*
+           * Yeni çağrı geldiğinde:
+           * 1) veriyi yeniden al
+           * 2) yeni kayıt varsa ses çal
+           */
+          if (
+            payload.eventType ===
+            "INSERT"
+          ) {
             await loadRequests(true);
           } else {
             await loadRequests(false);
@@ -267,39 +445,66 @@ export default function ServiceRequests({
 
     return () => {
       window.clearInterval(timer);
+
       supabase.removeChannel(channel);
 
       if (audioContextRef.current) {
         void audioContextRef.current.close();
         audioContextRef.current = null;
       }
+
+      soundEnabledRef.current = false;
+      setSoundEnabled(false);
     };
   }, [restaurantId]);
 
+  /*
+   * =====================================================
+   * SEKME BAŞLIĞI
+   * =====================================================
+   */
+
   useEffect(() => {
     if (requests.length > 0) {
-      document.title = `(${requests.length}) Garson Çağrısı • OZT`;
+      document.title =
+        `(${requests.length}) Garson Çağrısı • OZT`;
     } else {
-      document.title = "OZT Digital Menü";
+      document.title =
+        "OZT Digital Menü";
     }
 
     return () => {
-      document.title = "OZT Digital Menü";
+      document.title =
+        "OZT Digital Menü";
     };
   }, [requests.length]);
 
-  async function completeRequest(requestId: number) {
+  /*
+   * =====================================================
+   * ÇAĞRIYI TAMAMLA
+   * =====================================================
+   */
+
+  async function completeRequest(
+    requestId: number
+  ) {
     setUpdatingId(requestId);
     setError("");
 
-    const { error: updateError } = await supabase
+    const {
+      error: updateError,
+    } = await supabase
       .from("service_requests")
       .update({
         status: "completed",
-        completed_at: new Date().toISOString(),
+        completed_at:
+          new Date().toISOString(),
       })
       .eq("id", requestId)
-      .eq("restaurant_id", restaurantId);
+      .eq(
+        "restaurant_id",
+        restaurantId
+      );
 
     if (updateError) {
       console.error(
@@ -313,18 +518,29 @@ export default function ServiceRequests({
       );
 
       setUpdatingId(null);
+
       return;
     }
 
     setRequests((current) =>
       current.filter(
-        (request) => request.id !== requestId
+        (request) =>
+          request.id !== requestId
       )
     );
 
-    knownRequestIds.current.delete(requestId);
+    knownRequestIds.current.delete(
+      requestId
+    );
+
     setUpdatingId(null);
   }
+
+  /*
+   * =====================================================
+   * LOADING
+   * =====================================================
+   */
 
   if (loading) {
     return (
@@ -333,12 +549,18 @@ export default function ServiceRequests({
           background: "white",
           borderRadius: "18px",
           padding: "22px",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
+          boxShadow:
+            "0 10px 30px rgba(0,0,0,0.05)",
         }}
       >
         <div className="dashboard-section-heading">
-          <span>PERSONEL ÇAĞRILARI</span>
-          <h2>Garson Çağrıları</h2>
+          <span>
+            PERSONEL ÇAĞRILARI
+          </span>
+
+          <h2>
+            Garson Çağrıları
+          </h2>
         </div>
 
         <p
@@ -354,13 +576,20 @@ export default function ServiceRequests({
     );
   }
 
+  /*
+   * =====================================================
+   * ANA EKRAN
+   * =====================================================
+   */
+
   return (
     <section
       style={{
         background: "white",
         borderRadius: "18px",
         padding: "22px",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
+        boxShadow:
+          "0 10px 30px rgba(0,0,0,0.05)",
         minWidth: 0,
         position: "relative",
       }}
@@ -375,7 +604,8 @@ export default function ServiceRequests({
             height: "9px",
             borderRadius: "50%",
             background: "#b42318",
-            boxShadow: "0 0 0 5px rgba(180,35,24,0.08)",
+            boxShadow:
+              "0 0 0 5px rgba(180,35,24,0.08)",
           }}
           aria-label="Bekleyen çağrı var"
         />
@@ -392,8 +622,13 @@ export default function ServiceRequests({
         }}
       >
         <div>
-          <span>PERSONEL ÇAĞRILARI</span>
-          <h2>Garson Çağrıları</h2>
+          <span>
+            PERSONEL ÇAĞRILARI
+          </span>
+
+          <h2>
+            Garson Çağrıları
+          </h2>
         </div>
 
         <div
@@ -405,19 +640,30 @@ export default function ServiceRequests({
         >
           <button
             type="button"
-            onClick={enableNotificationSound}
+            onClick={
+              enableNotificationSound
+            }
             style={{
-              border: "1px solid #e5dfd2",
+              border:
+                "1px solid #e5dfd2",
               borderRadius: "9px",
               padding: "7px 9px",
-              background: soundEnabled ? "#e8f5e9" : "white",
-              color: soundEnabled ? "#2e7d32" : "#555",
+              background:
+                soundEnabled
+                  ? "#e8f5e9"
+                  : "white",
+              color:
+                soundEnabled
+                  ? "#2e7d32"
+                  : "#555",
               fontSize: "10px",
               fontWeight: 700,
               cursor: "pointer",
             }}
           >
-            {soundEnabled ? "🔊 Ses Açık" : "🔇 Sesi Aç"}
+            {soundEnabled
+              ? "🔊 Ses Açık"
+              : "🔇 Sesi Aç"}
           </button>
 
           <div
@@ -461,12 +707,19 @@ export default function ServiceRequests({
           style={{
             padding: "28px 18px",
             textAlign: "center",
-            border: "1px dashed #ddd4c3",
+            border:
+              "1px dashed #ddd4c3",
             borderRadius: "14px",
             background: "#faf8f3",
           }}
         >
-          <div style={{ fontSize: "34px" }}>🔕</div>
+          <div
+            style={{
+              fontSize: "34px",
+            }}
+          >
+            🔕
+          </div>
 
           <h3
             style={{
@@ -483,8 +736,8 @@ export default function ServiceRequests({
               fontSize: "12px",
             }}
           >
-            Yeni bir masa çağrısı geldiğinde burada
-            anında görünecek.
+            Yeni bir masa çağrısı geldiğinde
+            burada anında görünecek.
           </p>
         </div>
       ) : (
@@ -495,14 +748,20 @@ export default function ServiceRequests({
           }}
         >
           {requests.map((request) => {
-            const tableNumber = getTableNumber(request);
+            const tableNumber =
+              getTableNumber(request);
+
             const label =
-              requestLabels[request.request_type] ||
+              requestLabels[
+                request.request_type
+              ] ||
               "Personel Talebi";
-            const waitingSeconds = getWaitingSeconds(
-              request.created_at,
-              now
-            );
+
+            const waitingSeconds =
+              getWaitingSeconds(
+                request.created_at,
+                now
+              );
 
             return (
               <div
@@ -510,7 +769,8 @@ export default function ServiceRequests({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
+                  justifyContent:
+                    "space-between",
                   gap: "14px",
                   padding: "14px",
                   border:
@@ -546,7 +806,8 @@ export default function ServiceRequests({
                         placeItems: "center",
                         borderRadius: "10px",
                         background:
-                          waitingSeconds >= 180
+                          waitingSeconds >=
+                          180
                             ? "#fde3df"
                             : "#fff0bf",
                         fontSize: "15px",
@@ -575,12 +836,18 @@ export default function ServiceRequests({
                           marginTop: "2px",
                           color: "#666",
                           fontSize: "11px",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          whiteSpace:
+                            "nowrap",
+                          overflow:
+                            "hidden",
+                          textOverflow:
+                            "ellipsis",
                         }}
                       >
-                        {label} · {formatTime(request.created_at)}
+                        {label} ·{" "}
+                        {formatTime(
+                          request.created_at
+                        )}
                       </span>
                     </div>
                   </div>
@@ -588,53 +855,77 @@ export default function ServiceRequests({
                   <div
                     style={{
                       marginTop: "9px",
-                      display: "inline-flex",
-                      alignItems: "center",
+                      display:
+                        "inline-flex",
+                      alignItems:
+                        "center",
                       gap: "6px",
-                      padding: "5px 8px",
-                      borderRadius: "8px",
+                      padding:
+                        "5px 8px",
+                      borderRadius:
+                        "8px",
                       background:
-                        waitingSeconds >= 180
+                        waitingSeconds >=
+                        180
                           ? "#fde3df"
                           : "#f5f1e8",
                       color:
-                        waitingSeconds >= 180
+                        waitingSeconds >=
+                        180
                           ? "#b42318"
                           : "#6d5a32",
                       fontSize: "10px",
                       fontWeight: 800,
                     }}
                   >
-                    ⏱ {formatWaitingTime(waitingSeconds)} bekliyor
+                    ⏱{" "}
+                    {formatWaitingTime(
+                      waitingSeconds
+                    )}{" "}
+                    bekliyor
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={() =>
-                    completeRequest(request.id)
+                    completeRequest(
+                      request.id
+                    )
                   }
-                  disabled={updatingId === request.id}
+                  disabled={
+                    updatingId ===
+                    request.id
+                  }
                   style={{
                     flexShrink: 0,
                     border: "none",
-                    borderRadius: "9px",
-                    padding: "9px 12px",
-                    background: "#111",
-                    color: "white",
-                    fontSize: "11px",
-                    fontWeight: 700,
+                    borderRadius:
+                      "9px",
+                    padding:
+                      "9px 12px",
+                    background:
+                      "#111",
+                    color:
+                      "white",
+                    fontSize:
+                      "11px",
+                    fontWeight:
+                      700,
                     cursor:
-                      updatingId === request.id
+                      updatingId ===
+                      request.id
                         ? "not-allowed"
                         : "pointer",
                     opacity:
-                      updatingId === request.id
+                      updatingId ===
+                      request.id
                         ? 0.6
                         : 1,
                   }}
                 >
-                  {updatingId === request.id
+                  {updatingId ===
+                  request.id
                     ? "Tamamlanıyor..."
                     : "✓ Tamamlandı"}
                 </button>
@@ -651,8 +942,9 @@ export default function ServiceRequests({
           fontSize: "11px",
         }}
       >
-        Yeni çağrılar Realtime ile otomatik gelir; bekleme
-        süresi canlı olarak güncellenir.
+        Yeni çağrılar Realtime ile otomatik
+        gelir; bekleme süresi canlı olarak
+        güncellenir.
       </p>
     </section>
   );

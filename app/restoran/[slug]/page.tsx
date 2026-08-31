@@ -288,33 +288,55 @@ export default async function RestaurantPage({
           </a>
         )}
 
-        {table && (
-          <form action={callWaiter} style={{ margin: 0 }}>
-            <input
-              type="hidden"
-              name="slug"
-              value={restaurant.slug}
-            />
-            <input
-              type="hidden"
-              name="masa"
-              value={table.public_token}
-            />
+        <div style={{ margin: 0 }}>
+  {table ? (
+    <form
+      action={callWaiter}
+      style={{ margin: 0 }}
+    >
+      <input
+        type="hidden"
+        name="slug"
+        value={restaurant.slug}
+      />
 
-            <button
-              type="submit"
-              className="action-button"
-              style={{
-                width: "100%",
-                border: "none",
-                cursor: "pointer",
-                font: "inherit",
-              }}
-            >
-              🔔 Garsonu Çağır
-            </button>
-          </form>
-        )}
+      <input
+        type="hidden"
+        name="masa"
+        value={table.public_token}
+      />
+
+      <button
+        type="submit"
+        className="action-button"
+        style={{
+          width: "100%",
+          border: "none",
+          cursor: "pointer",
+          font: "inherit",
+        }}
+      >
+        🔔 Garsonu Çağır
+      </button>
+    </form>
+  ) : (
+    <button
+      type="button"
+      className="action-button"
+      disabled
+      title="Garson çağırmak için masa QR veya NFC kodunu kullanın."
+      style={{
+        width: "100%",
+        border: "none",
+        font: "inherit",
+        opacity: 0.55,
+        cursor: "not-allowed",
+      }}
+    >
+      🔔 Garsonu Çağır
+    </button>
+  )}
+</div>
 
         <a
           href={`/restoran/${restaurant.slug}/calisan${tableQuery}`}
