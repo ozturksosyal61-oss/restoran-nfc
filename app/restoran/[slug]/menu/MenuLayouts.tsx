@@ -2509,6 +2509,85 @@ export default function MenuLayouts({
             height: 78px !important;
           }
         }
+          /* =========================================================
+   MİRA KITCHEN PREMIUM — FAVORİLER CAROUSEL FINAL
+   ========================================================= */
+
+.ozt-layout-glass-premium .ozt-app-featured-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+
+  width: 100% !important;
+  max-width: 100% !important;
+
+  gap: 12px !important;
+
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+
+  padding: 4px 2px 14px !important;
+
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+
+  -webkit-overflow-scrolling: touch !important;
+  scroll-snap-type: x mandatory !important;
+}
+
+.ozt-layout-glass-premium
+.ozt-app-featured-row::-webkit-scrollbar {
+  display: none !important;
+}
+
+.ozt-layout-glass-premium
+.ozt-app-feature-card {
+  flex: 0 0 220px !important;
+
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+
+  height: 235px !important;
+
+  scroll-snap-align: start !important;
+
+  box-sizing: border-box !important;
+}
+
+
+/* MOBİL */
+
+@media (max-width: 600px) {
+
+  .ozt-layout-glass-premium
+  .ozt-app-feature-card {
+    flex: 0 0 205px !important;
+
+    width: 205px !important;
+    min-width: 205px !important;
+    max-width: 205px !important;
+
+    height: 225px !important;
+  }
+}
+
+
+/* KÜÇÜK TELEFON */
+
+@media (max-width: 430px) {
+
+  .ozt-layout-glass-premium
+  .ozt-app-feature-card {
+    flex: 0 0 190px !important;
+
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 190px !important;
+
+    height: 215px !important;
+  }
+}
 
       `}</style>
 

@@ -13572,62 +13572,149 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   }
 }
 /* =========================================================
-   MİRA KITCHEN — OZT GLASS PREMIUM FINAL
-   Sadece .ozt-layout-glass-premium kapsamındadır.
+
+/* =========================================================
+   MİRA KITCHEN — OZT GLASS PREMIUM
+   TEKİL / TEMİZ PREMIUM BLOĞU
+   Sadece .ozt-layout-glass-premium altını etkiler.
    ========================================================= */
 
 .ozt-layout-glass-premium {
-  max-width: 860px !important;
-  padding: 0 14px 110px !important;
+  position: relative !important;
+  isolation: isolate !important;
+  width: 100% !important;
+  max-width: 900px !important;
+  min-height: 100vh !important;
   margin: 0 auto !important;
+  padding: 0 14px 110px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  color: #f6f1e8 !important;
   background:
     radial-gradient(circle at 50% 0%, rgba(214,168,59,.08), transparent 30%),
-    linear-gradient(180deg, #080a0c 0%, #0c0e11 55%, #08090b 100%) !important;
-  color: #f4efe6 !important;
+    linear-gradient(180deg, #090b0d 0%, #0d0f12 56%, #08090b 100%) !important;
+}
+
+.ozt-layout-glass-premium,
+.ozt-layout-glass-premium * {
+  box-sizing: border-box !important;
 }
 
 /* ---------- HEADER ---------- */
-
 .ozt-layout-glass-premium .ozt-app-header {
   position: sticky !important;
   top: 0 !important;
   z-index: 80 !important;
-
-  min-height: 62px !important;
-  padding: 10px 12px !important;
-
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
   gap: 10px !important;
-
-  background: rgba(8,10,12,.90) !important;
+  min-height: 62px !important;
+  padding: 10px 4px !important;
+  background: rgba(8,10,12,.92) !important;
   border-bottom: 1px solid rgba(214,168,59,.18) !important;
   backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
   min-width: 0 !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-logo {
   width: 42px !important;
   height: 42px !important;
+  min-width: 42px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
   border-radius: 13px !important;
   background: #0b0c0e !important;
   border: 1px solid rgba(214,168,59,.55) !important;
-  color: #d6a83b !important;
+  color: #e1b84c !important;
+  font: 800 11px Georgia,serif !important;
   box-shadow: 0 0 18px rgba(214,168,59,.10) !important;
 }
 
+.ozt-layout-glass-premium .ozt-app-logo-image {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-brand > div:last-child {
+  min-width: 0 !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-brand strong {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: #f7f1e7 !important;
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-brand span {
+  display: block !important;
+  margin-top: 3px !important;
+  color: #8c8882 !important;
+  font-size: 7px !important;
+  letter-spacing: 1.5px !important;
+  white-space: nowrap !important;
+}
+
 .ozt-layout-glass-premium .ozt-app-header-cart {
-  border-color: rgba(214,168,59,.25) !important;
+  position: relative !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  margin-left: auto !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 12px !important;
+  text-decoration: none !important;
+  background: #15171a !important;
+  border: 1px solid rgba(214,168,59,.28) !important;
+  color: #f2e3c2 !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-header-cart b {
+  position: absolute !important;
+  top: -4px !important;
+  right: -4px !important;
+  min-width: 16px !important;
+  height: 16px !important;
+  padding: 0 4px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  background: #e1b84c !important;
+  color: #17120a !important;
+  border: 2px solid #0d0f12 !important;
+  font-size: 8px !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-table {
+  flex: 0 0 auto !important;
+  padding: 8px 10px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(214,168,59,.32) !important;
+  background: linear-gradient(145deg,#24201b,#141210) !important;
+  color: #ecd29b !important;
+  font-size: 9px !important;
+  font-weight: 900 !important;
 }
 
 /* ---------- HERO ---------- */
-
 .ozt-layout-glass-premium .ozt-app-hero {
-  margin-top: 12px !important;
+  position: relative !important;
+  margin-top: 10px !important;
   border-radius: 24px !important;
   overflow: hidden !important;
   border: 1px solid rgba(214,168,59,.28) !important;
@@ -13638,37 +13725,67 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   min-height: 330px !important;
   background-size: cover !important;
   background-position: center !important;
-  filter: saturate(.92) contrast(1.03) !important;
+  filter: saturate(.94) contrast(1.03) !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-hero-overlay {
-  background:
-    linear-gradient(180deg, rgba(0,0,0,.16) 0%, rgba(0,0,0,.32) 42%, rgba(0,0,0,.88) 100%) !important;
+  background: linear-gradient(180deg,rgba(0,0,0,.13) 0%,rgba(0,0,0,.34) 42%,rgba(0,0,0,.90) 100%) !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-hero-content {
-  padding: 30px 24px 22px !important;
+  position: absolute !important;
+  inset: auto 0 0 !important;
+  padding: 26px 22px 20px !important;
+}
+
+.ozt-layout-glass-premium .ozt-glass-eyebrow {
+  margin-bottom: 7px !important;
+  color: #d8b46b !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+  letter-spacing: 3px !important;
 }
 
 .ozt-layout-glass-premium .ozt-glass-hero-title {
-  max-width: 680px !important;
-  font-size: clamp(38px, 7vw, 62px) !important;
-  line-height: .98 !important;
-  letter-spacing: -.04em !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+  color: #fffaf2 !important;
+  font-family: Georgia,"Times New Roman",serif !important;
+  font-size: clamp(42px,7vw,64px) !important;
+  line-height: .95 !important;
+  letter-spacing: -.045em !important;
+}
+
+.ozt-layout-glass-premium .ozt-glass-hero-copy {
+  margin-top: 6px !important;
+  color: rgba(255,250,242,.82) !important;
+  font-size: 10px !important;
+  line-height: 1.35 !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-search {
+  margin-top: 13px !important;
+  width: 100% !important;
   height: 50px !important;
+  padding: 0 15px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
   border-radius: 15px !important;
-  border-color: rgba(255,255,255,.18) !important;
+  border: 1px solid rgba(255,255,255,.17) !important;
   background: rgba(0,0,0,.42) !important;
+  color: #e8dfd2 !important;
+  font-size: 11px !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-search span {
+  color: #a7a29b !important;
 }
 
 /* ---------- CATEGORY STRIP ---------- */
-
 .ozt-layout-glass-premium .ozt-app-category-strip {
-  margin-top: 14px !important;
-  padding: 2px 0 4px !important;
+  margin-top: 13px !important;
+  padding: 0 0 2px !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-categories {
@@ -13676,28 +13793,32 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   gap: 10px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  padding: 2px 2px 8px !important;
+  padding: 2px 2px 9px !important;
   scrollbar-width: none !important;
-  scroll-snap-type: x proximity !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
-.ozt-layout-glass-premium .ozt-app-categories::-webkit-scrollbar {
+.ozt-layout-glass-premium .ozt-app-categories::-webkit-scrollbar,
+.ozt-layout-glass-premium .ozt-app-featured-row::-webkit-scrollbar {
   display: none !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-category {
-  flex: 0 0 88px !important;
+  flex: 0 0 78px !important;
+  min-width: 78px !important;
+  display: block !important;
+  text-decoration: none !important;
+  color: #f0ebe2 !important;
   scroll-snap-align: start !important;
-  color: #f1ece4 !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-category-image {
-  width: 72px !important;
-  height: 72px !important;
-  margin: 0 auto 7px !important;
+  width: 62px !important;
+  height: 62px !important;
+  margin: 0 auto 6px !important;
   border-radius: 50% !important;
-  border: 1px solid rgba(214,168,59,.52) !important;
   overflow: hidden !important;
+  border: 1px solid rgba(214,168,59,.52) !important;
   background: #17191d !important;
   box-shadow: inset 0 0 0 3px rgba(0,0,0,.30) !important;
 }
@@ -13705,26 +13826,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .ozt-layout-glass-premium .ozt-app-category-image img {
   width: 100% !important;
   height: 100% !important;
+  display: block !important;
   object-fit: cover !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-category-image span {
+  width: 100% !important;
+  height: 100% !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #d8b46b !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-category > span {
   display: block !important;
-  font-size: 10px !important;
-  line-height: 1.15 !important;
-  text-align: center !important;
-  white-space: nowrap !important;
+  width: 100% !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
 }
 
 /* ---------- QUICK ACTIONS ---------- */
-
 .ozt-layout-glass-premium .ozt-app-quick-actions {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 10px !important;
-  margin: 12px 0 22px !important;
+  grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+  gap: 9px !important;
+  margin: 10px 0 22px !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-quick-actions form {
@@ -13732,68 +13862,135 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 }
 
 .ozt-layout-glass-premium .ozt-app-action-button {
-  min-height: 74px !important;
-  padding: 12px 9px !important;
+  width: 100% !important;
+  min-height: 70px !important;
+  padding: 10px 7px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
   border-radius: 17px !important;
-  background: linear-gradient(180deg, #181a1f, #111317) !important;
-  border: 1px solid rgba(255,255,255,.09) !important;
-  color: #f8f2e8 !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.03) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  background: linear-gradient(180deg,#181a1e,#111317) !important;
+  color: #f5efe5 !important;
+  text-decoration: none !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-action-button strong {
-  font-size: 12px !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-action-button small {
-  color: #8d8b86 !important;
+  color: #88847d !important;
+  font-size: 7px !important;
 }
 
 /* ---------- SECTION HEADINGS ---------- */
+.ozt-layout-glass-premium .ozt-app-section,
+.ozt-layout-glass-premium .ozt-app-cart-panel {
+  scroll-margin-top: 78px !important;
+}
 
 .ozt-layout-glass-premium .ozt-app-section {
-  margin-top: 30px !important;
-  scroll-margin-top: 82px !important;
+  margin-top: 28px !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-section:has(.ozt-empty-category) {
+  display: none !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-section-heading,
 .ozt-layout-glass-premium .ozt-glass-section-heading {
-  margin-bottom: 12px !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 11px !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-section-heading > div,
+.ozt-layout-glass-premium .ozt-glass-section-heading > div:first-child {
+  min-width: 0 !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-section-heading span,
+.ozt-layout-glass-premium .ozt-glass-section-kicker {
+  display: block !important;
+  margin-bottom: 4px !important;
+  color: #d0a44e !important;
+  font-size: 8px !important;
+  font-weight: 950 !important;
+  letter-spacing: 3px !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-section-heading h2,
 .ozt-layout-glass-premium .ozt-glass-section-heading h2 {
-  margin: 3px 0 0 !important;
-  color: #fff9f0 !important;
-  font-family: Georgia, "Times New Roman", serif !important;
-  font-size: clamp(28px, 5vw, 38px) !important;
-  line-height: 1 !important;
+  margin: 0 !important;
+  color: #fff7eb !important;
+  font-family: Georgia,"Times New Roman",serif !important;
+  font-size: 31px !important;
+  line-height: .98 !important;
+  font-weight: 700 !important;
+  letter-spacing: -.02em !important;
 }
 
-/* ---------- FAVORİLER ---------- */
+.ozt-layout-glass-premium .ozt-app-section-heading small,
+.ozt-layout-glass-premium .ozt-glass-section-heading p {
+  margin: 0 !important;
+  color: #7d7973 !important;
+  font-size: 8px !important;
+}
 
-.ozt-layout-glass-premium .ozt-app-featured-row {
+.ozt-layout-glass-premium .ozt-glass-section-badge {
+  min-width: 42px !important;
+  height: 32px !important;
+  padding: 0 8px !important;
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 12px !important;
-  overflow: visible !important;
+  place-items: center !important;
+  border-radius: 11px !important;
+  border: 1px solid rgba(214,168,59,.24) !important;
+  color: #dcb663 !important;
+  background: #141518 !important;
+  font-size: 9px !important;
+  font-weight: 900 !important;
+}
+
+/* ---------- FAVORİLER: TEK SATIR KAYDIRMALI ---------- */
+.ozt-layout-glass-premium .ozt-app-featured-row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
+  width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 2px 2px 12px !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
+  scroll-snap-type: x mandatory !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-feature-card {
   position: relative !important;
-  min-width: 0 !important;
-  padding: 8px !important;
-  border-radius: 19px !important;
-  background: linear-gradient(180deg, #1a1c20, #111317) !important;
-  border: 1px solid rgba(214,168,59,.20) !important;
+  flex: 0 0 205px !important;
+  width: 205px !important;
+  min-width: 205px !important;
+  height: 224px !important;
   overflow: hidden !important;
+  scroll-snap-align: start !important;
+  border-radius: 17px !important;
+  border: 1px solid rgba(214,168,59,.20) !important;
+  background: linear-gradient(180deg,#1a1c20,#111317) !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-feature-card .customer-product {
   display: flex !important;
   flex-direction: column !important;
-  gap: 8px !important;
-  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 7px !important;
+  gap: 0 !important;
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
@@ -13801,43 +13998,82 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-image-wrap {
   width: 100% !important;
-  height: 150px !important;
-  border-radius: 14px !important;
+  height: 104px !important;
+  min-height: 104px !important;
   overflow: hidden !important;
+  border-radius: 11px !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-feature-card .customer-product-image,
+.ozt-layout-glass-premium .ozt-app-product-row .customer-product-image {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-info {
-  padding: 2px 3px 34px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  padding: 8px 3px 36px !important;
+  overflow: hidden !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-info h3 {
-  color: #fff7ea !important;
-  font-size: 17px !important;
+  width: 100% !important;
+  margin: 0 0 4px !important;
+  color: #fff7ec !important;
+  font: 700 14px/1.12 Georgia,"Times New Roman",serif !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-info p {
-  color: #999894 !important;
-  font-size: 10px !important;
-  line-height: 1.35 !important;
+  width: 100% !important;
+  margin: 0 0 5px !important;
+  color: #96928c !important;
+  font-size: 9px !important;
+  line-height: 1.25 !important;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important;
+  overflow: hidden !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-price {
-  color: #e1b84c !important;
-  font-size: 17px !important;
+  display: block !important;
+  margin: 0 !important;
+  color: #e2b74c !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
 }
 
-.ozt-layout-glass-premium .ozt-app-quick-add {
-  width: 38px !important;
-  height: 38px !important;
-  border-radius: 50% !important;
-  background: #e1b84c !important;
-  color: #17120c !important;
+.ozt-layout-glass-premium .ozt-app-feature-card .customer-product-right {
+  display: none !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-feature-card .ozt-app-quick-add {
+  position: absolute !important;
+  right: 7px !important;
+  bottom: 7px !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
   border: 0 !important;
-  box-shadow: 0 5px 16px rgba(214,168,59,.24) !important;
+  border-radius: 50% !important;
+  background: #e2b74c !important;
+  color: #17120a !important;
+  box-shadow: 0 6px 16px rgba(214,168,59,.25) !important;
+  font-size: 20px !important;
 }
 
-/* ---------- NORMAL PRODUCTS ---------- */
-
+/* ---------- NORMAL ÜRÜNLER ---------- */
 .ozt-layout-glass-premium .ozt-app-product-list {
   display: flex !important;
   flex-direction: column !important;
@@ -13846,167 +14082,564 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .ozt-layout-glass-premium .ozt-app-product-row {
   position: relative !important;
+  width: 100% !important;
   min-width: 0 !important;
-  padding: 7px !important;
-  border-radius: 17px !important;
-  background: linear-gradient(180deg, #17191d, #111317) !important;
-  border: 1px solid rgba(255,255,255,.08) !important;
   overflow: hidden !important;
+  border-radius: 17px !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  background: linear-gradient(180deg,#17191d,#111317) !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-product-row .customer-product {
+  position: relative !important;
   display: grid !important;
-  grid-template-columns: 105px minmax(0,1fr) !important;
+  grid-template-columns: 82px minmax(0,1fr) !important;
   align-items: center !important;
-  gap: 12px !important;
-  min-height: 105px !important;
-  padding: 0 !important;
+  gap: 11px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 96px !important;
+  padding: 7px !important;
   background: transparent !important;
   border: 0 !important;
+  border-radius: 0 !important;
   box-shadow: none !important;
-}
-
-.ozt-layout-glass-premium .ozt-app-product-row .customer-product-image-wrap {
-  width: 105px !important;
-  height: 105px !important;
-  border-radius: 13px !important;
   overflow: hidden !important;
 }
 
-.ozt-layout-glass-premium .ozt-app-product-row .customer-product-image {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
+.ozt-layout-glass-premium .ozt-app-product-row .customer-product-image-wrap {
+  width: 82px !important;
+  min-width: 82px !important;
+  max-width: 82px !important;
+  height: 82px !important;
+  min-height: 82px !important;
+  max-height: 82px !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info {
-  padding: 4px 44px 4px 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding: 3px 45px 3px 0 !important;
+  overflow: hidden !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info h3 {
-  margin: 0 0 5px !important;
-  color: #fff7ec !important;
-  font-size: 16px !important;
-  line-height: 1.1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 0 4px !important;
+  color: #fff7ed !important;
+  font-size: 15px !important;
+  line-height: 1.15 !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info p {
-  color: #96938e !important;
-  font-size: 11px !important;
-  line-height: 1.35 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 0 6px !important;
+  color: #96928c !important;
+  font-size: 9px !important;
+  line-height: 1.3 !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-product-row .customer-product-price {
-  color: #e1b84c !important;
-  font-size: 15px !important;
+  display: block !important;
+  margin: 0 !important;
+  color: #e2b74c !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
 }
 
-.ozt-layout-glass-premium .ozt-app-row-add {
+.ozt-layout-glass-premium .ozt-app-product-row .customer-product-right {
   position: absolute !important;
-  right: 10px !important;
-  bottom: 10px !important;
+  right: 8px !important;
+  bottom: 8px !important;
+  width: 36px !important;
+  height: 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  z-index: 5 !important;
 }
 
-/* ---------- EMPTY CATEGORY: HİÇ GÖSTERME ---------- */
+.ozt-layout-glass-premium .ozt-app-product-row .add-to-cart-button,
+.ozt-layout-glass-premium .ozt-app-quick-add {
+  cursor: pointer !important;
+}
 
-.ozt-layout-glass-premium .ozt-app-section:has(.ozt-empty-category) {
-  display: none !important;
+.ozt-layout-glass-premium .ozt-app-product-row .add-to-cart-button {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 11px !important;
+  background: #e2b74c !important;
+  color: #17120a !important;
+  font-size: 21px !important;
+}
+
+/* ---------- ALT NAV ---------- */
+.ozt-layout-glass-premium .ozt-app-bottom-nav {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  transform: translateX(-50%) !important;
+  z-index: 9990 !important;
+  width: min(390px,calc(100vw - 32px)) !important;
+  min-height: 58px !important;
+  padding: 5px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 4px !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 18px !important;
+  background: rgba(17,18,21,.96) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.38) !important;
+  backdrop-filter: blur(18px) !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-bottom-nav a {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  border-radius: 14px !important;
+  color: #f0ebe2 !important;
+  text-decoration: none !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-bottom-nav a.active {
+  background: linear-gradient(135deg,#f5e2b6,#e3b95f) !important;
+  color: #17120a !important;
 }
 
 /* ---------- CART ---------- */
-
 .ozt-layout-glass-premium .ozt-app-cart-panel {
-  margin-top: 32px !important;
-  padding: 16px !important;
-  border-radius: 21px !important;
-  background: linear-gradient(180deg, #17191d, #0f1114) !important;
+  margin-top: 30px !important;
+  padding: 14px !important;
+  border-radius: 20px !important;
   border: 1px solid rgba(214,168,59,.18) !important;
+  background: linear-gradient(180deg,#17191d,#101215) !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-cart-items {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 9px !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-cart-item {
   display: grid !important;
-  grid-template-columns: 58px minmax(0,1fr) auto auto !important;
+  grid-template-columns: 54px minmax(0,1fr) auto 24px !important;
   align-items: center !important;
-  gap: 9px !important;
+  gap: 8px !important;
+  padding: 7px !important;
+  border-radius: 13px !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  background: #131519 !important;
 }
 
 .ozt-layout-glass-premium .ozt-app-cart-item img,
 .ozt-layout-glass-premium .ozt-app-cart-placeholder {
-  width: 58px !important;
-  height: 58px !important;
-  border-radius: 11px !important;
+  width: 54px !important;
+  height: 54px !important;
+  border-radius: 10px !important;
   object-fit: cover !important;
 }
 
-/* ---------- FOOTER ---------- */
+.ozt-layout-glass-premium .ozt-app-cart-info {
+  min-width: 0 !important;
+}
 
-.ozt-layout-glass-premium .ozt-app-footer {
-  padding: 32px 0 5px !important;
-  color: #6e6b66 !important;
+.ozt-layout-glass-premium .ozt-app-cart-info strong {
+  display: block !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: #f4eee5 !important;
+  font-size: 11px !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-cart-info span {
+  display: block !important;
+  margin-top: 3px !important;
+  color: #dbae42 !important;
+  font-size: 9px !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-cart-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-cart-controls button,
+.ozt-layout-glass-premium .ozt-app-cart-remove {
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 7px !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  background: #1d2024 !important;
+  color: #f2eadc !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-cart-controls b {
+  min-width: 13px !important;
   text-align: center !important;
+  font-size: 10px !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-cart-total {
+  margin-top: 12px !important;
+  padding-top: 11px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-top: 1px dashed rgba(255,255,255,.16) !important;
+  color: #cfc8bc !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-cart-total strong {
+  color: #e2b74c !important;
+  font-size: 20px !important;
+}
+
+.ozt-layout-glass-premium .ozt-app-order-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 52px !important;
+  margin-top: 12px !important;
+  border-radius: 15px !important;
+  background: linear-gradient(135deg,#f0cf7e,#dca73b) !important;
+  color: #17120a !important;
+  text-decoration: none !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+}
+
+/* ---------- FOOTER ---------- */
+.ozt-layout-glass-premium .ozt-app-footer {
+  padding: 28px 0 4px !important;
+  text-align: center !important;
+  color: #64615c !important;
+  font-size: 8px !important;
   letter-spacing: 2px !important;
 }
 
-/* ---------- MOBILE ---------- */
+/* ---------- PREMIUM ÜRÜN MODALI ---------- */
+.ozt-layout-glass-premium .product-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 100000 !important;
+  padding: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(0,0,0,.78) !important;
+  backdrop-filter: blur(7px) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
+}
 
-@media (max-width: 700px) {
+.ozt-layout-glass-premium .product-modal {
+  position: relative !important;
+  width: min(100%,430px) !important;
+  max-height: calc(100dvh - 24px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border-radius: 23px !important;
+  border: 1px solid rgba(214,168,59,.24) !important;
+  background: #1a1c20 !important;
+  color: #f7f1e8 !important;
+  box-shadow: 0 28px 80px rgba(0,0,0,.55) !important;
+}
+
+.ozt-layout-glass-premium .product-modal-image-area {
+  flex: 0 0 235px !important;
+  height: 235px !important;
+  min-height: 235px !important;
+  overflow: hidden !important;
+}
+
+.ozt-layout-glass-premium .product-modal-image {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
+}
+
+.ozt-layout-glass-premium .product-modal-close {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  z-index: 5 !important;
+  width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(7,8,9,.58) !important;
+  color: #f1e9db !important;
+  font-size: 28px !important;
+}
+
+.ozt-layout-glass-premium .product-modal-content {
+  min-height: 0 !important;
+  padding: 18px 18px 88px !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.ozt-layout-glass-premium .product-modal-heading h2 {
+  margin: 0 !important;
+  padding-right: 40px !important;
+  color: #fff8ee !important;
+  font: 700 30px/1.05 Georgia,"Times New Roman",serif !important;
+}
+
+.ozt-layout-glass-premium .product-modal-line {
+  width: 170px !important;
+  margin-top: 13px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: #d6a83b !important;
+}
+
+.ozt-layout-glass-premium .product-modal-line::before,
+.ozt-layout-glass-premium .product-modal-line::after {
+  content: "" !important;
+  flex: 1 !important;
+  height: 1px !important;
+  background: rgba(214,168,59,.56) !important;
+}
+
+.ozt-layout-glass-premium .product-modal-price {
+  margin-top: 18px !important;
+  color: #e4bc5b !important;
+  font-size: 25px !important;
+  font-weight: 950 !important;
+}
+
+.ozt-layout-glass-premium .product-modal-description {
+  margin: 10px 0 0 !important;
+  color: #b8b2aa !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+.ozt-layout-glass-premium .product-modal-info-box,
+.ozt-layout-glass-premium .product-modal-allergen-box {
+  margin-top: 13px !important;
+  padding: 13px !important;
+  border-radius: 15px !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  background: #17191d !important;
+}
+
+.ozt-layout-glass-premium .product-modal-info-title {
+  margin-bottom: 5px !important;
+  color: #d5cfca !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+}
+
+.ozt-layout-glass-premium .product-modal-info-box p,
+.ozt-layout-glass-premium .product-modal-allergen-box p {
+  margin: 0 !important;
+  color: #8f8a84 !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+}
+
+.ozt-layout-glass-premium .product-modal-divider {
+  width: 100% !important;
+  margin: 18px 0 !important;
+  border-top: 1px dashed rgba(255,255,255,.20) !important;
+}
+
+.ozt-layout-glass-premium .quantity-title {
+  margin-bottom: 8px !important;
+  color: #d8d0c7 !important;
+  font: 700 15px Georgia,"Times New Roman",serif !important;
+}
+
+.ozt-layout-glass-premium .quantity-selector {
+  width: 100% !important;
+  height: 58px !important;
+  display: grid !important;
+  grid-template-columns: 56px 1fr 56px !important;
+  align-items: center !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 29px !important;
+  background: #15171a !important;
+}
+
+.ozt-layout-glass-premium .quantity-selector button {
+  width: 42px !important;
+  height: 42px !important;
+  margin: auto !important;
+  padding: 0 !important;
+  border: 1px solid rgba(214,168,59,.42) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  color: #e2b74c !important;
+  font-size: 23px !important;
+}
+
+.ozt-layout-glass-premium .quantity-selector strong {
+  text-align: center !important;
+  color: #f6efe5 !important;
+  font-size: 20px !important;
+}
+
+.ozt-layout-glass-premium .product-modal-total {
+  margin-top: 15px !important;
+  padding: 15px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg,#f9f1df,#efe0be) !important;
+  color: #17120a !important;
+  border: 1px solid #ead6a4 !important;
+}
+
+.ozt-layout-glass-premium .product-modal-total span {
+  font: 700 14px Georgia,"Times New Roman",serif !important;
+}
+
+.ozt-layout-glass-premium .product-modal-total strong {
+  font-size: 20px !important;
+}
+
+.ozt-layout-glass-premium .product-modal .product-modal-add {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  margin-top: 13px !important;
+  padding: 0 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  border: 1px solid rgba(255,228,154,.74) !important;
+  border-radius: 16px !important;
+  background: linear-gradient(135deg,#f4d47c 0%,#e2b64b 52%,#c99528 100%) !important;
+  color: #17120a !important;
+  font-size: 16px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  box-shadow: 0 10px 24px rgba(194,142,34,.28), inset 0 1px 0 rgba(255,255,255,.50) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 6 !important;
+}
+
+.ozt-layout-glass-premium .product-modal .product-modal-add span {
+  margin: 0 !important;
+  color: #17120a !important;
+  font-size: 18px !important;
+}
+
+.ozt-layout-glass-premium .product-modal .product-modal-note {
+  margin-top: 9px !important;
+  color: #77736c !important;
+  text-align: center !important;
+  font-size: 8px !important;
+}
+
+/* ---------- MOBILE ---------- */
+@media (max-width: 600px) {
   .ozt-layout-glass-premium {
-    max-width: 100% !important;
-    padding-left: 10px !important;
-    padding-right: 10px !important;
+    padding-left: 9px !important;
+    padding-right: 9px !important;
   }
 
   .ozt-layout-glass-premium .ozt-app-hero-photo {
-    min-height: 250px !important;
+    min-height: 265px !important;
   }
 
   .ozt-layout-glass-premium .ozt-app-hero-content {
-    padding: 22px 17px 18px !important;
+    padding: 21px 15px 15px !important;
   }
 
-  .ozt-layout-glass-premium .ozt-app-quick-actions {
-    grid-template-columns: repeat(3, minmax(0,1fr)) !important;
+  .ozt-layout-glass-premium .ozt-glass-hero-title {
+    font-size: clamp(38px,10vw,52px) !important;
   }
 
-  .ozt-layout-glass-premium .ozt-app-featured-row {
-    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
-  }
-
-  .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-image-wrap {
-    height: 125px !important;
-  }
-}
-
-@media (max-width: 430px) {
   .ozt-layout-glass-premium .ozt-app-quick-actions {
     gap: 7px !important;
   }
 
   .ozt-layout-glass-premium .ozt-app-action-button {
-    min-height: 68px !important;
-    padding: 10px 6px !important;
+    min-height: 66px !important;
   }
 
-  .ozt-layout-glass-premium .ozt-app-action-button strong {
-    font-size: 10px !important;
-  }
-
-  .ozt-layout-glass-premium .ozt-app-action-button small {
-    font-size: 8px !important;
+  .ozt-layout-glass-premium .ozt-app-feature-card {
+    flex-basis: 198px !important;
+    width: 198px !important;
+    min-width: 198px !important;
+    height: 216px !important;
   }
 
   .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-image-wrap {
-    height: 112px !important;
+    height: 99px !important;
+    min-height: 99px !important;
   }
 
   .ozt-layout-glass-premium .ozt-app-product-row .customer-product {
-    grid-template-columns: 88px minmax(0,1fr) !important;
-    min-height: 88px !important;
+    grid-template-columns: 80px minmax(0,1fr) !important;
+    min-height: 94px !important;
+    gap: 9px !important;
   }
 
   .ozt-layout-glass-premium .ozt-app-product-row .customer-product-image-wrap {
-    width: 88px !important;
-    height: 88px !important;
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    height: 80px !important;
+    min-height: 80px !important;
+    max-height: 80px !important;
+  }
+
+  .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info {
+    padding-right: 41px !important;
   }
 
   .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info h3 {
@@ -14015,5 +14648,407 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
   .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info p {
     font-size: 9px !important;
+  }
+
+  .ozt-layout-glass-premium .ozt-app-product-row .customer-product-right {
+    right: 7px !important;
+    bottom: 7px !important;
+  }
+
+  .ozt-layout-glass-premium .product-modal-overlay {
+    padding: 8px !important;
+    align-items: flex-end !important;
+  }
+
+  .ozt-layout-glass-premium .product-modal {
+    width: 100% !important;
+    max-height: calc(100dvh - 12px) !important;
+    border-radius: 23px 23px 18px 18px !important;
+  }
+
+  .ozt-layout-glass-premium .product-modal-image-area {
+    flex-basis: 185px !important;
+    height: 185px !important;
+    min-height: 185px !important;
+  }
+
+  .ozt-layout-glass-premium .product-modal-content {
+    padding: 15px 15px 78px !important;
+  }
+
+  .ozt-layout-glass-premium .product-modal-heading h2 {
+    font-size: 27px !important;
+  }
+
+  .ozt-layout-glass-premium .product-modal .product-modal-add {
+    min-height: 54px !important;
+    height: 54px !important;
+    border-radius: 15px !important;
+    font-size: 15px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .ozt-layout-glass-premium .ozt-app-feature-card {
+    flex-basis: 188px !important;
+    width: 188px !important;
+    min-width: 188px !important;
+    height: 208px !important;
+  }
+
+  .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-image-wrap {
+    height: 93px !important;
+    min-height: 93px !important;
+  }
+
+  .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-info h3 {
+    font-size: 13px !important;
+  }
+
+  .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-info p {
+    font-size: 8px !important;
+  }
+
+  .ozt-layout-glass-premium .ozt-app-product-row .customer-product {
+    grid-template-columns: 74px minmax(0,1fr) !important;
+    min-height: 88px !important;
+    gap: 9px !important;
+  }
+
+  .ozt-layout-glass-premium .ozt-app-product-row .customer-product-image-wrap {
+    width: 74px !important;
+    min-width: 74px !important;
+    max-width: 74px !important;
+    height: 74px !important;
+    min-height: 74px !important;
+    max-height: 74px !important;
+  }
+
+  .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info {
+    padding-right: 38px !important;
+  }
+
+  .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info h3 {
+    font-size: 13px !important;
+  }
+
+  .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info p {
+    font-size: 8px !important;
+  }
+}
+/* =========================================================
+   MİRA KITCHEN PREMIUM
+   ÜRÜN KARTI — YATAY DÜZEN / METİN FIX
+   ========================================================= */
+
+.ozt-layout-glass-premium
+.ozt-app-product-row
+.customer-product {
+  position: relative !important;
+
+  display: grid !important;
+
+  grid-template-columns: 86px minmax(0, 1fr) !important;
+
+  align-items: center !important;
+
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+
+  min-height: 96px !important;
+
+  padding: 7px !important;
+
+  gap: 11px !important;
+
+  box-sizing: border-box !important;
+
+  overflow: hidden !important;
+}
+
+
+/* FOTOĞRAF */
+
+.ozt-layout-glass-premium
+.ozt-app-product-row
+.customer-product-image-wrap {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+
+  width: 86px !important;
+  min-width: 86px !important;
+  max-width: 86px !important;
+
+  height: 86px !important;
+  min-height: 86px !important;
+  max-height: 86px !important;
+
+  border-radius: 12px !important;
+
+  overflow: hidden !important;
+}
+
+.ozt-layout-glass-premium
+.ozt-app-product-row
+.customer-product-image {
+  width: 100% !important;
+  height: 100% !important;
+
+  object-fit: cover !important;
+
+  display: block !important;
+}
+
+
+/* =========================================================
+   BİLGİ ALANI — FOTOĞRAFIN YANINDA
+   ========================================================= */
+
+.ozt-layout-glass-premium
+.ozt-app-product-row
+.customer-product-info {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  padding: 4px 45px 4px 0 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+
+  overflow: hidden !important;
+
+  box-sizing: border-box !important;
+}
+
+
+/* ÜRÜN ADI */
+
+.ozt-layout-glass-premium
+.ozt-app-product-row
+.customer-product-info h3 {
+  display: block !important;
+
+  width: 100% !important;
+  max-width: 100% !important;
+
+  margin: 0 0 5px !important;
+
+  color: #fff8ed !important;
+
+  font-family: Georgia, "Times New Roman", serif !important;
+
+  font-size: 15px !important;
+  line-height: 1.15 !important;
+  font-weight: 700 !important;
+
+  white-space: nowrap !important;
+
+  overflow: hidden !important;
+
+  text-overflow: ellipsis !important;
+
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+
+/* AÇIKLAMA */
+
+.ozt-layout-glass-premium
+.ozt-app-product-row
+.customer-product-info p {
+  display: block !important;
+
+  width: 100% !important;
+  max-width: 100% !important;
+
+  margin: 0 0 7px !important;
+
+  color: #96938e !important;
+
+  font-size: 9px !important;
+  line-height: 1.35 !important;
+
+  white-space: nowrap !important;
+
+  overflow: hidden !important;
+
+  text-overflow: ellipsis !important;
+
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+
+/* FİYAT */
+
+.ozt-layout-glass-premium
+.ozt-app-product-row
+.customer-product-price {
+  display: block !important;
+
+  margin: 0 !important;
+
+  color: #e4b93f !important;
+
+  font-size: 15px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+
+  white-space: nowrap !important;
+}
+
+
+/* =========================================================
+   + BUTONU — BİLGİ ALANINI DARALTMASIN
+   ========================================================= */
+
+.ozt-layout-glass-premium
+.ozt-app-product-row
+.customer-product-right {
+  position: absolute !important;
+
+  right: 8px !important;
+  bottom: 8px !important;
+
+  width: 36px !important;
+  height: 36px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  z-index: 10 !important;
+}
+
+.ozt-layout-glass-premium
+.ozt-app-product-row
+.add-to-cart-button {
+  width: 36px !important;
+  height: 36px !important;
+
+  padding: 0 !important;
+
+  border: 0 !important;
+
+  border-radius: 11px !important;
+
+  background: #e4b93f !important;
+
+  color: #17120a !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.ozt-layout-glass-premium
+.ozt-app-product-row
+.add-to-cart-button span {
+  font-size: 20px !important;
+  line-height: 1 !important;
+}
+
+
+/* =========================================================
+   MOBİL
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .ozt-layout-glass-premium
+  .ozt-app-product-row
+  .customer-product {
+    grid-template-columns: 78px minmax(0, 1fr) !important;
+
+    min-height: 90px !important;
+
+    gap: 10px !important;
+  }
+
+  .ozt-layout-glass-premium
+  .ozt-app-product-row
+  .customer-product-image-wrap {
+    width: 78px !important;
+    min-width: 78px !important;
+    max-width: 78px !important;
+
+    height: 78px !important;
+    min-height: 78px !important;
+    max-height: 78px !important;
+  }
+
+  .ozt-layout-glass-premium
+  .ozt-app-product-row
+  .customer-product-info {
+    padding-right: 42px !important;
+  }
+
+  .ozt-layout-glass-premium
+  .ozt-app-product-row
+  .customer-product-info h3 {
+    font-size: 14px !important;
+  }
+
+  .ozt-layout-glass-premium
+  .ozt-app-product-row
+  .customer-product-info p {
+    font-size: 9px !important;
+  }
+
+  .ozt-layout-glass-premium
+  .ozt-app-product-row
+  .customer-product-price {
+    font-size: 14px !important;
+  }
+}
+
+
+/* =========================================================
+   KÜÇÜK TELEFON
+   ========================================================= */
+
+@media (max-width: 430px) {
+
+  .ozt-layout-glass-premium
+  .ozt-app-product-row
+  .customer-product {
+    grid-template-columns: 72px minmax(0, 1fr) !important;
+
+    min-height: 84px !important;
+
+    gap: 9px !important;
+  }
+
+  .ozt-layout-glass-premium
+  .ozt-app-product-row
+  .customer-product-image-wrap {
+    width: 72px !important;
+    min-width: 72px !important;
+
+    height: 72px !important;
+    min-height: 72px !important;
+  }
+
+  .ozt-layout-glass-premium
+  .ozt-app-product-row
+  .customer-product-info {
+    padding-right: 40px !important;
+  }
+
+  .ozt-layout-glass-premium
+  .ozt-app-product-row
+  .customer-product-info h3 {
+    font-size: 13px !important;
   }
 }
