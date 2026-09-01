@@ -24,6 +24,106 @@ type OrderItem = {
   image_url: string | null;
 };
 
+function toFiniteNumber(
+  value: unknown,
+  fallback = 0
+): number {
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : fallback;
+}
+
+async function enrichOrderItems(
+  itemsData: any[],
+  supabase: ReturnType<typeof createClient>
+): Promise<OrderItem[]> {
+  if (!Array.isArray(itemsData)) {
+    return [];
+  }
+
+  const productIds = [
+    ...new Set(
+      itemsData
+        .map((item) => Number(item?.product_id))
+        .filter((id) => Number.isFinite(id))
+    ),
+  ];
+
+  const productsById = new Map<number, any>();
+
+  if (productIds.length > 0) {
+    const {
+      data: products,
+      error: productsError,
+    } = await supabase
+      .from("products")
+      .select("id, name, price, image_url")
+      .in("id", productIds);
+
+    if (productsError) {
+      console.warn(
+        "Sipariş ürün detayları yüklenemedi:",
+        productsError
+      );
+    }
+
+    for (const product of products ?? []) {
+      productsById.set(Number(product.id), product);
+    }
+  }
+
+  return itemsData.map((item: any) => {
+    const productId = Number(item?.product_id);
+    const product = productsById.get(productId);
+
+    const quantity = Math.max(
+      1,
+      toFiniteNumber(item?.quantity, 1)
+    );
+
+    const unitPrice =
+      [
+        item?.unit_price,
+        item?.price,
+        item?.product_price,
+        product?.price,
+      ]
+        .map((value) => Number(value))
+        .find((value) => Number.isFinite(value)) ?? 0;
+
+    const totalPrice =
+      [
+        item?.total_price,
+        item?.line_total,
+        item?.total,
+      ]
+        .map((value) => Number(value))
+        .find((value) => Number.isFinite(value)) ??
+      unitPrice * quantity;
+
+    return {
+      id: Number(item?.id),
+      product_id: productId,
+      quantity,
+      unit_price: unitPrice,
+      total_price: totalPrice,
+      product_name:
+        item?.product_name ||
+        item?.name ||
+        product?.name ||
+        "Ürün",
+      image_url:
+        item?.image_url ||
+        item?.product_image_url ||
+        item?.image ||
+        product?.image_url ||
+        null,
+    };
+  });
+}
+
 const statusSteps = [
   {
     key: "pending",
@@ -199,18 +299,11 @@ export default function OrderTrackingPage() {
           ? data.items
           : [];
 
-        const formattedItems: OrderItem[] =
-          itemsData.map((item: any) => ({
-            id: Number(item.id),
-            product_id: Number(item.product_id),
-            quantity: Number(item.quantity),
-            unit_price: Number(item.unit_price),
-            total_price: Number(item.total_price),
-            product_name:
-              item.product_name || "Ürün",
-            image_url:
-              item.image_url || null,
-          }));
+        const formattedItems =
+          await enrichOrderItems(
+            itemsData,
+            supabase
+          );
 
         setOrder({
           id: Number(orderData.id),
@@ -309,25 +402,10 @@ export default function OrderTrackingPage() {
         if (
           Array.isArray(data.items)
         ) {
-          const updatedItems: OrderItem[] =
-            data.items.map(
-              (item: any) => ({
-                id: Number(item.id),
-                product_id:
-                  Number(item.product_id),
-                quantity:
-                  Number(item.quantity),
-                unit_price:
-                  Number(item.unit_price),
-                total_price:
-                  Number(item.total_price),
-                product_name:
-                  item.product_name ||
-                  "Ürün",
-                image_url:
-                  item.image_url ||
-                  null,
-              })
+          const updatedItems =
+            await enrichOrderItems(
+              data.items,
+              supabase
             );
 
           setOrderItems(updatedItems);
