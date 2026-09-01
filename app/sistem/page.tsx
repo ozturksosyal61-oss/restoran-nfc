@@ -410,6 +410,12 @@ export default async function SystemOwnerPage() {
             >
               ＋ Yeni Restoran Ekle
             </Link>
+            <Link
+  href="/sistem/abonelikler"
+  className="system-secondary-button"
+>
+  💳 Abonelik Yönetimi
+</Link>
 
           </div>
 

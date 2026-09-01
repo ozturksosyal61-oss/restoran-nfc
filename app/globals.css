@@ -15052,3 +15052,39 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     font-size: 13px !important;
   }
 }
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.filters input,
+.filters select {
+  height: 44px;
+  border: 1px solid #ddd6cc;
+  border-radius: 12px;
+  background: white;
+  padding: 0 14px;
+  font-size: 13px;
+  outline: none;
+}
+
+.filters input {
+  flex: 1;
+  min-width: 220px;
+}
+
+.filters input:focus,
+.filters select:focus {
+  border-color: #ad7b12;
+}
+
+@media (max-width: 700px) {
+  .filters {
+    flex-direction: column;
+  }
+
+  .filters input {
+    min-width: 0;
+  }
+}
