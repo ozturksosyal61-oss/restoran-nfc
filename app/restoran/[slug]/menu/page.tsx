@@ -463,6 +463,8 @@ export default async function RestaurantMenuPage({
             products={products}
             layout="ozt-glass-premium"
             restaurantName={restaurantData.name}
+            logoUrl={restaurantData.logo_url}
+            coverImageUrl={restaurantData.cover_image_url}
             tableNumber={tableNumber}
             slug={slug}
             masa={masa || ""}

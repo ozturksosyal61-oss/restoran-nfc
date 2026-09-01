@@ -30,6 +30,8 @@ type MenuLayoutsProps = {
   masa?: string;
   garson?: string;
   waiterAction?: (formData: FormData) => void | Promise<void>;
+  logoUrl?: string | null;
+  coverImageUrl?: string | null;
 };
 
 /* =========================================================
@@ -347,21 +349,99 @@ function OztGlassPremiumLayout({
   masa = "",
   garson = "",
   waiterAction,
+  logoUrl = null,
+  coverImageUrl = null,
 }: MenuLayoutsProps) {
-  const { items, itemCount, total, addToCart, increaseQuantity, decreaseQuantity, removeFromCart } = useCart();
+  const {
+    items,
+    itemCount,
+    total,
+    addToCart,
+    increaseQuantity,
+    decreaseQuantity,
+    removeFromCart,
+  } = useCart();
 
-  const featuredProducts = products.slice(0, Math.min(3, products.length));
-  const firstCategoryId = categories[0]?.id;
+  /*
+   * Premium tema için sadece ürün bulunan kategorileri kullan.
+   * Böylece boş kategori başlıkları/kartları oluşmaz.
+   * Aynı isimli kategori kalmış olsa bile tekilleştirilir.
+   */
+  const premiumCategories = categories.filter(
+    (category, index, array) =>
+      getCategoryProducts(category.id, products).length > 0 &&
+      array.findIndex(
+        (candidate) =>
+          candidate.name.trim().toLocaleLowerCase("tr-TR") ===
+          category.name.trim().toLocaleLowerCase("tr-TR")
+      ) === index
+  );
+
+  const featuredNames = new Set([
+    "Truffle Alfredo",
+    "Mira Smash Burger",
+    "San Sebastian",
+    "Mojito",
+  ]);
+
+  const featuredProducts: Product[] = [];
+
+  for (const product of products) {
+    if (
+      featuredNames.has(product.name) &&
+      !featuredProducts.some(
+        (featured) => featured.id === product.id
+      )
+    ) {
+      featuredProducts.push(product);
+    }
+  }
+
+  if (featuredProducts.length < 4) {
+    for (const product of products) {
+      if (
+        !featuredProducts.some(
+          (featured) => featured.id === product.id
+        )
+      ) {
+        featuredProducts.push(product);
+      }
+
+      if (featuredProducts.length === 4) {
+        break;
+      }
+    }
+  }
+
+  const firstCategoryId = premiumCategories[0]?.id;
 
   function categoryImage(categoryId: number) {
-    return products.find((product) => product.category_id === categoryId)?.image_url || null;
+    return (
+      products.find(
+        (product) =>
+          Number(product.category_id) === Number(categoryId)
+      )?.image_url || null
+    );
   }
 
   return (
     <div id="ozt-premium-top" className="ozt-layout ozt-layout-glass-premium">
       <header className="ozt-app-header">
         <div className="ozt-app-brand">
-          <div className="ozt-app-logo">OZT</div>
+          <div className="ozt-app-logo">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={`${restaurantName} logosu`}
+                className="ozt-app-logo-image"
+              />
+            ) : (
+              restaurantName
+                .trim()
+                .slice(0, 3)
+                .toUpperCase()
+            )}
+          </div>
           <div>
             <strong>{restaurantName}</strong>
             <span>PREMIUM MENU EXPERIENCE</span>
@@ -375,7 +455,16 @@ function OztGlassPremiumLayout({
       </header>
 
       <section className="ozt-glass-hero ozt-app-hero">
-        <div className="ozt-app-hero-photo" />
+        <div
+          className="ozt-app-hero-photo"
+          style={
+            coverImageUrl
+              ? {
+                  backgroundImage: `url("${coverImageUrl}")`,
+                }
+              : undefined
+          }
+        />
         <div className="ozt-app-hero-overlay" />
         <div className="ozt-app-hero-content">
           <div className="ozt-glass-eyebrow">{restaurantName.toUpperCase()}</div>
@@ -385,10 +474,10 @@ function OztGlassPremiumLayout({
         </div>
       </section>
 
-      {categories.length > 0 && (
+      {premiumCategories.length > 0 && (
         <div className="ozt-app-category-strip">
           <div className="ozt-app-categories" aria-label="Kategoriler">
-          {categories.map((category) => {
+          {premiumCategories.map((category) => {
             const img = categoryImage(category.id);
             return (
               <a key={category.id} href={`#category-${category.id}`} className="ozt-app-category">
@@ -445,7 +534,7 @@ function OztGlassPremiumLayout({
         <section className="ozt-app-section">
           <div className="ozt-app-section-heading">
             <div><span>ÖNE ÇIKANLAR 🔥</span><h2>Favoriler</h2></div>
-            <small>{products.length} ürün</small>
+            <small>{featuredProducts.length} seçki</small>
           </div>
           <div className="ozt-app-featured-row">
             {featuredProducts.map((product) => (
@@ -465,7 +554,7 @@ function OztGlassPremiumLayout({
         </section>
       )}
 
-      {categories.map((category) => {
+      {premiumCategories.map((category) => {
         const categoryProducts = getCategoryProducts(category.id, products);
         return (
           <section key={category.id} id={`category-${category.id}`} className="ozt-app-section">
@@ -2200,6 +2289,224 @@ export default function MenuLayouts({
           .ozt-grid-card
           .add-to-cart-button span {
             font-size: 17px !important;
+          }
+        }
+
+
+        /* =====================================================
+           MİRA KITCHEN — PREMIUM FINAL OVERRIDES
+           Yalnızca ozt-glass-premium teması
+        ===================================================== */
+
+        .ozt-layout-glass-premium .ozt-app-logo {
+          overflow: hidden;
+          background: #0f1114 !important;
+          border-color: rgba(214,168,59,.55) !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-logo-image {
+          width: 100%;
+          height: 100%;
+          display: block;
+          object-fit: contain;
+          border-radius: inherit;
+          padding: 4px;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-hero-photo {
+          background-position: center !important;
+          background-size: cover !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-category-strip {
+          position: static !important;
+          margin-top: 12px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-categories {
+          display: flex !important;
+          gap: 10px !important;
+          overflow-x: auto !important;
+          padding: 0 1px 7px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-category {
+          flex: 0 0 78px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-category-image {
+          width: 62px !important;
+          height: 62px !important;
+          margin: 0 auto 6px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-category span {
+          font-size: 8px !important;
+          font-weight: 800 !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-quick-actions {
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          gap: 9px !important;
+          margin: 12px 0 22px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-action-button {
+          min-height: 68px !important;
+          padding: 9px 7px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-action-button strong {
+          font-size: 10px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-action-button small {
+          font-size: 7px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-featured-row {
+          display: grid !important;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          gap: 10px !important;
+          overflow: visible !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-feature-card {
+          min-width: 0 !important;
+          padding: 6px !important;
+          border-radius: 17px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-image-wrap {
+          height: 138px !important;
+          border-radius: 12px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-info {
+          padding: 8px 6px 31px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-info h3 {
+          font-size: 15px !important;
+          line-height: 1.1 !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-info p {
+          margin-bottom: 7px !important;
+          font-size: 9px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-price {
+          padding: 0 6px 8px !important;
+          font-size: 14px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-quick-add {
+          width: 34px !important;
+          height: 34px !important;
+          right: 8px !important;
+          bottom: 8px !important;
+          border-radius: 11px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-product-list {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 9px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-product-row {
+          padding: 5px !important;
+          border-radius: 15px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-product-row .customer-product {
+          grid-template-columns: 88px minmax(0, 1fr) !important;
+          min-height: 88px !important;
+          gap: 10px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-product-row .customer-product-image-wrap {
+          width: 88px !important;
+          height: 88px !important;
+          border-radius: 11px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info {
+          padding: 5px 40px 5px 0 !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info h3 {
+          font-size: 13px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-product-row .customer-product-info p {
+          font-size: 9px !important;
+          line-height: 1.3 !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-product-row .customer-product-price {
+          font-size: 13px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-row-add {
+          width: 34px !important;
+          height: 34px !important;
+          right: 8px !important;
+          bottom: 8px !important;
+          border-radius: 11px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-bottom-nav {
+          left: 50% !important;
+          width: min(92vw, 540px) !important;
+          transform: translateX(-50%) !important;
+          bottom: 10px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-cart-panel {
+          margin-top: 28px !important;
+          margin-bottom: 10px !important;
+        }
+
+        @media (max-width: 430px) {
+          .ozt-layout-glass-premium {
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+          }
+
+          .ozt-layout-glass-premium .ozt-app-header {
+            padding-left: 2px !important;
+            padding-right: 2px !important;
+          }
+
+          .ozt-layout-glass-premium .ozt-app-hero-photo {
+            min-height: 245px !important;
+          }
+
+          .ozt-layout-glass-premium .ozt-app-featured-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-image-wrap {
+            height: 106px !important;
+          }
+
+          .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-info h3 {
+            font-size: 13px !important;
+          }
+
+          .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-info p {
+            font-size: 8px !important;
+          }
+
+          .ozt-layout-glass-premium .ozt-app-product-row .customer-product {
+            grid-template-columns: 78px minmax(0, 1fr) !important;
+          }
+
+          .ozt-layout-glass-premium .ozt-app-product-row .customer-product-image-wrap {
+            width: 78px !important;
+            height: 78px !important;
           }
         }
 
