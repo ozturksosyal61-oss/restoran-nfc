@@ -1,508 +1,453 @@
 import Link from "next/link";
 
-type Feature = {
-  icon: string;
-  title: string;
-  text: string;
-};
-
-type Plan = {
-  name: string;
-  text: string;
-  items: string[];
-};
-
-const features: Feature[] = [
+const features = [
   {
-    icon: "📱",
-    title: "QR & NFC Menü",
-    text: "Müşteriniz tek dokunuşla menünüze ulaşsın. Masa bazlı QR ve NFC bağlantılarıyla hızlı erişim.",
+    icon: "▣",
+    title: "QR Menü",
+    text: "Müşterileriniz QR kodu okutarak menünüze saniyeler içinde ulaşır.",
   },
   {
-    icon: "🛒",
-    title: "Masa Bazlı Sipariş",
-    text: "Müşteri menüden seçsin, siparişini versin. Sipariş doğrudan restoran panelinize düşsün.",
+    icon: "⌁",
+    title: "NFC Menü",
+    text: "Telefonu NFC kartınıza yaklaştırın, dijital menünüz anında açılsın.",
   },
   {
-    icon: "🔔",
+    icon: "↗",
+    title: "Dijital Sipariş",
+    text: "Müşterileriniz masadan hızlı ve kolay şekilde sipariş verebilir.",
+  },
+  {
+    icon: "♧",
     title: "Garson Çağırma",
-    text: "Müşteri masadan garson çağırabilsin. Ekip gelen talepleri panelden anında görsün.",
+    text: "Müşterileriniz tek dokunuşla garson talebi oluşturabilir.",
   },
   {
-    icon: "📊",
-    title: "Yönetim Paneli",
-    text: "Menü, masalar, siparişler, çalışanlar, yorumlar ve işletme ayarları tek panelde.",
+    icon: "⌂",
+    title: "Masa Yönetimi",
+    text: "Masalarınızı, siparişlerinizi ve çağrıları tek panelden yönetin.",
+  },
+  {
+    icon: "◈",
+    title: "Restoran Paneli",
+    text: "Menünüzü, ürünlerinizi ve siparişlerinizi kolayca yönetin.",
   },
 ];
 
-const plans: Plan[] = [
+const steps = [
   {
-    name: "STARTER",
-    text: "Dijital menü ve QR ile güçlü bir başlangıç.",
-    items: [
-      "Dijital menü",
-      "QR menü",
-      "Temel işletme yönetimi",
+    number: "01",
+    title: "Restoranınızı oluşturun",
+    text: "Dakikalar içinde restoran hesabınızı oluşturun.",
+  },
+  {
+    number: "02",
+    title: "Menünüzü ekleyin",
+    text: "Kategori ve ürünlerinizi panel üzerinden yönetin.",
+  },
+  {
+    number: "03",
+    title: "QR & NFC'nizi kullanın",
+    text: "Müşterileriniz tek dokunuşla dijital menünüze ulaşsın.",
+  },
+  {
+    number: "04",
+    title: "Siparişleri yönetin",
+    text: "Sipariş ve garson çağrılarını tek ekrandan takip edin.",
+  },
+];
+
+const packages = [
+  {
+    name: "BAŞLANGIÇ",
+    price: "499",
+    description: "Dijital menüye yeni başlayan işletmeler için.",
+    features: [
+      "QR Dijital Menü",
+      "Ürün & Kategori Yönetimi",
+      "Masa Yönetimi",
+      "Sipariş Yönetimi",
     ],
   },
   {
-    name: "PRO",
-    text: "Sipariş ve müşteri deneyimini büyütmek isteyen işletmeler için.",
-    items: [
-      "STARTER özellikleri",
-      "NFC",
-      "Online sipariş",
-      "Garson çağırma",
-      "Analitik",
-      "Çoklu kullanıcı",
+    name: "PROFESYONEL",
+    price: "799",
+    description: "Dijital sipariş deneyimini büyütmek isteyen restoranlar için.",
+    featured: true,
+    features: [
+      "Başlangıç paketindeki her şey",
+      "NFC Menü",
+      "Garson Çağırma",
+      "Gelişmiş Sipariş Yönetimi",
     ],
   },
   {
     name: "PREMIUM",
-    text: "İleri seviye raporlama ve tam restoran deneyimi.",
-    items: [
-      "PRO özellikleri",
-      "Gelişmiş raporlar",
+    price: "1.299",
+    description: "Tüm dijital restoran deneyimini tek platformda isteyenler için.",
+    features: [
+      "Profesyonel paketindeki her şey",
+      "Gelişmiş restoran yönetimi",
+      "Müşteri değerlendirmeleri",
+      "Öncelikli destek",
     ],
   },
 ];
 
-export default function Home() {
+export default function HomePage() {
   return (
     <main className="landing-page">
-      {/* =====================================================
-          NAVIGATION
-      ====================================================== */}
-      <header className="landing-nav">
-        <Link
-          href="/"
-          className="brand-mark"
-          aria-label="OZT Digital Menu ana sayfa"
-        >
-          <span className="brand-mark-box">
-            OZT
-          </span>
-
+      <nav className="landing-nav">
+        <Link href="/" className="landing-brand">
+          <span className="landing-brand-mark">O</span>
           <span>
-            OZT DIGITAL MENU
+            OZT <strong>DIGITAL</strong>
           </span>
         </Link>
 
-        <div className="landing-nav-actions">
-          <Link
-            href="/admin/login"
-            className="nav-login"
-          >
-            İşletme Girişi
-          </Link>
-
-          <a
-            href="#iletisim"
-            className="nav-cta"
-          >
-            Demo İste
-          </a>
+        <div className="landing-nav-links">
+          <a href="#ozellikler">Özellikler</a>
+          <a href="#nasil-calisir">Nasıl Çalışır?</a>
+          <a href="#paketler">Paketler</a>
+          <Link href="/demo">Demo</Link>
         </div>
-      </header>
 
-      {/* =====================================================
-          HERO
-      ====================================================== */}
+        <Link href="/abonelik" className="landing-nav-button">
+          Ücretsiz Dene
+        </Link>
+      </nav>
+
       <section className="landing-hero">
-        <div className="landing-hero-copy">
-          <div className="eyebrow">
-            RESTORANLAR İÇİN YENİ NESİL DİJİTAL DENEYİM
+        <div className="landing-hero-glow landing-hero-glow-one" />
+        <div className="landing-hero-glow landing-hero-glow-two" />
+
+        <div className="landing-hero-content">
+          <div className="landing-eyebrow">
+            QR MENÜ • NFC • SİPARİŞ • RESTORAN YÖNETİMİ
           </div>
 
           <h1>
-            Menünüzü{" "}
-            <span>dijitalleştirin.</span>
+            Restoranınızın
             <br />
-            Siparişi hızlandırın.
+            <span>tüm dijital deneyimi</span>
+            <br />
+            tek platformda.
           </h1>
 
           <p>
-            QR ve NFC destekli dijital menü, masa bazlı
-            sipariş, garson çağırma ve restoran yönetimini
-            tek bir sistemde birleştirin.
+            QR menü, NFC menü, dijital sipariş, garson çağırma ve
+            restoran yönetimini tek bir sistemde birleştirin.
           </p>
 
           <div className="landing-hero-actions">
-            <a
-              href="#ozellikler"
-              className="landing-primary"
-            >
-              Sistemi Keşfet <span>→</span>
-            </a>
+            <Link href="/abonelik" className="landing-button landing-button-primary">
+              14 GÜN ÜCRETSİZ DENE
+              <span>→</span>
+            </Link>
 
-            <Link
-              href="/admin/login"
-              className="landing-secondary"
-            >
-              Yönetim Paneli
+            <Link href="/demo" className="landing-button landing-button-secondary">
+              DEMOYU İNCELE
             </Link>
           </div>
 
           <div className="landing-trust">
+            <span>✓ Kredi kartı gerekmez</span>
+            <span>✓ 14 gün ücretsiz</span>
             <span>✓ Kurulumu kolay</span>
-            <span>✓ Mobil uyumlu</span>
-            <span>✓ QR + NFC</span>
           </div>
         </div>
 
-        {/* =====================================================
-            PRODUCT PREVIEW
-        ====================================================== */}
-        <div
-          className="hero-product-card"
-          aria-label="OZT Digital Menu ürün önizlemesi"
-        >
-          <div className="hero-product-top">
+        <div className="landing-product-preview">
+          <div className="landing-preview-glow" />
+
+          <div className="landing-phone">
+            <div className="landing-phone-top">
+              <span>OZT DIGITAL</span>
+              <span>•••</span>
+            </div>
+
+            <div className="landing-phone-logo">M</div>
+
+            <h3>MIRA KITCHEN</h3>
+            <p>DİJİTAL MENÜ</p>
+
+            <div className="landing-phone-actions">
+              <div>QR MENÜ</div>
+              <div>NFC</div>
+              <div>SİPARİŞ</div>
+            </div>
+
+            <div className="landing-phone-menu">
+              <div>
+                <span>Popüler Ürünler</span>
+                <b>→</b>
+              </div>
+
+              <div className="landing-phone-item">
+                <span />
+                <div>
+                  <strong>Izgara Burger</strong>
+                  <small>Özel sos & patates</small>
+                </div>
+                <b>₺320</b>
+              </div>
+
+              <div className="landing-phone-item">
+                <span />
+                <div>
+                  <strong>Makarna</strong>
+                  <small>Günün özel sosuyla</small>
+                </div>
+                <b>₺280</b>
+              </div>
+            </div>
+
+            <div className="landing-phone-cart">
+              <span>Sepet</span>
+              <strong>Sipariş Ver →</strong>
+            </div>
+          </div>
+
+          <div className="landing-floating-card landing-floating-card-left">
+            <span>◈</span>
             <div>
-              <small>MASA 12</small>
-              <strong>OZT KAFE</strong>
-            </div>
-
-            <span className="status-pill">
-              ● AÇIK
-            </span>
-          </div>
-
-          <div className="hero-product-menu">
-            <small>DİJİTAL MENÜ</small>
-
-            <h2>Lezzetli seçimler.</h2>
-
-            <div className="mock-product">
-              <div className="mock-image">
-                🍔
-              </div>
-
-              <div>
-                <strong>OZT Burger</strong>
-
-                <span>
-                  Özel sos, cheddar, patates
-                </span>
-              </div>
-
-              <b>₺320</b>
-            </div>
-
-            <div className="mock-product">
-              <div className="mock-image">
-                ☕
-              </div>
-
-              <div>
-                <strong>Özel Kahve</strong>
-
-                <span>
-                  Taze çekilmiş espresso
-                </span>
-              </div>
-
-              <b>₺120</b>
+              <strong>QR + NFC</strong>
+              <small>Tek dokunuşta menü</small>
             </div>
           </div>
 
-          <div className="hero-product-bottom">
-            <span>🛒 Sepet</span>
-            <span>🔔 Garson Çağır</span>
-            <span>⭐ Yorum</span>
+          <div className="landing-floating-card landing-floating-card-right">
+            <span>✓</span>
+            <div>
+              <strong>Sipariş Alındı</strong>
+              <small>Masa 12 • 485 ₺</small>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          STRIP
-      ====================================================== */}
-      <section className="landing-strip">
-        <span>QR</span>
-        <span>NFC</span>
-        <span>DİJİTAL MENÜ</span>
-        <span>SİPARİŞ</span>
-        <span>ANALİTİK</span>
-        <span>MÜŞTERİ DENEYİMİ</span>
+      <section className="landing-stats">
+        <div>
+          <strong>24/7</strong>
+          <span>Dijital erişim</span>
+        </div>
+        <div>
+          <strong>QR</strong>
+          <span>Temassız menü</span>
+        </div>
+        <div>
+          <strong>NFC</strong>
+          <span>Tek dokunuş</span>
+        </div>
+        <div>
+          <strong>1 PANEL</strong>
+          <span>Tüm yönetim</span>
+        </div>
       </section>
 
-      {/* =====================================================
-          FEATURES
-      ====================================================== */}
-      <section
-        id="ozellikler"
-        className="landing-section"
-      >
-        <div className="section-heading">
-          <div className="eyebrow">
-            TEK PLATFORM
-          </div>
-
+      <section id="ozellikler" className="landing-section">
+        <div className="landing-section-heading">
+          <div className="landing-eyebrow">NEDEN OZT DIGITAL?</div>
           <h2>
-            Restoranınızın dijital operasyonu
-            tek yerde.
+            Restoranınız için
+            <br />
+            <span>daha akıllı bir deneyim.</span>
           </h2>
-
           <p>
-            Müşterinin masaya oturduğu andan
-            siparişin tamamlanmasına kadar deneyimi
-            sadeleştirin.
+            Müşterinizin masaya oturduğu andan siparişin mutfağa
+            ulaşmasına kadar tüm süreci dijitalleştirin.
           </p>
         </div>
 
-        <div className="feature-grid">
+        <div className="landing-feature-grid">
           {features.map((feature) => (
-            <article
-              className="feature-card"
-              key={feature.title}
-            >
-              <div className="feature-icon">
-                {feature.icon}
-              </div>
-
-              <h3>
-                {feature.title}
-              </h3>
-
-              <p>
-                {feature.text}
-              </p>
-            </article>
+            <div className="landing-feature-card" key={feature.title}>
+              <div className="landing-feature-icon">{feature.icon}</div>
+              <h3>{feature.title}</h3>
+              <p>{feature.text}</p>
+              <span className="landing-feature-arrow">→</span>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* =====================================================
-          CUSTOMER FLOW
-      ====================================================== */}
+      <section id="nasil-calisir" className="landing-section landing-how-section">
+        <div className="landing-section-heading">
+          <div className="landing-eyebrow">NASIL ÇALIŞIR?</div>
+          <h2>
+            Başlamak
+            <br />
+            <span>çok kolay.</span>
+          </h2>
+        </div>
+
+        <div className="landing-steps">
+          {steps.map((step) => (
+            <div className="landing-step" key={step.number}>
+              <span className="landing-step-number">{step.number}</span>
+              <div>
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="landing-demo-section">
-        <div className="demo-copy">
-          <div className="eyebrow">
-            MÜŞTERİ AKIŞI
-          </div>
+        <div className="landing-demo-content">
+          <div className="landing-eyebrow">CANLI DEMO</div>
 
           <h2>
-            QR&apos;ı okutun. Gerisini sistem
-            halletsin.
+            Anlatmak yerine
+            <br />
+            <span>deneyin.</span>
           </h2>
 
           <p>
-            Masa QR&apos;ı veya NFC etiketi müşteriyi
-            doğrudan ilgili masanın dijital menüsüne
-            taşır. Müşteri seçer, sipariş verir ve
-            durumunu telefonundan takip eder.
+            Gerçek çalışan restoran demosunu inceleyin. QR menüyü,
+            siparişi ve müşteri deneyimini kendiniz test edin.
           </p>
 
-          <div className="flow-list">
-            <span>
-              <b>01</b> QR / NFC
-            </span>
-
-            <span>
-              <b>02</b> Dijital Menü
-            </span>
-
-            <span>
-              <b>03</b> Sepet &amp; Sipariş
-            </span>
-
-            <span>
-              <b>04</b> Sipariş Takibi
-            </span>
-          </div>
+          <Link href="/demo" className="landing-button landing-button-primary">
+            DEMOYU İNCELE
+            <span>→</span>
+          </Link>
         </div>
 
-        <div className="phone-preview">
-          <div className="phone-notch" />
-
-          <div className="phone-screen">
-            <small>
-              OZT KAFE · MASA 12
-            </small>
-
-            <h3>
-              Siparişiniz hazırlanıyor
-            </h3>
-
-            <div className="order-progress">
-              <span className="active">
-                ✓
-              </span>
-
-              <i />
-
-              <span className="active">
-                ✓
-              </span>
-
-              <i />
-
-              <span className="active">
-                ●
-              </span>
+        <div className="landing-demo-visual">
+          <div className="landing-demo-qr">
+            <div className="landing-qr-pattern">
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
             </div>
+          </div>
 
-            <div className="phone-order">
-              <span>
-                OZT Burger × 2
-              </span>
-
-              <b>
-                ₺640
-              </b>
+          <div className="landing-nfc-card">
+            <div className="landing-nfc-logo">OZT</div>
+            <div className="landing-nfc-lines">
+              <span>DIGITAL MENU</span>
+              <small>NFC • QR</small>
             </div>
-
-            <div className="phone-order">
-              <span>
-                Özel Kahve × 1
-              </span>
-
-              <b>
-                ₺120
-              </b>
-            </div>
-
-            <div className="phone-total">
-              <span>
-                Toplam
-              </span>
-
-              <strong>
-                ₺760
-              </strong>
-            </div>
+            <div className="landing-nfc-symbol">◉</div>
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          PRICING
-      ====================================================== */}
-      <section
-        className="landing-section pricing-section"
-      >
-        <div className="section-heading">
-          <div className="eyebrow">
-            PAKETLER
-          </div>
-
+      <section id="paketler" className="landing-section landing-pricing-section">
+        <div className="landing-section-heading landing-section-heading-center">
+          <div className="landing-eyebrow">PAKETLER</div>
           <h2>
-            İşletmenize uygun planı seçin.
+            İhtiyacınıza uygun
+            <br />
+            <span>paketi seçin.</span>
           </h2>
-
           <p>
-            İhtiyacınız büyüdükçe OZT Digital Menu
-            de sizinle büyür.
+            14 gün boyunca ücretsiz deneyin. Memnun kalırsanız devam edin.
           </p>
         </div>
 
-        <div className="pricing-grid">
-          {plans.map((plan) => (
-            <article
-              key={plan.name}
-              className={`pricing-card${
-                plan.name === "PRO"
-                  ? " featured"
-                  : ""
+        <div className="landing-pricing-grid">
+          {packages.map((item) => (
+            <div
+              className={`landing-price-card ${
+                item.featured ? "landing-price-card-featured" : ""
               }`}
+              key={item.name}
             >
-              {plan.name === "PRO" && (
-                <div className="pricing-badge">
-                  EN POPÜLER
-                </div>
+              {item.featured && (
+                <div className="landing-price-badge">EN ÇOK TERCİH EDİLEN</div>
               )}
 
-              <div className="pricing-name">
-                {plan.name}
+              <div className="landing-price-name">{item.name}</div>
+
+              <div className="landing-price">
+                <strong>{item.price}</strong>
+                <span>₺ / ay</span>
               </div>
 
-              <p>
-                {plan.text}
-              </p>
+              <p className="landing-price-description">{item.description}</p>
+
+              <div className="landing-price-divider" />
 
               <ul>
-                {plan.items.map((item) => (
-                  <li key={item}>
-                    ✓ {item}
+                {item.features.map((feature) => (
+                  <li key={feature}>
+                    <span>✓</span>
+                    {feature}
                   </li>
                 ))}
               </ul>
 
-              <a href="#iletisim">
-                Demo / Bilgi Al →
-              </a>
-            </article>
+              <Link
+                href="/abonelik"
+                className={
+                  item.featured
+                    ? "landing-price-button landing-price-button-dark"
+                    : "landing-price-button"
+                }
+              >
+                14 GÜN ÜCRETSİZ DENE →
+              </Link>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* =====================================================
-          CTA
-      ====================================================== */}
-      <section
-        id="iletisim"
-        className="landing-cta"
-      >
-        <div>
-          <div className="eyebrow">
-            HAZIR MISINIZ?
-          </div>
+      <section className="landing-final-cta">
+        <div className="landing-final-glow" />
 
-          <h2>
-            Restoranınızı dijitale taşıyın.
-          </h2>
+        <div className="landing-eyebrow">OZT DIGITAL</div>
 
-          <p>
-            Demo için bizimle iletişime geçin
-            veya işletme paneline giriş yapın.
-          </p>
+        <h2>
+          Restoranınızı
+          <br />
+          <span>bugün dijitale taşıyın.</span>
+        </h2>
+
+        <p>
+          14 gün ücretsiz deneyin. Kurulumu kolay, kullanımı basit,
+          restoranınız için tasarlanmış dijital çözüm.
+        </p>
+
+        <div className="landing-hero-actions">
+          <Link href="/abonelik" className="landing-button landing-button-primary">
+            ÜCRETSİZ DENEMEYİ BAŞLAT
+            <span>→</span>
+          </Link>
+
+          <Link href="/demo" className="landing-button landing-button-secondary">
+            DEMOYU İNCELE
+          </Link>
         </div>
-
-        <Link
-          href="/admin/login"
-          className="landing-primary"
-        >
-          İşletme Paneline Git <span>→</span>
-        </Link>
       </section>
 
-      {/* =====================================================
-          FOOTER
-      ====================================================== */}
       <footer className="landing-footer">
-        <div>
-          <strong>
-            OZT DIGITAL MENU
-          </strong>
-
-          <span>
-            Restoranlar için QR &amp; NFC
-            dijital deneyim platformu.
-          </span>
+        <div className="landing-footer-brand">
+          <span className="landing-brand-mark">O</span>
+          <div>
+            <strong>OZT DIGITAL</strong>
+            <small>Restoranlar için dijital deneyim.</small>
+          </div>
         </div>
 
-        <nav>
-          <Link href="/gizlilik">
-            Gizlilik
-          </Link>
+        <div className="landing-footer-links">
+          <Link href="/demo">Demo</Link>
+          <Link href="/abonelik">Paketler</Link>
+          <Link href="/admin">Restoran Girişi</Link>
+          <Link href="/sistem/login">Sistem Girişi</Link>
+        </div>
 
-          <Link href="/kvkk">
-            KVKK
-          </Link>
-
-          <Link href="/kullanim-sartlari">
-            Kullanım Şartları
-          </Link>
-
-          <Link href="/cerez-politikasi">
-            Çerez Politikası
-          </Link>
-        </nav>
-
-        <small>
-          © {new Date().getFullYear()} OZT Digital Menu.
-          Tüm hakları saklıdır.
-        </small>
+        <div className="landing-footer-bottom">
+          <span>© {new Date().getFullYear()} OZT Digital</span>
+          <span>QR • NFC • DIGITAL MENU</span>
+        </div>
       </footer>
     </main>
   );
