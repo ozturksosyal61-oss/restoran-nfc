@@ -15,7 +15,7 @@ export default function ArchiveRestaurantButton({
 
   async function handleArchive() {
     const confirmed = window.confirm(
-      `"${restaurantName}" restoranını devre dışı bırakmak istediğinizden emin misiniz?\n\nRestoran müşterilere kapatılacak ve sistem panelindeki aktif listeden çıkarılacak. Sipariş, ürün, masa, abonelik ve diğer geçmiş kayıtlar korunacaktır.\n\nDevam etmek için Tamam'a basın.`
+      `"${restaurantName}" restoranını devre dışı bırakmak istediğinizden emin misiniz?\n\nRestoran pasif duruma alınır. Mevcut sipariş, ürün, masa, abonelik ve geçmiş kayıtlar silinmez.\n\nDevam etmek için Tamam'a basın.`
     );
 
     if (!confirmed) return;
@@ -27,9 +27,7 @@ export default function ArchiveRestaurantButton({
         "/api/sistem/restoran-devre-disi",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             restaurant_id: restaurantId,
           }),
@@ -40,17 +38,13 @@ export default function ArchiveRestaurantButton({
 
       if (!response.ok || !data.success) {
         throw new Error(
-          data.error ||
-            "Restoran devre dışı bırakılamadı."
+          data.error || "Restoran devre dışı bırakılamadı."
         );
       }
 
       window.location.reload();
     } catch (error) {
-      console.error(
-        "RESTORAN DEVRE DIŞI BIRAKMA HATASI:",
-        error
-      );
+      console.error("RESTORAN DEVRE DIŞI HATASI:", error);
 
       window.alert(
         error instanceof Error
@@ -68,11 +62,8 @@ export default function ArchiveRestaurantButton({
       className="restaurant-archive-button"
       onClick={handleArchive}
       disabled={loading}
-      title="Restoranı güvenli şekilde devre dışı bırak"
     >
-      {loading
-        ? "Kapatılıyor..."
-        : "🗄️ Devre Dışı Bırak"}
+      {loading ? "Kapatılıyor..." : "🗄️ Devre Dışı Bırak"}
     </button>
   );
 }

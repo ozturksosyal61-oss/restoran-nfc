@@ -2,16 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
 import LogoutButton from "./LogoutButton";
-import { updateRestaurantPlan } from "./actions";
-import { getRestaurantThemeMeta, normalizeRestaurantTheme, RESTAURANT_THEMES, type RestaurantTheme } from "../../lib/themes";
+import ArchiveRestaurantButton from "./ArchiveRestaurantButton";
 
 type Restaurant = {
   id: number;
   name: string;
   slug: string;
   is_active?: boolean | null;
-  plan?: string | null;
-  theme?: RestaurantTheme | string | null;
 };
 
 type RestaurantTable = {
@@ -21,7 +18,6 @@ type RestaurantTable = {
   public_token: string;
   is_active: boolean;
 };
-
 
 export default async function SystemOwnerPage() {
   // ============================================================
@@ -63,8 +59,7 @@ export default async function SystemOwnerPage() {
     error: restaurantsError,
   } = await supabase
     .from("restaurants")
-    .select("id, name, slug, is_active, plan, theme")
-    .eq("is_active", true)
+    .select("id, name, slug, is_active")
     .order("id", { ascending: true });
 
   /*
@@ -495,82 +490,7 @@ export default async function SystemOwnerPage() {
                         /restoran/{restaurant.slug}
                       </p>
 
-                      <div
-                        className={`restaurant-theme-badge theme-${normalizeRestaurantTheme(restaurant.theme)}`}
-                      >
-                        🎨 {getRestaurantThemeMeta(restaurant.theme).label}
-                      </div>
-
                     </div>
-
-                    {/* PAKET YÖNETİMİ */}
-                    <form
-                      action={updateRestaurantPlan}
-                      className="restaurant-plan-form"
-                    >
-                      <input
-                        type="hidden"
-                        name="restaurant_id"
-                        value={restaurant.id}
-                      />
-
-                      <div className="restaurant-plan-label">
-                        <span>📦 Paket</span>
-                        <small>Sistem sahibi tarafından yönetilir</small>
-                      </div>
-
-                      <select
-                        name="plan"
-                        defaultValue={
-                          restaurant.plan === "pro" ||
-                          restaurant.plan === "premium"
-                            ? restaurant.plan
-                            : "starter"
-                        }
-                        className={
-                          `restaurant-plan-select plan-${
-                            restaurant.plan === "pro" ||
-                            restaurant.plan === "premium"
-                              ? restaurant.plan
-                              : "starter"
-                          }`
-                        }
-                        aria-label={`${restaurant.name} paketini seç`}
-                      >
-                        <option value="starter">🟢 STARTER</option>
-                        <option value="pro">🔵 PRO</option>
-                        <option value="premium">🟣 PREMIUM</option>
-                      </select>
-
-                      <label className="restaurant-theme-control">
-                        <span>🎨 Tema</span>
-                        <select
-                          name="theme"
-                          defaultValue={normalizeRestaurantTheme(restaurant.theme)}
-                          className={
-                            `restaurant-theme-select theme-${normalizeRestaurantTheme(restaurant.theme)}`
-                          }
-                          aria-label={`${restaurant.name} temasını seç`}
-                        >
-                          {RESTAURANT_THEMES.map((theme) => (
-                            <option key={theme.value} value={theme.value}>
-                              {theme.value === "classic" ? "⚪ " : theme.value === "dark-modern" ? "🔵 " : "🟡 "}
-                              {theme.label}
-                            </option>
-                          ))}
-                        </select>
-                        <small>
-                          {getRestaurantThemeMeta(restaurant.theme).description}
-                        </small>
-                      </label>
-
-                      <button
-                        type="submit"
-                        className="restaurant-plan-save"
-                      >
-                        💾 Paket + Temayı Kaydet
-                      </button>
-                    </form>
 
 
                     {/* YÖNETİCİ */}
@@ -686,6 +606,11 @@ export default async function SystemOwnerPage() {
                       >
                         Menüyü Gör →
                       </Link>
+
+                      <ArchiveRestaurantButton
+                        restaurantId={restaurant.id}
+                        restaurantName={restaurant.name}
+                      />
 
                     </div>
 
@@ -832,15 +757,15 @@ export default async function SystemOwnerPage() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
+          gap: 7px;
           min-height: 44px;
-          padding: 0 18px;
+          padding: 0 16px;
           border-radius: 12px;
           text-decoration: none;
           background: #fff7df;
           color: #8b6500;
           border: 1px solid #e2c76c;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 800;
           transition: .2s ease;
           white-space: nowrap;
@@ -1040,78 +965,6 @@ export default async function SystemOwnerPage() {
           color: #999;
         }
 
-        .restaurant-theme-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          margin-top: 10px;
-          padding: 6px 9px;
-          border-radius: 999px;
-          background: #f5f2ea;
-          border: 1px solid #e7ddc8;
-          color: #80631d;
-          font-size: 10px;
-          font-weight: 900;
-        }
-
-        .restaurant-theme-badge.theme-dark-modern {
-          background: #e8f5ff;
-          border-color: #b9ddf6;
-          color: #0879ba;
-        }
-
-        .restaurant-theme-badge.theme-luxury-gold {
-          background: #fff7df;
-          border-color: #e6ca72;
-          color: #8b6618;
-        }
-
-        .restaurant-theme-control {
-          display: flex;
-          flex-direction: column;
-          gap: 7px;
-          margin-top: 12px;
-          padding-top: 12px;
-          border-top: 1px solid #eee7dc;
-        }
-
-        .restaurant-theme-control > span {
-          font-size: 12px;
-          font-weight: 900;
-          color: #26231f;
-        }
-
-        .restaurant-theme-control small {
-          color: #8c867c;
-          font-size: 9px;
-          line-height: 1.4;
-        }
-
-        .restaurant-theme-select {
-          width: 100%;
-          min-height: 42px;
-          padding: 0 12px;
-          border: 1px solid #ddd4c4;
-          border-radius: 11px;
-          background: #fff;
-          color: #191919;
-          font-size: 12px;
-          font-weight: 900;
-          outline: none;
-        }
-
-        .restaurant-theme-select.theme-dark-modern {
-          border-color: #a7d7f4;
-          background: #f3fbff;
-          color: #0c6b9f;
-        }
-
-        .restaurant-theme-select.theme-luxury-gold {
-          border-color: #e4c776;
-          background: #fffbef;
-          color: #7f5d14;
-        }
-
         /* MANAGER */
 
         .restaurant-manager {
@@ -1146,73 +999,6 @@ export default async function SystemOwnerPage() {
           display: block;
           font-size: 12px;
         }
-
-        /* PLAN */
-
-        .restaurant-plan-form {
-          margin-top: 15px;
-          padding: 14px;
-          border: 1px solid #e9e3d8;
-          border-radius: 14px;
-          background: #faf9f6;
-        }
-
-        .restaurant-plan-label {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-          margin-bottom: 8px;
-          font-size: 12px;
-          font-weight: 900;
-        }
-
-        .restaurant-plan-label small {
-          color: #999;
-          font-size: 9px;
-          font-weight: 600;
-          text-align: right;
-        }
-
-        .restaurant-plan-select {
-          width: 100%;
-          min-height: 42px;
-          padding: 0 12px;
-          border: 1px solid #ddd7cc;
-          border-radius: 10px;
-          background: white;
-          color: #171717;
-          font-size: 12px;
-          font-weight: 900;
-          cursor: pointer;
-          outline: none;
-        }
-
-        .restaurant-plan-select:focus {
-          border-color: #c79500;
-          box-shadow: 0 0 0 3px rgba(199,149,0,.12);
-        }
-
-        .restaurant-plan-save {
-          width: 100%;
-          min-height: 38px;
-          margin-top: 8px;
-          border: none;
-          border-radius: 10px;
-          background: #151515;
-          color: white;
-          font-size: 11px;
-          font-weight: 900;
-          cursor: pointer;
-        }
-
-        .restaurant-plan-save:hover {
-          background: #292929;
-        }
-
-        .plan-starter { border-color: #b8dfc4; }
-        .plan-pro { border-color: #b9d5f2; }
-        .plan-premium { border-color: #d6b9ee; }
 
         /* FEATURES */
 
@@ -1443,7 +1229,32 @@ export default async function SystemOwnerPage() {
             min-height: 42px;
           }
 
-          .system-footer {
+        .restaurant-archive-button {
+          min-height: 42px;
+          padding: 0 13px;
+          border: 1px solid #efc8c4;
+          border-radius: 11px;
+          background: #fff6f5;
+          color: #a52d25;
+          font-size: 11px;
+          font-weight: 900;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: .2s ease;
+        }
+
+        .restaurant-archive-button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          background: #ffe9e6;
+          border-color: #df9a92;
+        }
+
+        .restaurant-archive-button:disabled {
+          opacity: .6;
+          cursor: not-allowed;
+        }
+
+        .system-footer {
             flex-direction: column;
             gap: 8px;
           }
