@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "../../lib/supabase/client";
 
 type RegistrationResponse = {
   success?: boolean;
@@ -42,6 +43,7 @@ export default function KayitPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const supabase = createClient();
 
   useEffect(() => {
     const plan = searchParams.get("plan_id") || "";
@@ -137,9 +139,49 @@ export default function KayitPage() {
         );
       }
 
-      router.replace(
-        "/login?registered=1"
+      // Kayıt tamamlandıktan sonra seçilen paket için
+      // 14 günlük ücretsiz denemeyi otomatik başlat.
+      const trialResponse = await fetch(
+        "/api/subscription/start",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            restaurant_id: data.restaurant_id,
+            plan_id: planId,
+            billing_interval: billingInterval,
+          }),
+        }
       );
+
+      const trialData =
+        await trialResponse.json();
+
+      if (!trialResponse.ok || !trialData.success) {
+        throw new Error(
+          trialData.error ||
+            "Hesabınız oluşturuldu ancak 14 günlük ücretsiz deneme başlatılamadı."
+        );
+      }
+
+      // Müşteriyi kayıt sonrası otomatik olarak giriş yaptır.
+      const { error: loginError } =
+        await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
+        });
+
+      if (loginError) {
+        throw new Error(
+          "Hesabınız oluşturuldu ve denemeniz başlatıldı. Otomatik giriş yapılamadı; İşletme Girişi üzerinden giriş yapabilirsiniz."
+        );
+      }
+
+      // Deneme aktif: müşteriyi direkt işletme paneline gönder.
+      router.replace("/admin");
+      router.refresh();
     } catch (err) {
       setError(
         err instanceof Error
@@ -162,8 +204,9 @@ export default function KayitPage() {
         <h1>Restoranınızı kaydedin.</h1>
 
         <p className="subtitle">
-          Hesabınızı oluşturun. Kayıt tamamlandığında
-          işletme giriş ekranına yönlendirileceksiniz.
+          Hesabınızı oluşturun. Seçtiğiniz paket için
+          14 günlük ücretsiz denemeniz otomatik başlatılır
+          ve ardından doğrudan işletme paneline girersiniz.
         </p>
 
         <form onSubmit={handleSubmit}>
