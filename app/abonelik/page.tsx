@@ -95,6 +95,21 @@ export default function SubscriptionPage() {
       setPlans(data.plans || []);
 
       if (data.plans?.length > 0) {
+        const params =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search)
+            : null;
+
+        const planFromUrl =
+          params?.get("plan_id") || "";
+
+        const planExists =
+          data.plans.some(
+            (plan: Plan) =>
+              String(plan.id) ===
+              String(planFromUrl)
+          );
+
         const professional =
           data.plans.find(
             (plan: Plan) =>
@@ -102,8 +117,10 @@ export default function SubscriptionPage() {
           );
 
         setSelectedPlan(
-          professional?.id ||
-            data.plans[0].id
+          planExists
+            ? planFromUrl
+            : professional?.id ||
+              data.plans[0].id
         );
       }
     } catch (error) {
@@ -189,9 +206,31 @@ export default function SubscriptionPage() {
       getRestaurantId();
 
     if (!restaurantId) {
-      setMessage(
-        "Restaurant ID bulunamadı."
+      const params = new URLSearchParams(
+        window.location.search
       );
+
+      const planId =
+        selectedPlan ||
+        params.get("plan_id") ||
+        "";
+
+      const interval =
+        selectedInterval ||
+        params.get("billing_interval") ||
+        "monthly";
+
+      const registerUrl =
+        `/kayit?plan_id=${encodeURIComponent(
+          planId
+        )}` +
+        `&billing_interval=${encodeURIComponent(
+          interval
+        )}`;
+
+      window.location.href =
+        registerUrl;
+
       return;
     }
 
@@ -340,9 +379,38 @@ export default function SubscriptionPage() {
   const handleSubscriptionAction = () => {
     if (changingPlan) {
       goToPayment();
-    } else {
-      startTrial();
+      return;
     }
+
+    const restaurantId = getRestaurantId();
+
+    if (!restaurantId) {
+      const params = new URLSearchParams(
+        window.location.search
+      );
+
+      const planId =
+        selectedPlan ||
+        params.get("plan_id") ||
+        "";
+
+      const interval =
+        selectedInterval ||
+        params.get("billing_interval") ||
+        "monthly";
+
+      window.location.href =
+        `/kayit?plan_id=${encodeURIComponent(
+          planId
+        )}` +
+        `&billing_interval=${encodeURIComponent(
+          interval
+        )}`;
+
+      return;
+    }
+
+    startTrial();
   };
 
   // -------------------------------------------------------
