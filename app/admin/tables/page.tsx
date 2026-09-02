@@ -1,9 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { createClient } from "../../../lib/supabase/client";
-import NfcWriter from "./NfcWriter";
 
 type Restaurant = {
   id: number;
@@ -21,7 +20,7 @@ type RestaurantTable = {
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
-  "https://restoran-nfc.vercel.app";
+  "https://www.oztdigital.com.tr";
 
 export default function TablesPage() {
   const [restaurants, setRestaurants] =
@@ -741,7 +740,7 @@ export default function TablesPage() {
      * NEXT_PUBLIC_APP_URL
      *
      * yoksa:
-     * https://restoran-nfc.vercel.app
+     * https://www.oztdigital.com.tr
      */
 
     const baseUrl =
@@ -1567,110 +1566,6 @@ export default function TablesPage() {
           </div>
         </section>
 
-        {/* MASA ÖZETİ */}
-
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(150px, 1fr))",
-            gap: "10px",
-            marginBottom: "15px",
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              border: "1px solid #e7e2da",
-              borderRadius: "14px",
-              padding: "14px 15px",
-            }}
-          >
-            <span
-              style={{
-                display: "block",
-                color: "#888",
-                fontSize: "10px",
-                fontWeight: 800,
-                letterSpacing: ".5px",
-              }}
-            >
-              TOPLAM MASA
-            </span>
-            <strong
-              style={{
-                display: "block",
-                marginTop: "5px",
-                fontSize: "22px",
-              }}
-            >
-              {tables.length}
-            </strong>
-          </div>
-
-          <div
-            style={{
-              background: "#effaf2",
-              border: "1px solid #c9e8d1",
-              borderRadius: "14px",
-              padding: "14px 15px",
-            }}
-          >
-            <span
-              style={{
-                display: "block",
-                color: "#16733a",
-                fontSize: "10px",
-                fontWeight: 800,
-                letterSpacing: ".5px",
-              }}
-            >
-              AKTİF
-            </span>
-            <strong
-              style={{
-                display: "block",
-                marginTop: "5px",
-                fontSize: "22px",
-                color: "#16733a",
-              }}
-            >
-              {tables.filter((table) => table.is_active).length}
-            </strong>
-          </div>
-
-          <div
-            style={{
-              background: "#f7f7f7",
-              border: "1px solid #e2e2e2",
-              borderRadius: "14px",
-              padding: "14px 15px",
-            }}
-          >
-            <span
-              style={{
-                display: "block",
-                color: "#777",
-                fontSize: "10px",
-                fontWeight: 800,
-                letterSpacing: ".5px",
-              }}
-            >
-              PASİF
-            </span>
-            <strong
-              style={{
-                display: "block",
-                marginTop: "5px",
-                fontSize: "22px",
-                color: "#777",
-              }}
-            >
-              {tables.filter((table) => !table.is_active).length}
-            </strong>
-          </div>
-        </section>
-
         {/* MASALAR BAŞLIK */}
 
         <div
@@ -2126,10 +2021,6 @@ export default function TablesPage() {
                         🖨️ Yazdır
                       </button>
                     </div>
-                                        <NfcWriter
-                      url={qrUrl}
-                      tableNumber={table.table_number}
-                    />
 
                     {/* DÜZENLE / SİL */}
 
