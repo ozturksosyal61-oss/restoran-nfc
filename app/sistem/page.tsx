@@ -227,20 +227,29 @@ export default async function SystemOwnerPage() {
           </div>
 
           <div className="system-header-actions">
-  <Link
-    href="/admin"
-    className="system-secondary-button"
-  >
-    Yönetim Paneli
-  </Link>
+            <Link
+              href="/admin"
+              className="system-secondary-button"
+            >
+              Yönetim Paneli
+            </Link>
 
- <Link href="/sistem/yeni-restoran">
-  + Yeni Restoran
-</Link>
-  
+            <Link
+              href="/sistem/abonelikler"
+              className="system-subscription-button"
+            >
+              💳 Abonelikler
+            </Link>
 
-  <LogoutButton />
-</div>
+            <Link
+              href="/sistem/yeni-restoran"
+              className="system-primary-button"
+            >
+              + Yeni Restoran
+            </Link>
+
+            <LogoutButton />
+          </div>
 
         </header>
 
@@ -410,12 +419,6 @@ export default async function SystemOwnerPage() {
             >
               ＋ Yeni Restoran Ekle
             </Link>
-            <Link
-  href="/sistem/abonelikler"
-  className="system-secondary-button"
->
-  💳 Abonelik Yönetimi
-</Link>
 
           </div>
 
@@ -820,11 +823,32 @@ export default async function SystemOwnerPage() {
           border: 1px solid #ddd8ce;
         }
 
-        .system-secondary-button:hover {
+        \1
+        .system-subscription-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          min-height: 44px;
+          padding: 0 18px;
+          border-radius: 12px;
+          text-decoration: none;
+          background: #fff7df;
+          color: #8b6500;
+          border: 1px solid #e2c76c;
+          font-size: 13px;
+          font-weight: 800;
+          transition: .2s ease;
+          white-space: nowrap;
+        }
+
+        .system-subscription-button:hover {
+          transform: translateY(-1px);
+          background: #fff1c2;
           border-color: #c79500;
         }
 
-        /* STATS */
+        \2
 
         .system-stats {
           display: grid;
