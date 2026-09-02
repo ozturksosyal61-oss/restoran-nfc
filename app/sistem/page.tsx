@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
 import LogoutButton from "./LogoutButton";
-import DeleteRestaurantButton from "./DeleteRestaurantButton";
 import { updateRestaurantPlan } from "./actions";
 import { getRestaurantThemeMeta, normalizeRestaurantTheme, RESTAURANT_THEMES, type RestaurantTheme } from "../../lib/themes";
 
@@ -65,6 +64,7 @@ export default async function SystemOwnerPage() {
   } = await supabase
     .from("restaurants")
     .select("id, name, slug, is_active, plan, theme")
+    .eq("is_active", true)
     .order("id", { ascending: true });
 
   /*
@@ -687,11 +687,6 @@ export default async function SystemOwnerPage() {
                         Menüyü Gör →
                       </Link>
 
-                      <DeleteRestaurantButton
-                        restaurantId={restaurant.id}
-                        restaurantName={restaurant.name}
-                      />
-
                     </div>
 
                   </article>
@@ -855,30 +850,6 @@ export default async function SystemOwnerPage() {
           transform: translateY(-1px);
           background: #fff1c2;
           border-color: #c79500;
-        }
-
-        .restaurant-delete-button {
-          min-height: 42px;
-          padding: 0 14px;
-          border: 1px solid #efc8c4;
-          border-radius: 12px;
-          background: #fff6f5;
-          color: #a52d25;
-          font-size: 12px;
-          font-weight: 900;
-          cursor: pointer;
-          transition: .2s ease;
-        }
-
-        .restaurant-delete-button:hover:not(:disabled) {
-          transform: translateY(-1px);
-          background: #ffe9e6;
-          border-color: #df9a92;
-        }
-
-        .restaurant-delete-button:disabled {
-          opacity: .55;
-          cursor: not-allowed;
         }
 
         /* STATS */
