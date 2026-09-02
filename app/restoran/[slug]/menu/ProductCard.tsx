@@ -23,6 +23,12 @@ export default function ProductCard({
   const [isOpen, setIsOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
+  // =====================================================
+  // SEPETE EKLENDİ BİLDİRİMİ
+  // =====================================================
+
+  const [showAddedToast, setShowAddedToast] = useState(false);
+
   function openModal() {
     setQuantity(1);
     setIsOpen(true);
@@ -53,8 +59,30 @@ export default function ProductCard({
       });
     }
 
+    // Önce modalı kapat
     closeModal();
+
+    // Bildirimi göster
+    setShowAddedToast(true);
   }
+
+  // =====================================================
+  // TOAST'U OTOMATİK KAPAT
+  // =====================================================
+
+  useEffect(() => {
+    if (!showAddedToast) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowAddedToast(false);
+    }, 2200);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [showAddedToast]);
 
   const total =
     Number(product.price) * quantity;
@@ -115,6 +143,35 @@ export default function ProductCard({
 
   return (
     <>
+      {/* =================================================
+          SEPETE EKLENDİ — TOAST
+      ================================================= */}
+
+      {showAddedToast && (
+        <div
+          className="cart-added-toast"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="cart-added-toast-icon">
+            ✓
+          </div>
+
+          <div className="cart-added-toast-content">
+            <strong>
+              SEPETE EKLENDİ
+            </strong>
+
+            <span>
+              {product.name}
+              {quantity > 1
+                ? ` · ${quantity} adet`
+                : ""}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* =================================================
           ÜRÜN KARTI
       ================================================= */}

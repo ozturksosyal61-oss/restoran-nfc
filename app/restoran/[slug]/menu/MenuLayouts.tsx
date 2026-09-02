@@ -1,5 +1,7 @@
+
 "use client";
 
+import { useState } from "react";
 import ProductCard from "./ProductCard";
 import { useCart } from "./CartContext";
 
@@ -361,6 +363,27 @@ function OztGlassPremiumLayout({
     decreaseQuantity,
     removeFromCart,
   } = useCart();
+  const [searchTerm, setSearchTerm] = useState("");
+
+const normalizedSearch = searchTerm
+  .trim()
+  .toLocaleLowerCase("tr-TR");
+
+const filteredProducts = normalizedSearch
+  ? products.filter((product) => {
+      const searchableText = [
+        product.name,
+        product.description,
+        product.ingredients,
+        product.allergens,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase("tr-TR");
+
+      return searchableText.includes(normalizedSearch);
+    })
+  : products;
 
   /*
    * Premium tema için sadece ürün bulunan kategorileri kullan.
@@ -375,6 +398,10 @@ function OztGlassPremiumLayout({
           candidate.name.trim().toLocaleLowerCase("tr-TR") ===
           category.name.trim().toLocaleLowerCase("tr-TR")
       ) === index
+  );
+
+  const visibleCategories = premiumCategories.filter((category) =>
+    getCategoryProducts(category.id, filteredProducts).length > 0
   );
 
   const featuredNames = new Set([
@@ -470,14 +497,40 @@ function OztGlassPremiumLayout({
           <div className="ozt-glass-eyebrow">{restaurantName.toUpperCase()}</div>
           <div className="ozt-glass-hero-title">Hoş Geldiniz ♥</div>
           <div className="ozt-glass-hero-copy">Lezzet, şimdi bir tık uzağınızda. Menünüzü keşfedin ve favorinizi seçin.</div>
-          <div className="ozt-app-search">⌕ <span>Menüde ara...</span></div>
+          <div
+  className={`ozt-app-search ${
+    normalizedSearch ? "has-search" : ""
+  }`}
+>
+  <span className="ozt-app-search-icon">⌕</span>
+
+  <input
+    type="search"
+    value={searchTerm}
+    onChange={(event) => setSearchTerm(event.target.value)}
+    placeholder="Menüde ara..."
+    aria-label="Menüde ara"
+    autoComplete="off"
+  />
+
+  {searchTerm && (
+    <button
+      type="button"
+      className="ozt-app-search-clear"
+      onClick={() => setSearchTerm("")}
+      aria-label="Aramayı temizle"
+    >
+      ×
+    </button>
+  )}
+</div>
         </div>
       </section>
 
-      {premiumCategories.length > 0 && (
+      {visibleCategories.length > 0 && (
         <div className="ozt-app-category-strip">
           <div className="ozt-app-categories" aria-label="Kategoriler">
-          {premiumCategories.map((category) => {
+          {visibleCategories.map((category) => {
             const img = categoryImage(category.id);
             return (
               <a key={category.id} href={`#category-${category.id}`} className="ozt-app-category">
@@ -530,7 +583,7 @@ function OztGlassPremiumLayout({
       {garson === "ok" && <div className="ozt-app-message success">✓ Garson çağrınız gönderildi.</div>}
       {garson === "hata" && <div className="ozt-app-message error">Garson çağrısı gönderilemedi. Lütfen tekrar deneyin.</div>}
 
-      {featuredProducts.length > 0 && (
+      {!normalizedSearch && featuredProducts.length > 0 && (
         <section className="ozt-app-section">
           <div className="ozt-app-section-heading">
             <div><span>ÖNE ÇIKANLAR 🔥</span><h2>Favoriler</h2></div>
@@ -553,9 +606,30 @@ function OztGlassPremiumLayout({
           </div>
         </section>
       )}
+      {normalizedSearch && filteredProducts.length === 0 && (
+  <section className="ozt-app-search-empty">
+    <div className="ozt-app-search-empty-icon">⌕</div>
 
-      {premiumCategories.map((category) => {
-        const categoryProducts = getCategoryProducts(category.id, products);
+    <h3>Ürün bulunamadı</h3>
+
+    <p>
+      “{searchTerm}” için menümüzde eşleşen bir ürün
+      bulunamadı.
+    </p>
+
+    <button
+      type="button"
+      onClick={() => setSearchTerm("")}
+    >
+      Aramayı Temizle
+    </button>
+  </section>
+)}
+{visibleCategories.map((category) => {
+  const categoryProducts = getCategoryProducts(
+    category.id,
+    filteredProducts
+  );
         return (
           <section key={category.id} id={`category-${category.id}`} className="ozt-app-section">
             <div className="ozt-glass-section-heading">
@@ -1735,15 +1809,121 @@ export default function MenuLayouts({
         }
         .ozt-app-hero .ozt-glass-hero-copy { color:rgba(255,255,255,.76); font-size:10px; max-width:480px; line-height:1.55; }
         .ozt-app-search {
-          margin-top:14px; padding:13px 14px;
+          display:flex;
+          align-items:center;
+          gap:8px;
+          margin-top:14px;
+          padding:13px 14px;
           border:1px solid rgba(255,255,255,.16);
           border-radius:15px;
           background:rgba(10,10,11,.55);
-          color:#fff; font-size:11px;
+          color:#fff;
+          font-size:11px;
           backdrop-filter:blur(14px);
           box-shadow:0 8px 24px rgba(0,0,0,.22);
+          transition:border-color .18s ease, box-shadow .18s ease;
         }
-        .ozt-app-search span { color:#aaa; margin-left:7px; }
+
+        .ozt-app-search-icon {
+          flex:0 0 auto;
+          color:#e2b86e !important;
+          margin:0 !important;
+          font-size:15px;
+          line-height:1;
+        }
+
+        .ozt-app-search input {
+          flex:1;
+          min-width:0;
+          width:100%;
+          border:0;
+          outline:0;
+          background:transparent;
+          color:#fff;
+          font-family:inherit;
+          font-size:11px;
+        }
+
+        .ozt-app-search input::placeholder {
+          color:#aaa;
+        }
+
+        .ozt-app-search input::-webkit-search-cancel-button {
+          display:none;
+        }
+
+        .ozt-app-search.has-search {
+          border-color:rgba(226,184,110,.58);
+          box-shadow:
+            0 0 0 1px rgba(226,184,110,.10),
+            0 8px 24px rgba(0,0,0,.22);
+        }
+
+        .ozt-app-search-clear {
+          flex:0 0 auto;
+          width:24px;
+          height:24px;
+          display:grid;
+          place-items:center;
+          padding:0;
+          border:0;
+          border-radius:50%;
+          background:rgba(255,255,255,.10);
+          color:#fff;
+          font-size:17px;
+          line-height:1;
+          cursor:pointer;
+        }
+
+        .ozt-app-search-clear:hover {
+          background:rgba(226,184,110,.24);
+        }
+
+        .ozt-app-search-empty {
+          margin:24px 0 35px;
+          padding:32px 20px;
+          text-align:center;
+          border:1px solid rgba(255,255,255,.10);
+          border-radius:20px;
+          background:rgba(255,255,255,.035);
+        }
+
+        .ozt-app-search-empty-icon {
+          width:54px;
+          height:54px;
+          margin:0 auto 14px;
+          display:grid;
+          place-items:center;
+          border-radius:50%;
+          border:1px solid rgba(226,184,110,.35);
+          color:#e2b86e;
+          font-size:24px;
+        }
+
+        .ozt-app-search-empty h3 {
+          margin:0 0 7px;
+          color:#fff;
+          font-size:18px;
+        }
+
+        .ozt-app-search-empty p {
+          margin:0 auto 18px;
+          max-width:300px;
+          color:#999;
+          font-size:11px;
+          line-height:1.6;
+        }
+
+        .ozt-app-search-empty button {
+          border:1px solid rgba(226,184,110,.45);
+          border-radius:12px;
+          padding:10px 15px;
+          background:rgba(226,184,110,.10);
+          color:#e2b86e;
+          font-size:11px;
+          font-weight:800;
+          cursor:pointer;
+        }
 
         .ozt-layout-glass-premium .ozt-app-category-strip {
           position:sticky !important; top:58px !important; z-index:65 !important;
@@ -2509,85 +2689,7 @@ export default function MenuLayouts({
             height: 78px !important;
           }
         }
-          /* =========================================================
-   MİRA KITCHEN PREMIUM — FAVORİLER CAROUSEL FINAL
-   ========================================================= */
-
-.ozt-layout-glass-premium .ozt-app-featured-row {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-
-  width: 100% !important;
-  max-width: 100% !important;
-
-  gap: 12px !important;
-
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-
-  padding: 4px 2px 14px !important;
-
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-
-  -webkit-overflow-scrolling: touch !important;
-  scroll-snap-type: x mandatory !important;
-}
-
-.ozt-layout-glass-premium
-.ozt-app-featured-row::-webkit-scrollbar {
-  display: none !important;
-}
-
-.ozt-layout-glass-premium
-.ozt-app-feature-card {
-  flex: 0 0 220px !important;
-
-  width: 220px !important;
-  min-width: 220px !important;
-  max-width: 220px !important;
-
-  height: 235px !important;
-
-  scroll-snap-align: start !important;
-
-  box-sizing: border-box !important;
-}
-
-
-/* MOBİL */
-
-@media (max-width: 600px) {
-
-  .ozt-layout-glass-premium
-  .ozt-app-feature-card {
-    flex: 0 0 205px !important;
-
-    width: 205px !important;
-    min-width: 205px !important;
-    max-width: 205px !important;
-
-    height: 225px !important;
-  }
-}
-
-
-/* KÜÇÜK TELEFON */
-
-@media (max-width: 430px) {
-
-  .ozt-layout-glass-premium
-  .ozt-app-feature-card {
-    flex: 0 0 190px !important;
-
-    width: 190px !important;
-    min-width: 190px !important;
-    max-width: 190px !important;
-
-    height: 215px !important;
-  }
-}
+          
 
       `}</style>
 

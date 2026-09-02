@@ -1,4 +1,3 @@
-
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
@@ -139,13 +138,7 @@ export default function KayitPage() {
       }
 
       router.replace(
-        `/abonelik?restaurant_id=${encodeURIComponent(
-          String(data.restaurant_id)
-        )}` +
-          `&plan_id=${encodeURIComponent(planId)}` +
-          `&billing_interval=${encodeURIComponent(
-            billingInterval
-          )}`
+        "/login?registered=1"
       );
     } catch (err) {
       setError(
@@ -169,8 +162,8 @@ export default function KayitPage() {
         <h1>Restoranınızı kaydedin.</h1>
 
         <p className="subtitle">
-          Hesabınızı oluşturun. Ardından seçtiğiniz paket için
-          14 günlük ücretsiz deneme ekranına geçeceksiniz.
+          Hesabınızı oluşturun. Kayıt tamamlandığında
+          işletme giriş ekranına yönlendirileceksiniz.
         </p>
 
         <form onSubmit={handleSubmit}>
