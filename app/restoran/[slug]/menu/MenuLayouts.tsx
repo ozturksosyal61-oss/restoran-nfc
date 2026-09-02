@@ -2140,7 +2140,7 @@ export default function MenuLayouts({
           .ozt-app-hero-content { inset:auto 18px 18px; }
           .ozt-app-quick-actions { gap:7px; }
           .ozt-app-action-button { min-height:72px; }
-          .ozt-app-feature-card { flex-basis:78%; }
+          .ozt-app-feature-card { flex: 0 0 78% !important; }
           .ozt-app-feature-card .customer-product-image-wrap { height:172px !important; }
           .ozt-app-bottom-nav { width:calc(100vw - 18px); bottom:9px; }
           .ozt-app-cart-item { grid-template-columns:44px minmax(0,1fr) auto; }
@@ -2545,14 +2545,26 @@ export default function MenuLayouts({
         }
 
         .ozt-layout-glass-premium .ozt-app-featured-row {
-          display: grid !important;
-          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          display: flex !important;
+          flex-direction: row !important;
+          flex-wrap: nowrap !important;
           gap: 10px !important;
-          overflow: visible !important;
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+          scroll-snap-type: x mandatory !important;
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+          padding-bottom: 8px !important;
+        }
+
+        .ozt-layout-glass-premium .ozt-app-featured-row::-webkit-scrollbar {
+          display: none;
         }
 
         .ozt-layout-glass-premium .ozt-app-feature-card {
+          flex: 0 0 74% !important;
           min-width: 0 !important;
+          scroll-snap-align: start !important;
           padding: 6px !important;
           border-radius: 17px !important;
         }
@@ -2665,7 +2677,13 @@ export default function MenuLayouts({
           }
 
           .ozt-layout-glass-premium .ozt-app-featured-row {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            gap: 9px !important;
+            scroll-snap-type: x mandatory !important;
           }
 
           .ozt-layout-glass-premium .ozt-app-feature-card .customer-product-image-wrap {

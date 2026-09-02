@@ -2,7 +2,6 @@
 import QRCode from "qrcode";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "../../../lib/supabase-server";
-import NfcUrlActions from "./NfcUrlActions";
 
 export const dynamic = "force-dynamic";
 
@@ -60,8 +59,7 @@ export default async function AdminQRPage() {
   }
 
   const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    "http://localhost:3000";
+    "https://www.oztdigital.com.tr";
 
   /*
     =====================================================
@@ -613,66 +611,6 @@ const tableQrs = await Promise.all(
               >
                 📥 Masa {table.tableNumber} QR İndir
               </a>
-              <div
-  style={{
-    marginTop: "14px",
-    paddingTop: "14px",
-    borderTop: "1px solid #eee",
-    textAlign: "left",
-  }}
->
-  <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "7px",
-      marginBottom: "6px",
-    }}
-  >
-    <span style={{ fontSize: "17px" }}>
-      📲
-    </span>
-
-    <strong
-      style={{
-        fontSize: "13px",
-        color: "#222",
-      }}
-    >
-      NFC Kart
-    </strong>
-  </div>
-
-  <p
-    style={{
-      margin: "0 0 8px",
-      fontSize: "11px",
-      color: "#777",
-      lineHeight: 1.5,
-    }}
-  >
-    Bu bağlantıyı NFC kartına URL olarak
-    yazabilirsiniz.
-  </p>
-
-  <div
-    style={{
-      background: "#f7f5f0",
-      borderRadius: "10px",
-      padding: "9px 10px",
-      fontSize: "10px",
-      color: "#666",
-      wordBreak: "break-all",
-      lineHeight: 1.45,
-    }}
-  >
-    {table.tableUrl}
-  </div>
-
-  <NfcUrlActions
-    url={table.tableUrl}
-  />
-</div>
 
             </div>
 
