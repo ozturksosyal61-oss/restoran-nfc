@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { createClient } from "../../../lib/supabase/client";
+import NfcWriter from "./NfcWriter";
 
 type Restaurant = {
   id: number;
@@ -20,7 +21,7 @@ type RestaurantTable = {
 
 const APP_URL =
   "https://www.oztdigital.com.tr";
-
+  
 export default function TablesPage() {
   const [restaurants, setRestaurants] =
     useState<Restaurant[]>([]);
@@ -61,6 +62,10 @@ export default function TablesPage() {
   const [error, setError] =
     useState("");
 
+  // Kullanıcının masa yönetme yetkisi
+  const [canManageTables, setCanManageTables] =
+    useState(false);
+
   /*
    * =====================================================
    * RESTORANLARI GETİR
@@ -81,6 +86,7 @@ export default function TablesPage() {
       setRestaurants([]);
       setTables([]);
       setSelectedRestaurantId("");
+      setCanManageTables(false);
       setError("Oturum bulunamadı.");
       return;
     }
@@ -91,7 +97,7 @@ export default function TablesPage() {
       error: membershipError,
     } = await supabase
       .from("restaurant_users")
-      .select("restaurant_id")
+      .select("restaurant_id, role, permissions")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -104,6 +110,7 @@ export default function TablesPage() {
       setRestaurants([]);
       setTables([]);
       setSelectedRestaurantId("");
+      setCanManageTables(false);
       setError(
         "İşletme bağlantısı alınamadı: " +
           membershipError.message
@@ -115,9 +122,34 @@ export default function TablesPage() {
       setRestaurants([]);
       setTables([]);
       setSelectedRestaurantId("");
+      setCanManageTables(false);
       setError(
         "Hesabınıza bağlı bir işletme bulunamadı."
       );
+      return;
+    }
+
+    // Yönetici tüm bölümlere erişebilir.
+    // Diğer kullanıcılar için yalnızca permissions.tables === true ise
+    // masa yönetimine izin verilir.
+    const role = String(membership.role || "").toLowerCase();
+    const permissions =
+      membership.permissions &&
+      typeof membership.permissions === "object"
+        ? (membership.permissions as Record<string, boolean>)
+        : {};
+
+    const hasTablePermission =
+      role === "manager" ||
+      permissions.tables === true;
+
+    setCanManageTables(hasTablePermission);
+
+    if (!hasTablePermission) {
+      setRestaurants([]);
+      setTables([]);
+      setSelectedRestaurantId("");
+      setError("Bu hesabın Masa Yönetimi yetkisi bulunmuyor.");
       return;
     }
 
@@ -140,6 +172,7 @@ export default function TablesPage() {
       setRestaurants([]);
       setTables([]);
       setSelectedRestaurantId("");
+      setCanManageTables(false);
       setError(
         "İşletme bilgisi alınamadı: " +
           restaurantError.message
@@ -151,6 +184,7 @@ export default function TablesPage() {
       setRestaurants([]);
       setTables([]);
       setSelectedRestaurantId("");
+      setCanManageTables(false);
       setError("Bağlı işletme bulunamadı.");
       return;
     }
@@ -170,6 +204,11 @@ export default function TablesPage() {
   async function loadTables(
     restaurantId: string
   ) {
+    if (!canManageTables) {
+      setTables([]);
+      return;
+    }
+
     if (!restaurantId) {
       setTables([]);
       return;
@@ -246,6 +285,7 @@ export default function TablesPage() {
     }
   }, [
     selectedRestaurantId,
+    canManageTables,
   ]);
 
   /*
@@ -255,6 +295,11 @@ export default function TablesPage() {
    */
 
   async function createTable() {
+    if (!canManageTables) {
+      setError("Bu işlem için Masa Yönetimi yetkiniz yok.");
+      return;
+    }
+
     setMessage("");
     setError("");
 
@@ -378,6 +423,11 @@ export default function TablesPage() {
   async function toggleTable(
     table: RestaurantTable
   ) {
+    if (!canManageTables) {
+      setError("Bu işlem için Masa Yönetimi yetkiniz yok.");
+      return;
+    }
+
     setError("");
     setMessage("");
 
@@ -451,6 +501,11 @@ export default function TablesPage() {
    */
 
   async function createBulkTables() {
+    if (!canManageTables) {
+      setError("Bu işlem için Masa Yönetimi yetkiniz yok.");
+      return;
+    }
+
     setMessage("");
     setError("");
 
@@ -545,6 +600,11 @@ export default function TablesPage() {
   }
 
   async function saveEditTable() {
+    if (!canManageTables) {
+      setError("Bu işlem için Masa Yönetimi yetkiniz yok.");
+      return;
+    }
+
     if (!editingTable) return;
 
     setError("");
@@ -602,6 +662,11 @@ export default function TablesPage() {
    */
 
   async function deleteTable(table: RestaurantTable) {
+    if (!canManageTables) {
+      setError("Bu işlem için Masa Yönetimi yetkiniz yok.");
+      return;
+    }
+
     const confirmed = window.confirm(
       `Masa ${table.table_number} silinsin mi?\n\nBu işlem geri alınamaz.`
     );
@@ -671,8 +736,11 @@ export default function TablesPage() {
      * Supabase restaurants.slug alanındaki
      * gerçek slug kullanılıyor.
      *
-     * Üretim domaini:
-     * https://www.oztdigital.com.tr
+     * Domain:
+     * NEXT_PUBLIC_APP_URL
+     *
+     * yoksa:
+     * https://restoran-nfc.vercel.app
      */
 
     const baseUrl =
@@ -1001,6 +1069,105 @@ export default function TablesPage() {
    * =====================================================
    */
 
+  if (!canManageTables) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          background: "#f5f3ef",
+          padding: "30px 16px 60px",
+          color: "#171717",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "700px",
+            margin: "0 auto",
+          }}
+        >
+          <div
+            style={{
+              background: "#171717",
+              color: "#fff",
+              borderRadius: "18px",
+              padding: "28px 24px",
+              marginBottom: "18px",
+            }}
+          >
+            <div
+              style={{
+                color: "#d99b08",
+                fontSize: "10px",
+                fontWeight: 800,
+                letterSpacing: "1.5px",
+                marginBottom: "6px",
+              }}
+            >
+              MASA YÖNETİMİ
+            </div>
+
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "25px",
+              }}
+            >
+              QR / NFC Masa Yönetimi
+            </h1>
+          </div>
+
+          <div
+            style={{
+              background: "#fff",
+              border: "1px solid #e7e2da",
+              borderRadius: "18px",
+              padding: "30px 24px",
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                width: "56px",
+                height: "56px",
+                margin: "0 auto 15px",
+                borderRadius: "50%",
+                background: "#fff4e5",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "26px",
+              }}
+            >
+              🔒
+            </div>
+
+            <h2
+              style={{
+                margin: "0 0 8px",
+                fontSize: "21px",
+              }}
+            >
+              Erişim Yetkiniz Yok
+            </h2>
+
+            <p
+              style={{
+                margin: 0,
+                color: "#777",
+                fontSize: "13px",
+                lineHeight: 1.6,
+              }}
+            >
+              Bu hesabın Masa Yönetimi yetkisi bulunmuyor.
+              <br />
+              İşletme yöneticisinden <strong>Masalar</strong> yetkisini istemelisiniz.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main
       style={{
@@ -1080,6 +1247,21 @@ export default function TablesPage() {
             Her masa için benzersiz QR
             bağlantısı oluştur.
           </p>
+
+          <a
+            href="/admin"
+            style={{
+              display: "inline-block",
+              marginTop: "14px",
+              color: "#fff",
+              textDecoration: "none",
+              fontSize: "11px",
+              fontWeight: 800,
+              opacity: 0.78,
+            }}
+          >
+            ← Yönetim Paneline Dön
+          </a>
         </header>
 
         {/* HATA */}
@@ -1384,6 +1566,110 @@ export default function TablesPage() {
           </div>
         </section>
 
+        {/* MASA ÖZETİ */}
+
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(150px, 1fr))",
+            gap: "10px",
+            marginBottom: "15px",
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              border: "1px solid #e7e2da",
+              borderRadius: "14px",
+              padding: "14px 15px",
+            }}
+          >
+            <span
+              style={{
+                display: "block",
+                color: "#888",
+                fontSize: "10px",
+                fontWeight: 800,
+                letterSpacing: ".5px",
+              }}
+            >
+              TOPLAM MASA
+            </span>
+            <strong
+              style={{
+                display: "block",
+                marginTop: "5px",
+                fontSize: "22px",
+              }}
+            >
+              {tables.length}
+            </strong>
+          </div>
+
+          <div
+            style={{
+              background: "#effaf2",
+              border: "1px solid #c9e8d1",
+              borderRadius: "14px",
+              padding: "14px 15px",
+            }}
+          >
+            <span
+              style={{
+                display: "block",
+                color: "#16733a",
+                fontSize: "10px",
+                fontWeight: 800,
+                letterSpacing: ".5px",
+              }}
+            >
+              AKTİF
+            </span>
+            <strong
+              style={{
+                display: "block",
+                marginTop: "5px",
+                fontSize: "22px",
+                color: "#16733a",
+              }}
+            >
+              {tables.filter((table) => table.is_active).length}
+            </strong>
+          </div>
+
+          <div
+            style={{
+              background: "#f7f7f7",
+              border: "1px solid #e2e2e2",
+              borderRadius: "14px",
+              padding: "14px 15px",
+            }}
+          >
+            <span
+              style={{
+                display: "block",
+                color: "#777",
+                fontSize: "10px",
+                fontWeight: 800,
+                letterSpacing: ".5px",
+              }}
+            >
+              PASİF
+            </span>
+            <strong
+              style={{
+                display: "block",
+                marginTop: "5px",
+                fontSize: "22px",
+                color: "#777",
+              }}
+            >
+              {tables.filter((table) => !table.is_active).length}
+            </strong>
+          </div>
+        </section>
+
         {/* MASALAR BAŞLIK */}
 
         <div
@@ -1432,7 +1718,42 @@ export default function TablesPage() {
               justifyContent: "flex-end",
             }}
           >
-            <strong>{tables.length} masa</strong>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                flexWrap: "wrap",
+              }}
+            >
+              <strong>{tables.length} masa</strong>
+
+              <span
+                style={{
+                  padding: "5px 9px",
+                  borderRadius: "999px",
+                  background: "#effaf2",
+                  color: "#16733a",
+                  fontSize: "10px",
+                  fontWeight: 800,
+                }}
+              >
+                🟢 {tables.filter((table) => table.is_active).length} aktif
+              </span>
+
+              <span
+                style={{
+                  padding: "5px 9px",
+                  borderRadius: "999px",
+                  background: "#f3f3f3",
+                  color: "#777",
+                  fontSize: "10px",
+                  fontWeight: 800,
+                }}
+              >
+                ⚪ {tables.filter((table) => !table.is_active).length} pasif
+              </span>
+            </div>
 
             <button
               type="button"
@@ -1556,17 +1877,29 @@ export default function TablesPage() {
                           "10px",
                       }}
                     >
-                      <strong
-                        style={{
-                          fontSize:
-                            "17px",
-                        }}
-                      >
-                        🚪 Masa{" "}
-                        {
-                          table.table_number
-                        }
-                      </strong>
+                      <div>
+                        <strong
+                          style={{
+                            display: "block",
+                            fontSize: "17px",
+                          }}
+                        >
+                          🚪 Masa {table.table_number}
+                        </strong>
+
+                        <span
+                          style={{
+                            display: "block",
+                            marginTop: "3px",
+                            color: "#999",
+                            fontSize: "9px",
+                            fontWeight: 700,
+                            letterSpacing: "0.5px",
+                          }}
+                        >
+                          QR / NFC MASA BAĞLANTISI
+                        </span>
+                      </div>
 
                       <span
                         style={{
@@ -1792,6 +2125,10 @@ export default function TablesPage() {
                         🖨️ Yazdır
                       </button>
                     </div>
+                                        <NfcWriter
+                      url={qrUrl}
+                      tableNumber={table.table_number}
+                    />
 
                     {/* DÜZENLE / SİL */}
 
