@@ -24,6 +24,106 @@ type OrderItem = {
   image_url: string | null;
 };
 
+function toFiniteNumber(
+  value: unknown,
+  fallback = 0
+): number {
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : fallback;
+}
+
+async function enrichOrderItems(
+  itemsData: any[],
+  supabase: ReturnType<typeof createClient>
+): Promise<OrderItem[]> {
+  if (!Array.isArray(itemsData)) {
+    return [];
+  }
+
+  const productIds = [
+    ...new Set(
+      itemsData
+        .map((item) => Number(item?.product_id))
+        .filter((id) => Number.isFinite(id))
+    ),
+  ];
+
+  const productsById = new Map<number, any>();
+
+  if (productIds.length > 0) {
+    const {
+      data: products,
+      error: productsError,
+    } = await supabase
+      .from("products")
+      .select("id, name, price, image_url")
+      .in("id", productIds);
+
+    if (productsError) {
+      console.warn(
+        "Sipariş ürün detayları yüklenemedi:",
+        productsError
+      );
+    }
+
+    for (const product of products ?? []) {
+      productsById.set(Number(product.id), product);
+    }
+  }
+
+  return itemsData.map((item: any) => {
+    const productId = Number(item?.product_id);
+    const product = productsById.get(productId);
+
+    const quantity = Math.max(
+      1,
+      toFiniteNumber(item?.quantity, 1)
+    );
+
+    const unitPrice =
+      [
+        item?.unit_price,
+        item?.price,
+        item?.product_price,
+        product?.price,
+      ]
+        .map((value) => Number(value))
+        .find((value) => Number.isFinite(value)) ?? 0;
+
+    const totalPrice =
+      [
+        item?.total_price,
+        item?.line_total,
+        item?.total,
+      ]
+        .map((value) => Number(value))
+        .find((value) => Number.isFinite(value)) ??
+      unitPrice * quantity;
+
+    return {
+      id: Number(item?.id),
+      product_id: productId,
+      quantity,
+      unit_price: unitPrice,
+      total_price: totalPrice,
+      product_name:
+        item?.product_name ||
+        item?.name ||
+        product?.name ||
+        "Ürün",
+      image_url:
+        item?.image_url ||
+        item?.product_image_url ||
+        item?.image ||
+        product?.image_url ||
+        null,
+    };
+  });
+}
+
 const statusSteps = [
   {
     key: "pending",
@@ -63,16 +163,81 @@ export default function OrderTrackingPage() {
   const slug = params.slug as string;
   const orderId = Number(params.id);
 
-  const tableToken =
-    typeof window !== "undefined"
-      ? new URLSearchParams(
-          window.location.search
-        ).get("masa")?.trim() ||
-        localStorage
-          .getItem("ozt_table_token")
-          ?.trim() ||
-        ""
-      : "";
+  const [tableToken, setTableToken] = useState("");
+
+  // =====================================================
+  // QR / NFC MASA TOKENINI GÜVENLİ ŞEKİLDE BUL
+  // =====================================================
+  // ÖNEMLİ:
+  // QR linkindeki "masa" değeri bazen "5" gibi masa numarasıdır.
+  // Bu değeri doğrudan public_token olarak göndermek yanlıştı.
+  // Önce gerçek token anahtarlarını, sonra localStorage'ı kontrol ediyoruz.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const searchParams = new URLSearchParams(window.location.search);
+
+    const isLikelyToken = (value: string | null) => {
+      if (!value) return false;
+
+      const cleaned = value.trim();
+
+      const uuidLike =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+      if (uuidLike.test(cleaned)) return true;
+
+      return cleaned.length >= 16 && /[a-zA-Z]/.test(cleaned);
+    };
+
+    const candidates = [
+      searchParams.get("public_token"),
+      searchParams.get("table_token"),
+      searchParams.get("masa_token"),
+      searchParams.get("token"),
+      isLikelyToken(searchParams.get("masa"))
+        ? searchParams.get("masa")
+        : null,
+      localStorage.getItem("ozt_table_token"),
+      localStorage.getItem("ozt_table_public_token"),
+      localStorage.getItem("table_token"),
+      localStorage.getItem("public_token"),
+      localStorage.getItem("masa_token"),
+    ];
+
+    const resolvedToken =
+      candidates
+        .map((value) => value?.trim() || "")
+        .find((value) => isLikelyToken(value)) || "";
+
+    if (resolvedToken) {
+      setTableToken(resolvedToken);
+      localStorage.setItem("ozt_table_token", resolvedToken);
+
+      // Bu masanın son siparişini hatırla.
+      // Müşteri ana sayfaya döndüğünde buradan tekrar takip ekranına geçebilir.
+      if (orderId && !Number.isNaN(orderId)) {
+        localStorage.setItem(
+          `ozt_last_order_${slug}_${resolvedToken}`,
+          String(orderId)
+        );
+      }
+    } else {
+      console.warn(
+        "⚠️ QR/NFC masa tokenı bulunamadı.",
+        {
+          url: window.location.href,
+          masa: searchParams.get("masa"),
+        }
+      );
+
+      setError(
+        "Masa doğrulama bilgisi bulunamadı. Lütfen QR/NFC kodunu tekrar okutun."
+      );
+      setLoading(false);
+    }
+  }, []);
+
 
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -103,8 +268,8 @@ export default function OrderTrackingPage() {
     async function loadOrder() {
       try {
         if (!tableToken) {
-          setError("Masa doğrulama bilgisi bulunamadı.");
-          setLoading(false);
+          // Token ayrı bir effect içinde çözümleniyor.
+          // Bu ilk çalışmada hata göstermeden bekle.
           return;
         }
 
@@ -115,7 +280,7 @@ export default function OrderTrackingPage() {
           "get_public_order",
           {
             p_order_id: orderId,
-            p_public_token: tableToken,
+            p_table_token: tableToken,
           }
         );
 
@@ -143,18 +308,11 @@ export default function OrderTrackingPage() {
           ? data.items
           : [];
 
-        const formattedItems: OrderItem[] =
-          itemsData.map((item: any) => ({
-            id: Number(item.id),
-            product_id: Number(item.product_id),
-            quantity: Number(item.quantity),
-            unit_price: Number(item.unit_price),
-            total_price: Number(item.total_price),
-            product_name:
-              item.product_name || "Ürün",
-            image_url:
-              item.image_url || null,
-          }));
+        const formattedItems =
+          await enrichOrderItems(
+            itemsData,
+            supabase
+          );
 
         setOrder({
           id: Number(orderData.id),
@@ -171,6 +329,7 @@ export default function OrderTrackingPage() {
         });
 
         setOrderItems(formattedItems);
+        setError("");
         setLoading(false);
       } catch (error) {
         console.error(
@@ -205,7 +364,7 @@ export default function OrderTrackingPage() {
           "get_public_order",
           {
             p_order_id: orderId,
-            p_public_token: tableToken,
+            p_table_token: tableToken,
           }
         );
 
@@ -252,25 +411,10 @@ export default function OrderTrackingPage() {
         if (
           Array.isArray(data.items)
         ) {
-          const updatedItems: OrderItem[] =
-            data.items.map(
-              (item: any) => ({
-                id: Number(item.id),
-                product_id:
-                  Number(item.product_id),
-                quantity:
-                  Number(item.quantity),
-                unit_price:
-                  Number(item.unit_price),
-                total_price:
-                  Number(item.total_price),
-                product_name:
-                  item.product_name ||
-                  "Ürün",
-                image_url:
-                  item.image_url ||
-                  null,
-              })
+          const updatedItems =
+            await enrichOrderItems(
+              data.items,
+              supabase
             );
 
           setOrderItems(updatedItems);
@@ -294,99 +438,146 @@ export default function OrderTrackingPage() {
   // =====================================================
 
   async function submitReview() {
-    if (!order) {
-      setReviewError(
-        "Sipariş bilgileri yüklenemedi."
-      );
-      return;
-    }
-
-    if (rating < 1 || rating > 5) {
-      setReviewError(
-        "Lütfen 1 ile 5 arasında bir puan seçin."
-      );
-      return;
-    }
-
-    setReviewLoading(true);
-    setReviewError("");
-
-    try {
-      const supabase = createClient();
-
-      // -------------------------------------------------
-      // RESTORANI BUL
-      // -------------------------------------------------
-
-      const {
-        data: restaurant,
-        error: restaurantError,
-      } = await supabase
-        .from("restaurants")
-        .select("id")
-        .eq("slug", slug)
-        .single();
-
-      if (restaurantError || !restaurant) {
-        setReviewError(
-          "İşletme bulunamadı."
-        );
-
-        setReviewLoading(false);
-        return;
-      }
-
-      // -------------------------------------------------
-      // DEĞERLENDİRME
-      // -------------------------------------------------
-
-      const { error } = await supabase
-        .from("reviews")
-        .insert({
-          order_id: order.id,
-          restaurant_id: restaurant.id,
-          customer_name:
-            order.customer_name || null,
-          rating,
-          comment:
-            reviewComment.trim() || null,
-          is_visible: true,
-        });
-
-      if (error) {
-        console.error(
-          "Değerlendirme hatası:",
-          error
-        );
-
-        if (error.code === "23505") {
-          setReviewError(
-            "Bu sipariş için zaten bir değerlendirme yapılmış."
-          );
-        } else {
-          setReviewError(
-            "Değerlendirme gönderilemedi: " +
-              error.message
-          );
-        }
-
-        setReviewLoading(false);
-        return;
-      }
-
-      setReviewSubmitted(true);
-      setReviewLoading(false);
-    } catch (error) {
-      console.error(error);
-
-      setReviewError(
-        "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
-      );
-
-      setReviewLoading(false);
-    }
+  if (!order) {
+    setReviewError(
+      "Sipariş bilgileri yüklenemedi."
+    );
+    return;
   }
 
+  if (rating < 1 || rating > 5) {
+    setReviewError(
+      "Lütfen 1 ile 5 arasında bir puan seçin."
+    );
+    return;
+  }
+
+  setReviewLoading(true);
+  setReviewError("");
+
+  try {
+    const supabase = createClient();
+
+    // -------------------------------------------------
+    // RESTORANI BUL
+    // -------------------------------------------------
+
+    const {
+      data: restaurant,
+      error: restaurantError,
+    } = await supabase
+      .from("restaurants")
+      .select("id")
+      .eq("slug", slug)
+      .single();
+
+    if (restaurantError || !restaurant) {
+      setReviewError(
+        "İşletme bulunamadı."
+      );
+
+      setReviewLoading(false);
+      return;
+    }
+
+    // -------------------------------------------------
+    // DEĞERLENDİRMEYİ RPC İLE GÖNDER
+    // -------------------------------------------------
+
+    const {
+      data: reviewId,
+      error: reviewError,
+    } = await supabase.rpc(
+      "create_public_review",
+      {
+        p_order_id: order.id,
+        p_restaurant_id: restaurant.id,
+        p_rating: rating,
+        p_comment:
+          reviewComment.trim() || null,
+      }
+    );
+
+    // -------------------------------------------------
+    // RPC HATASI
+    // -------------------------------------------------
+
+    if (
+      reviewError ||
+      !reviewId
+    ) {
+      console.error(
+        "Değerlendirme RPC hatası:",
+        reviewError
+      );
+
+      const errorMessage =
+        reviewError?.message || "";
+
+      // Duplicate değerlendirme
+      if (
+        errorMessage.includes(
+          "zaten bir değerlendirme yapılmış"
+        )
+      ) {
+        setReviewError(
+          "Bu sipariş için zaten bir değerlendirme yapılmış."
+        );
+      }
+
+      // Sipariş delivered değil
+      else if (
+        errorMessage.includes(
+          "değerlendirme için uygun değil"
+        )
+      ) {
+        setReviewError(
+          "Bu sipariş henüz değerlendirmeye uygun değil."
+        );
+      }
+
+      // Genel hata
+      else {
+        setReviewError(
+          "Değerlendirme gönderilemedi: " +
+            (
+              errorMessage ||
+              "Bilinmeyen hata"
+            )
+        );
+      }
+
+      setReviewLoading(false);
+      return;
+    }
+
+    // -------------------------------------------------
+    // BAŞARILI
+    // -------------------------------------------------
+
+    console.log(
+      "Değerlendirme başarıyla oluşturuldu:",
+      reviewId
+    );
+
+    setReviewSubmitted(true);
+    setReviewLoading(false);
+
+  } catch (error) {
+    console.error(
+      "Değerlendirme gönderme hatası:",
+      error
+    );
+
+    setReviewError(
+      error instanceof Error
+        ? `Değerlendirme gönderilemedi: ${error.message}`
+        : "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
+    );
+
+    setReviewLoading(false);
+  }
+}
   // =====================================================
   // YÜKLENİYOR
   // =====================================================
@@ -497,12 +688,40 @@ export default function OrderTrackingPage() {
     ? `/restoran/${slug}?masa=${encodeURIComponent(tableToken)}`
     : `/restoran/${slug}`;
 
-  const billHref = tableToken
-    ? `/restoran/${slug}/odeme?masa=${encodeURIComponent(tableToken)}`
-    : `/restoran/${slug}/odeme`;
-
   return (
     <main className="restaurant-page">
+
+      {/* =================================================
+          ANA SAYFAYA DÖN
+          Mevcut sipariş takip işlevlerine dokunmaz.
+      ================================================= */}
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "1100px",
+          margin: "0 auto 14px",
+          padding: "14px 18px 0",
+        }}
+      >
+        <a
+          href={homeHref}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "10px 16px",
+            borderRadius: "10px",
+            border: "1px solid #d8c08a",
+            background: "#fff",
+            color: "#9a6f00",
+            fontSize: "13px",
+            fontWeight: 800,
+            textDecoration: "none",
+          }}
+        >
+          ← Ana Sayfaya Dön
+        </a>
+      </div>
 
       {/* =================================================
           ÜST BAŞLIK
@@ -529,30 +748,6 @@ export default function OrderTrackingPage() {
           CANLI
         </div>
       </section>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 10,
-          marginTop: 12,
-        }}
-      >
-        <a
-          href={homeHref}
-          className="tracking-back-button"
-          style={{ textDecoration: "none", textAlign: "center" }}
-        >
-          ← Ana Sayfaya Dön
-        </a>
-        <a
-          href={billHref}
-          className="tracking-back-button"
-          style={{ textDecoration: "none", textAlign: "center" }}
-        >
-          💳 Masa Hesabım
-        </a>
-      </div>
 
       {/* =================================================
           MEVCUT DURUM

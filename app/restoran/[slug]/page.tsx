@@ -743,12 +743,10 @@ export default async function RestaurantPage({
             </a>
           </section>
 
-          {table && (
-            <SiparisTakipLink
-              slug={restaurant.slug}
-              tableToken={table.public_token}
-            />
-          )}
+          <SiparisTakipLink
+            slug={restaurant.slug}
+            tableToken={tableToken || ""}
+          />
 
           {/* GARSON BİLDİRİMİ */}
           {garsonStatus === "ok" && (
