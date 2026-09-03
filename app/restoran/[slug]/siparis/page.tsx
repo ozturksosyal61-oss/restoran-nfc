@@ -14,13 +14,11 @@ import {
 import { useCart } from "../menu/CartContext";
 
 import { createClient } from "../../../../lib/supabase/client";
-import { hasPlanFeature } from "../../../../lib/plan";
 
 type Restaurant = {
   id: number;
   name: string;
   table_count: number | null;
-  plan: string | null;
 };
 
 type RestaurantTable = {
@@ -179,7 +177,7 @@ export default function OrderPage() {
               "restaurants"
             )
             .select(
-              "id, name, table_count, plan"
+              "id, name, table_count"
             )
             .eq(
               "slug",
@@ -214,12 +212,6 @@ export default function OrderPage() {
         setRestaurant(
           restaurantData
         );
-
-        if (!hasPlanFeature(restaurantData.plan, "orders")) {
-          setError(
-            "Bu işletmenin mevcut paketi online sipariş özelliğini içermiyor."
-          );
-        }
 
         /*
          * =================================================
@@ -529,13 +521,6 @@ export default function OrderPage() {
   async function handleServiceRequest() {
     setServiceRequestMessage("");
 
-    if (!hasPlanFeature(restaurant?.plan, "waiter_call")) {
-      setServiceRequestMessage(
-        "Bu işletmenin mevcut paketi garson çağırma özelliğini içermiyor."
-      );
-      return;
-    }
-
     if (!restaurant) {
       setServiceRequestMessage(
         "İşletme bilgileri bulunamadı."
@@ -609,380 +594,455 @@ export default function OrderPage() {
    */
 
   async function handleSubmit(
-  event: React.FormEvent<HTMLFormElement>
-) {
-  event.preventDefault();
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
-  setError("");
+    setError("");
 
-  /*
-   * =====================================================
-   * ONLINE SİPARİŞ KONTROLÜ
-   * =====================================================
-   */
+    /*
+     * =================================================
+     * SEPET
+     * =================================================
+     */
 
-  if (!hasPlanFeature(restaurant?.plan, "orders")) {
-    setError(
-      "Bu işletmenin mevcut paketi online sipariş özelliğini içermiyor."
-    );
-    return;
-  }
-
-  /*
-   * =====================================================
-   * SEPET
-   * =====================================================
-   */
-
-  if (items.length === 0) {
-    setError("Sepetiniz boş.");
-    return;
-  }
-
-  /*
-   * =====================================================
-   * RESTORAN
-   * =====================================================
-   */
-
-  if (!restaurant) {
-    setError("İşletme bilgileri bulunamadı.");
-    return;
-  }
-
-  /*
-   * =====================================================
-   * MASA
-   * =====================================================
-   */
-
-  if (!tableNumber.trim()) {
-    setError("Lütfen masa numaranızı seçin.");
-    return;
-  }
-
-  /*
-   * =====================================================
-   * ÖDEME YÖNTEMİ
-   * =====================================================
-   */
-
-  if (!paymentMethod) {
-    setError("Lütfen ödeme yönteminizi seçin.");
-    return;
-  }
-
-  /*
-   * =====================================================
-   * TABLE ID KONTROLÜ
-   * =====================================================
-   */
-
-  let verifiedTable = table;
-
-  const supabase = createClient();
-
-  /*
-   * QR / NFC token
-   *
-   * Öncelik:
-   * 1. URL
-   * 2. localStorage
-   */
-
-  const tableToken =
-    tableTokenFromUrl ||
-    localStorage.getItem("ozt_table_token")?.trim() ||
-    "";
-
-  /*
-   * =====================================================
-   * QR / NFC MASA DOĞRULAMA
-   * =====================================================
-   */
-
-  if (tableToken) {
-    const {
-      data: tokenTable,
-      error: tokenTableError,
-    } = await supabase
-      .from("restaurant_tables")
-      .select(
-        "id, table_number, public_token, is_active"
-      )
-      .eq(
-        "restaurant_id",
-        restaurant.id
-      )
-      .eq(
-        "public_token",
-        tableToken
-      )
-      .eq(
-        "is_active",
-        true
-      )
-      .maybeSingle();
-
-    if (tokenTableError) {
-      console.error(
-        "Final table verification error:",
-        tokenTableError
-      );
-
+    if (items.length === 0) {
       setError(
-        "Masa doğrulaması yapılamadı."
-      );
-
-      return;
-    }
-
-    if (!tokenTable) {
-      setError(
-        "QR/NFC masa kodu geçersiz veya pasif."
+        "Sepetiniz boş."
       );
 
       return;
     }
 
     /*
-     * URL tokenındaki masa ile
-     * ekrandaki masa aynı mı?
+     * =================================================
+     * RESTORAN
+     * =================================================
      */
 
-    if (
-      String(tokenTable.table_number) !==
-      String(tableNumber)
-    ) {
+    if (!restaurant) {
       setError(
-        "Masa doğrulaması başarısız."
+        "İşletme bilgileri bulunamadı."
       );
 
       return;
     }
 
-    verifiedTable = tokenTable;
-  } else {
     /*
      * =================================================
-     * MANUEL MASA SEÇİMİ
+     * MASA
      * =================================================
      */
 
-    if (
-      !verifiedTable ||
-      String(
-        verifiedTable.table_number
-      ) !==
-        String(tableNumber)
-    ) {
+    if (!tableNumber.trim()) {
+      setError(
+        "Lütfen masa numaranızı seçin."
+      );
+
+      return;
+    }
+
+    /*
+     * =================================================
+     * ÖDEME YÖNTEMİ
+     * =================================================
+     */
+
+    if (!paymentMethod) {
+      setError(
+        "Lütfen ödeme yönteminizi seçin."
+      );
+
+      return;
+    }
+
+    /*
+     * =================================================
+     * TABLE ID KONTROLÜ
+     * =================================================
+     *
+     * Artık sipariş mutlaka gerçek
+     * restaurant_tables kaydına bağlanıyor.
+     */
+
+    let verifiedTable =
+      table;
+
+    const supabase =
+      createClient();
+
+    /*
+     * QR/NFC kullanıldıysa token ile
+     * tekrar doğrula.
+     */
+
+    const tableToken =
+      tableTokenFromUrl ||
+      localStorage.getItem(
+        "ozt_table_token"
+      )?.trim() ||
+      "";
+
+    if (tableToken) {
       const {
-        data: manualTable,
-        error: manualTableError,
-      } = await supabase
-        .from("restaurant_tables")
-        .select(
-          "id, table_number, public_token, is_active"
-        )
-        .eq(
-          "restaurant_id",
-          restaurant.id
-        )
-        .eq(
-          "table_number",
-          Number(tableNumber)
-        )
-        .eq(
-          "is_active",
-          true
-        )
-        .maybeSingle();
+        data: tokenTable,
+        error:
+          tokenTableError,
+      } =
+        await supabase
+          .from(
+            "restaurant_tables"
+          )
+          .select(
+            "id, table_number, public_token, is_active"
+          )
+          .eq(
+            "restaurant_id",
+            restaurant.id
+          )
+          .eq(
+            "public_token",
+            tableToken
+          )
+          .eq(
+            "is_active",
+            true
+          )
+          .maybeSingle();
 
       if (
-        manualTableError ||
-        !manualTable
+        tokenTableError
       ) {
         console.error(
-          "Manual table verification error:",
-          manualTableError
+          "Final table verification error:",
+          tokenTableError
         );
 
         setError(
-          "Seçilen masa aktif değil veya bulunamadı."
+          "Masa doğrulaması yapılamadı."
         );
 
         return;
       }
 
-      verifiedTable = manualTable;
-    }
-  }
+      if (!tokenTable) {
+        setError(
+          "QR/NFC masa kodu geçersiz veya pasif."
+        );
 
-  /*
-   * =====================================================
-   * MASA KONTROLÜ
-   * =====================================================
-   */
-
-  if (!verifiedTable) {
-    setError(
-      "Masa bilgisi bulunamadı."
-    );
-
-    return;
-  }
-
-  /*
-   * =====================================================
-   * SİPARİŞ GÖNDER
-   *
-   * ÖNEMLİ:
-   *
-   * Burada orders tablosuna doğrudan INSERT YOK.
-   *
-   * create_public_order RPC kullanılıyor.
-   *
-   * Böylece QR/NFC ile gelen anon müşteri,
-   * orders SELECT yetkisine ihtiyaç duymuyor.
-   * =====================================================
-   */
-
-  setLoading(true);
-
-  try {
-    /*
-     * =================================================
-     * ÜRÜNLERİ RPC FORMATINA ÇEVİR
-     * =================================================
-     */
-
-    const orderItems = items.map(
-      (item) => ({
-        product_id: item.id,
-        product_name: item.name,
-        price: Number(item.price),
-        quantity: Number(item.quantity),
-      })
-    );
-
-    /*
-     * =================================================
-     * TEK RPC İLE SİPARİŞ OLUŞTUR
-     * =================================================
-     */
-
-    const {
-      data: orderId,
-      error: orderError,
-    } = await supabase.rpc(
-      "create_public_order_with_session",
-      {
-        p_restaurant_id:
-          restaurant.id,
-
-        p_table_id:
-          verifiedTable.id,
-
-        p_table_number:
-          String(
-            verifiedTable.table_number
-          ),
-
-        p_customer_name:
-          customerName.trim() || "",
-
-        p_note:
-          note.trim() || "",
-
-        p_total_amount:
-          Number(total),
-
-        p_payment_method:
-          paymentMethod,
-
-        p_items:
-          orderItems,
+        return;
       }
-    );
 
-    /*
-     * =================================================
-     * RPC HATASI
-     * =================================================
-     */
-
-    if (
-      orderError ||
-      !orderId
-    ) {
-      console.error(
-        "Order RPC error:",
-        orderError
-      );
-
-      const errorMessage =
-        orderError?.message || "";
+      /*
+       * URL tokenı ile masa numarası
+       * birbiriyle uyuşuyor mu?
+       */
 
       if (
-        errorMessage.includes(
-          "ONLINE_ORDER_PLAN_REQUIRED"
+        String(
+          tokenTable.table_number
+        ) !==
+        String(
+          tableNumber
         )
       ) {
         setError(
-          "Bu işletmenin mevcut paketi online sipariş özelliğini içermiyor."
+          "Masa doğrulaması başarısız."
         );
-      } else {
-        setError(
-          "Sipariş oluşturulamadı: " +
-            (
-              errorMessage ||
-              "Bilinmeyen hata"
-            )
-        );
+
+        return;
       }
 
-      setLoading(false);
+      verifiedTable =
+        tokenTable;
+    } else {
+      /*
+       * Manuel seçimde gerçek masa kaydı
+       * bulunmak zorunda.
+       */
 
-      return;
+      if (
+        !verifiedTable ||
+        String(
+          verifiedTable.table_number
+        ) !==
+          String(
+            tableNumber
+          )
+      ) {
+        const {
+          data: manualTable,
+          error:
+            manualTableError,
+        } =
+          await supabase
+            .from(
+              "restaurant_tables"
+            )
+            .select(
+              "id, table_number, public_token, is_active"
+            )
+            .eq(
+              "restaurant_id",
+              restaurant.id
+            )
+            .eq(
+              "table_number",
+              Number(
+                tableNumber
+              )
+            )
+            .eq(
+              "is_active",
+              true
+            )
+            .maybeSingle();
+
+        if (
+          manualTableError ||
+          !manualTable
+        ) {
+          setError(
+            "Seçilen masa aktif değil veya bulunamadı."
+          );
+
+          return;
+        }
+
+        verifiedTable =
+          manualTable;
+      }
     }
 
     /*
      * =================================================
-     * BAŞARILI
+     * ARTIK SİPARİŞ OLUŞTUR
      * =================================================
      */
 
-    console.log(
-      "Sipariş başarıyla oluşturuldu:",
-      orderId
+    setLoading(
+      true
     );
 
-    clearCart();
+    try {
+      /*
+       * =================================================
+       * ANA SİPARİŞ
+       * =================================================
+       */
 
-    setLoading(false);
+      const {
+        data: order,
+        error: orderError,
+      } =
+        await supabase
+          .from("orders")
+          .insert({
+            restaurant_id:
+              restaurant.id,
 
-    /*
-     * Sipariş takip ekranına git
-     */
+            /*
+             * GERÇEK MASA ID
+             */
 
-    router.push(
-      `/restoran/${slug}/siparis/takip/${orderId}`
-    );
-  } catch (err) {
-    console.error(
-      "Submit error:",
-      err
-    );
+            table_id:
+              verifiedTable.id,
 
-    setError(
-      err instanceof Error
-        ? `Sipariş oluşturulamadı: ${err.message}`
-        : "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
-    );
+            /*
+             * GERÇEK MASA NUMARASI
+             */
 
-    setLoading(false);
+            table_number:
+              String(
+                verifiedTable.table_number
+              ),
+
+            customer_name:
+              customerName.trim() ||
+              null,
+
+            note:
+              note.trim() ||
+              null,
+
+            total_amount:
+              total,
+
+            /*
+             * ÖDEME BİLGİLERİ
+             *
+             * cash   = Nakit
+             * card   = Kart / POS
+             * online = Online ödeme
+             */
+
+            payment_method:
+              paymentMethod,
+
+            payment_status:
+              "unpaid",
+
+            status:
+              "pending",
+          })
+          .select("id")
+          .single();
+
+      if (
+        orderError ||
+        !order
+      ) {
+        console.error(
+          "Order error:",
+          orderError
+        );
+
+        setError(
+          "Sipariş oluşturulamadı: " +
+            (
+              orderError?.message ||
+              "Bilinmeyen hata"
+            )
+        );
+
+        setLoading(
+          false
+        );
+
+        return;
+      }
+
+      /*
+       * =================================================
+       * SİPARİŞ ÜRÜNLERİ
+       * =================================================
+       */
+
+      const orderItems =
+        items.map(
+          (item) => ({
+            order_id:
+              order.id,
+
+            product_id:
+              item.id,
+
+            product_name:
+              item.name,
+
+            price:
+              Number(
+                item.price
+              ),
+
+            quantity:
+              item.quantity,
+          })
+        );
+
+      const {
+        error:
+          orderItemsError,
+      } =
+        await supabase
+          .from(
+            "order_items"
+          )
+          .insert(
+            orderItems
+          );
+
+      if (
+        orderItemsError
+      ) {
+        console.error(
+          "Order items error:",
+          orderItemsError
+        );
+
+        /*
+         * Ana siparişi de geri almaya çalış.
+         */
+
+        await supabase
+          .from("orders")
+          .delete()
+          .eq(
+            "id",
+            order.id
+          );
+
+        setError(
+          "Sipariş ürünleri kaydedilemedi: " +
+            orderItemsError.message
+        );
+
+        setLoading(
+          false
+        );
+
+        return;
+      }
+
+      /*
+       * =================================================
+       * BAŞARILI
+       * =================================================
+       */
+
+      /*
+       * Sepeti temizle.
+       */
+
+      clearCart();
+
+      setLoading(
+        false
+      );
+
+      /*
+       * Sipariş takip ekranı.
+       */
+
+      try {
+        const token =
+          table?.public_token ||
+          tableTokenFromUrl ||
+          localStorage.getItem("ozt_table_token") ||
+          "";
+
+        if (token) {
+          localStorage.setItem(
+            "ozt_last_order_${slug}_${token}",
+            String(order.id)
+          );
+        }
+      } catch (storageError) {
+        console.warn("Son sipariş localStorage'a kaydedilemedi:", storageError);
+      }
+
+      router.push(
+        `/restoran/${slug}/siparis/takip/${order.id}?masa=${encodeURIComponent(
+          table?.public_token ||
+          tableTokenFromUrl ||
+          ""
+        )}`
+      );
+    } catch (err) {
+      console.error(
+        "Submit error:",
+        err
+      );
+
+      setError(
+        "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
+      );
+
+      setLoading(
+        false
+      );
+    }
   }
-}
 
   /*
    * =====================================================
@@ -1031,16 +1091,6 @@ export default function OrderPage() {
       (_, index) =>
         index + 1
     );
-
-  const canOrder = hasPlanFeature(
-    restaurant?.plan,
-    "orders"
-  );
-
-  const canWaiterCall = hasPlanFeature(
-    restaurant?.plan,
-    "waiter_call"
-  );
 
   /*
    * =====================================================
@@ -1127,7 +1177,7 @@ export default function OrderPage() {
 
         {/* GARSON ÇAĞIR */}
 
-        {table && canWaiterCall && (
+        {table && (
           <div
             style={{
               marginBottom: "18px",
@@ -1203,35 +1253,6 @@ export default function OrderPage() {
           </div>
         )}
 
-        {!canOrder && (
-          <div
-            style={{
-              marginBottom: "18px",
-              padding: "18px",
-              border: "1px solid #e5dccb",
-              borderRadius: "14px",
-              background: "#fffaf0",
-              textAlign: "center",
-            }}
-          >
-            <strong style={{ display: "block", fontSize: "15px" }}>
-              🔒 Online Sipariş Kapalı
-            </strong>
-            <p
-              style={{
-                margin: "7px 0 0",
-                color: "#777",
-                fontSize: "12px",
-                lineHeight: 1.5,
-              }}
-            >
-              Bu işletmenin mevcut paketi online sipariş özelliğini içermiyor.
-            </p>
-          </div>
-        )}
-
-        {canOrder && (
-          <>
         {/* FORM */}
 
         <form
@@ -1407,8 +1428,6 @@ export default function OrderPage() {
               : "Siparişi Onayla"}
           </button>
         </form>
-          </>
-        )}
       </section>
     </main>
   );

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import SiparisTakipLink from "./SiparisTakipLink";
 
 async function callWaiter(formData: FormData) {
   "use server";
@@ -741,6 +742,13 @@ export default async function RestaurantPage({
               </span>
             </a>
           </section>
+
+          {table && (
+            <SiparisTakipLink
+              slug={restaurant.slug}
+              tableToken={table.public_token}
+            />
+          )}
 
           {/* GARSON BİLDİRİMİ */}
           {garsonStatus === "ok" && (
