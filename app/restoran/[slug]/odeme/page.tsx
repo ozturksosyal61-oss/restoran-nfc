@@ -20,7 +20,7 @@ export default function PaymentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const slug = params.slug as string;
-  const token = searchParams.get("masa")?.trim() || "";
+  const [token, setToken] = useState("");
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [bill, setBill] = useState<BillResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,10 +47,20 @@ export default function PaymentPage() {
   }, [slug, supabase, token]);
 
   useEffect(() => {
+    const urlToken = searchParams.get("masa")?.trim() || "";
+    const storedToken =
+      window.localStorage.getItem("ozt_table_token")?.trim() || "";
+
+    setToken(urlToken || storedToken);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!token) return;
+
     void loadBill();
     const interval = window.setInterval(() => void loadBill(true), 10000);
     return () => window.clearInterval(interval);
-  }, [loadBill]);
+  }, [loadBill, token]);
 
   return (
     <main className="bill-page">

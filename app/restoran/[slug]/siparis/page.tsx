@@ -827,160 +827,51 @@ export default function OrderPage() {
     try {
       /*
        * =================================================
-       * ANA SİPARİŞ
+       * ANA SİPARİŞ + AÇIK MASA OTURUMU
        * =================================================
+       *
+       * Siparişi doğrudan orders tablosuna insert etmek yerine
+       * açık dining session oluşturan RPC kullanılır.
+       * Böylece orders.session_id otomatik doldurulur.
        */
 
+      const orderItems = items.map((item) => ({
+        product_id: item.id,
+        product_name: item.name,
+        price: Number(item.price),
+        quantity: Number(item.quantity),
+      }));
+
       const {
-        data: order,
+        data: orderId,
         error: orderError,
-      } =
-        await supabase
-          .from("orders")
-          .insert({
-            restaurant_id:
-              restaurant.id,
+      } = await supabase.rpc(
+        "create_public_order_with_session",
+        {
+          p_restaurant_id: restaurant.id,
+          p_table_id: verifiedTable.id,
+          p_table_number: String(verifiedTable.table_number),
+          p_customer_name: customerName.trim() || null,
+          p_note: note.trim() || null,
+          p_total_amount: total,
+          p_payment_method: paymentMethod,
+          p_items: orderItems,
+        }
+      );
 
-            /*
-             * GERÇEK MASA ID
-             */
+      const order = orderId
+        ? { id: Number(orderId) }
+        : null;
 
-            table_id:
-              verifiedTable.id,
-
-            /*
-             * GERÇEK MASA NUMARASI
-             */
-
-            table_number:
-              String(
-                verifiedTable.table_number
-              ),
-
-            customer_name:
-              customerName.trim() ||
-              null,
-
-            note:
-              note.trim() ||
-              null,
-
-            total_amount:
-              total,
-
-            /*
-             * ÖDEME BİLGİLERİ
-             *
-             * cash   = Nakit
-             * card   = Kart / POS
-             * online = Online ödeme
-             */
-
-            payment_method:
-              paymentMethod,
-
-            payment_status:
-              "unpaid",
-
-            status:
-              "pending",
-          })
-          .select("id")
-          .single();
-
-      if (
-        orderError ||
-        !order
-      ) {
-        console.error(
-          "Order error:",
-          orderError
-        );
+      if (orderError || !order) {
+        console.error("Order RPC error:", orderError);
 
         setError(
           "Sipariş oluşturulamadı: " +
-            (
-              orderError?.message ||
-              "Bilinmeyen hata"
-            )
+            (orderError?.message || "Bilinmeyen hata")
         );
 
-        setLoading(
-          false
-        );
-
-        return;
-      }
-
-      /*
-       * =================================================
-       * SİPARİŞ ÜRÜNLERİ
-       * =================================================
-       */
-
-      const orderItems =
-        items.map(
-          (item) => ({
-            order_id:
-              order.id,
-
-            product_id:
-              item.id,
-
-            product_name:
-              item.name,
-
-            price:
-              Number(
-                item.price
-              ),
-
-            quantity:
-              item.quantity,
-          })
-        );
-
-      const {
-        error:
-          orderItemsError,
-      } =
-        await supabase
-          .from(
-            "order_items"
-          )
-          .insert(
-            orderItems
-          );
-
-      if (
-        orderItemsError
-      ) {
-        console.error(
-          "Order items error:",
-          orderItemsError
-        );
-
-        /*
-         * Ana siparişi de geri almaya çalış.
-         */
-
-        await supabase
-          .from("orders")
-          .delete()
-          .eq(
-            "id",
-            order.id
-          );
-
-        setError(
-          "Sipariş ürünleri kaydedilemedi: " +
-            orderItemsError.message
-        );
-
-        setLoading(
-          false
-        );
-
+        setLoading(false);
         return;
       }
 
@@ -1013,7 +904,7 @@ export default function OrderPage() {
 
         if (token) {
           localStorage.setItem(
-            "ozt_last_order_${slug}_${token}",
+            `ozt_last_order_${slug}_${token}`,
             String(order.id)
           );
         }
