@@ -70,6 +70,46 @@ const plans: Plan[] = [
 export default function Home() {
   return (
     <main className="landing-page">
+      <style>{`
+        .landing-products-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          width: 100%;
+          min-height: 52px;
+          padding: 14px 20px;
+          margin-top: 0;
+          border-radius: 14px;
+          border: 1px solid rgba(200, 148, 29, 0.42);
+          background: linear-gradient(135deg, #fffaf0 0%, #f5ead1 100%);
+          color: #171717;
+          text-decoration: none;
+          font-size: 15px;
+          font-weight: 900;
+          letter-spacing: -0.01em;
+          box-shadow: 0 10px 24px rgba(30, 24, 10, 0.08);
+          transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+          box-sizing: border-box;
+        }
+        .landing-products-button span {
+          color: #c8941d;
+          font-size: 18px;
+          line-height: 1;
+        }
+        .landing-products-button:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 14px 28px rgba(30, 24, 10, 0.12);
+          border-color: rgba(200, 148, 29, 0.68);
+        }
+        @media (max-width: 600px) {
+          .landing-products-button {
+            min-height: 50px;
+            font-size: 14px;
+            border-radius: 13px;
+          }
+        }
+      `}</style>
       {/* =====================================================
           NAVIGATION
       ====================================================== */}
@@ -94,13 +134,6 @@ export default function Home() {
             className="nav-login"
           >
             İşletme Girişi
-          </Link>
-
-          <Link
-            href="/urunler"
-            className="nav-login"
-          >
-            📦 Ürünler
           </Link>
 
           <Link
@@ -141,6 +174,13 @@ export default function Home() {
             >
               Sistemi Keşfet <span>→</span>
             </a>
+
+            <Link
+              href="/urunler"
+              className="landing-products-button"
+            >
+              📦 Ürünleri İncele <span>→</span>
+            </Link>
 
             <Link
               href="/admin/login"
