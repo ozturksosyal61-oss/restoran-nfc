@@ -38,7 +38,7 @@ export default function DemoPage() {
 
           <div className="demo-actions">
             <Link
-              href="/restoran/mira-kitchen"
+              href="/restoran/mira-kitchen?masa=2a8149f1-624c-4d3e-ad8c-dd50f72e13b0"
               className="demo-primary-button"
             >
               MİRA KITCHEN DEMOSUNU AÇ →

@@ -203,636 +203,663 @@ export default async function RestaurantPage({
 
   return (
     <>
-      {isGlassPremium && (
-        <style>{`
-          .ozt-glass-home {
-            min-height: 100vh !important;
-            background:
-              radial-gradient(circle at 10% 0%, rgba(255,255,255,.98), transparent 30%),
-              radial-gradient(circle at 100% 8%, rgba(214,194,157,.30), transparent 28%),
-              linear-gradient(180deg, #f5f1e9 0%, #ece5d9 100%) !important;
-            color: #272118 !important;
-          }
+      <style>{`
+        .ozt-modern-home {
+          --ozt-bg: #f6f2ea;
+          --ozt-surface: rgba(255,255,255,.78);
+          --ozt-surface-solid: #fffdf9;
+          --ozt-text: #241f18;
+          --ozt-muted: #766b5c;
+          --ozt-gold: #b58b45;
+          --ozt-gold-dark: #8b6428;
+          --ozt-line: rgba(120,94,54,.16);
+          min-height: 100vh;
+          padding: 18px 14px 42px;
+          background:
+            radial-gradient(circle at 0% 0%, rgba(255,255,255,.98) 0 18%, transparent 42%),
+            radial-gradient(circle at 100% 0%, rgba(208,180,128,.22), transparent 32%),
+            linear-gradient(180deg, #f7f4ee 0%, #eee7dc 100%);
+          color: var(--ozt-text);
+          box-sizing: border-box;
+        }
 
-          .ozt-glass-home .hero {
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(242,235,224,.80)) !important;
-            border: 1px solid rgba(182,151,97,.28) !important;
-            box-shadow: 18px 20px 40px rgba(91,72,43,.12), -8px -8px 22px rgba(255,255,255,.85), inset 0 1px 0 rgba(255,255,255,.95) !important;
-            backdrop-filter: blur(14px);
-          }
+        .ozt-modern-shell {
+          width: 100%;
+          max-width: 560px;
+          margin: 0 auto;
+        }
 
-          .ozt-glass-home .hero::after {
-            content: "";
-            position: absolute;
-            width: 180px;
-            height: 180px;
-            right: -65px;
-            top: -80px;
-            border-radius: 50%;
-            border: 1px solid rgba(167,130,67,.25);
-            box-shadow: 0 0 0 22px rgba(255,255,255,.16), 0 0 0 44px rgba(167,130,67,.07);
-            pointer-events: none;
-          }
+        .ozt-modern-hero {
+          position: relative;
+          overflow: hidden;
+          padding: 24px 18px 20px;
+          border: 1px solid rgba(153,121,72,.18);
+          border-radius: 30px;
+          background:
+            linear-gradient(145deg, rgba(255,255,255,.9), rgba(242,235,225,.74)),
+            radial-gradient(circle at 80% 20%, rgba(185,141,69,.10), transparent 32%);
+          box-shadow:
+            0 20px 45px rgba(71,55,34,.10),
+            inset 0 1px 0 rgba(255,255,255,.95);
+          backdrop-filter: blur(18px);
+        }
 
-          .ozt-glass-home .hero h1,
-          .ozt-glass-home .hero p,
-          .ozt-glass-home .hero > span {
-            color: #292218 !important;
-          }
+        .ozt-modern-hero::before,
+        .ozt-modern-hero::after {
+          content: "";
+          position: absolute;
+          border-radius: 999px;
+          border: 1px solid rgba(181,139,69,.20);
+          pointer-events: none;
+        }
+        .ozt-modern-hero::before {
+          width: 170px; height: 170px; left: -92px; top: -110px;
+          box-shadow: 0 0 0 20px rgba(181,139,69,.04), 0 0 0 40px rgba(255,255,255,.45);
+        }
+        .ozt-modern-hero::after {
+          width: 140px; height: 140px; right: -72px; top: -92px;
+          box-shadow: 0 0 0 18px rgba(181,139,69,.04);
+        }
 
-          .ozt-glass-home .actions .action-button {
-            background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(236,229,218,.92)) !important;
-            border: 1px solid rgba(183,157,112,.28) !important;
-            color: #30281d !important;
-            box-shadow: 7px 8px 17px rgba(92,72,43,.10), -5px -5px 12px rgba(255,255,255,.78), inset 1px 1px 2px rgba(255,255,255,.85) !important;
-          }
+        .ozt-modern-logo-wrap {
+          display: flex;
+          justify-content: center;
+          position: relative;
+          z-index: 1;
+        }
 
-          .ozt-glass-home .actions .primary-action {
-            background: linear-gradient(145deg, #d9c08f, #b8914b) !important;
-            color: #fff !important;
-            border-color: #b99659 !important;
-          }
+        .ozt-modern-logo {
+          width: 82px;
+          height: 82px;
+          border-radius: 24px;
+          object-fit: cover;
+          border: 1px solid rgba(151,119,71,.25);
+          background: rgba(255,255,255,.72);
+          box-shadow:
+            0 14px 28px rgba(76,59,37,.14),
+            inset 0 1px 0 rgba(255,255,255,.92);
+        }
 
-          .ozt-glass-home .actions form button {
-            color: #6f4d18 !important;
-          }
+        .ozt-modern-logo-fallback {
+          width: 82px;
+          height: 82px;
+          border-radius: 24px;
+          display: grid;
+          place-items: center;
+          background: linear-gradient(145deg, #c9aa70, #9a7033);
+          color: #fff;
+          font-weight: 900;
+          letter-spacing: 2px;
+          font-size: 23px;
+          box-shadow: 0 14px 28px rgba(76,59,37,.16);
+        }
 
-          .ozt-glass-home section:not(.hero):not(.actions) {
-            color: #292218;
-          }
+        .ozt-modern-kicker {
+          margin-top: 17px;
+          text-align: center;
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 2.2px;
+          color: var(--ozt-gold-dark);
+        }
 
-          .ozt-glass-home section:not(.hero):not(.actions) > div {
-            box-shadow: 10px 11px 22px rgba(92,72,43,.08), -5px -5px 13px rgba(255,255,255,.72);
-          }
+        .ozt-modern-title {
+          position: relative;
+          z-index: 1;
+          margin: 7px 0 0;
+          text-align: center;
+          font-size: clamp(28px, 7vw, 38px);
+          line-height: 1.02;
+          font-weight: 900;
+          letter-spacing: -.7px;
+        }
 
-          .ozt-glass-home .restaurant-footer {
-            color: #756752 !important;
-          }
+        .ozt-modern-description {
+          position: relative;
+          z-index: 1;
+          margin: 10px auto 0;
+          max-width: 390px;
+          text-align: center;
+          font-size: 13px;
+          line-height: 1.55;
+          color: var(--ozt-muted);
+        }
 
-          .ozt-glass-home .restaurant-logo,
-          .ozt-glass-home .logo {
-            box-shadow: 8px 10px 18px rgba(75,56,32,.14), -5px -5px 12px rgba(255,255,255,.85) !important;
-          }
-        `}</style>
-      )}
+        .ozt-modern-meta {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap;
+          gap: 7px;
+          margin-top: 13px;
+          position: relative;
+          z-index: 1;
+        }
 
-      <main className={isGlassPremium ? "restaurant-page ozt-glass-home" : "restaurant-page"}>
+        .ozt-modern-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 30px;
+          padding: 0 11px;
+          border-radius: 999px;
+          border: 1px solid rgba(130,102,62,.16);
+          background: rgba(255,255,255,.62);
+          color: #665b4d;
+          font-size: 11px;
+          font-weight: 800;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+        }
 
-      {/* ==================================================
-          HERO
-      ================================================== */}
+        .ozt-modern-pill.is-open {
+          color: #236641;
+          border-color: rgba(35,102,65,.13);
+          background: rgba(229,247,236,.9);
+        }
 
-      <section className="hero">
+        .ozt-modern-actions {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+          margin-top: 14px;
+        }
 
-        {restaurant.logo_url ? (
-          <img
-            src={restaurant.logo_url}
-            alt={`${restaurant.name} logosu`}
-            className="restaurant-logo"
-          />
-        ) : (
-          <div className="logo">
-            OZT
-          </div>
-        )}
+        .ozt-modern-action {
+          min-height: 76px;
+          display: flex;
+          align-items: center;
+          gap: 11px;
+          padding: 12px;
+          border-radius: 20px;
+          text-decoration: none;
+          color: #2d271f;
+          border: 1px solid var(--ozt-line);
+          background: linear-gradient(145deg, rgba(255,255,255,.94), rgba(240,233,223,.88));
+          box-shadow:
+            7px 9px 20px rgba(77,59,36,.08),
+            -4px -4px 12px rgba(255,255,255,.7),
+            inset 0 1px 0 rgba(255,255,255,.92);
+          transition: transform .18s ease, box-shadow .18s ease;
+          box-sizing: border-box;
+        }
 
-        <h1>{restaurant.name}</h1>
+        .ozt-modern-action:active { transform: scale(.985); }
 
-        <p>
-          {restaurant.description}
-        </p>
+        .ozt-modern-action.featured {
+          grid-column: 1 / -1;
+          min-height: 92px;
+          color: #fff;
+          background: linear-gradient(135deg, #d8bf8b 0%, #b48a45 52%, #9d7539 100%);
+          border-color: rgba(137,96,35,.35);
+          box-shadow:
+            0 14px 30px rgba(143,103,43,.23),
+            inset 0 1px 0 rgba(255,255,255,.25);
+        }
 
-        <span>
-          {restaurant.slug}
-        </span>
+        .ozt-modern-action.google {
+          border-color: rgba(205,157,47,.25);
+        }
 
-        {table && (
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              marginTop: "14px",
-              padding: "8px 14px",
-              borderRadius: "999px",
-              background: "rgba(224,160,0,0.12)",
-              border: "1px solid rgba(224,160,0,0.35)",
-              color: "#d99b00",
-              fontWeight: 800,
-              fontSize: "13px",
-            }}
-          >
-            📍 Masa {table.table_number}
-          </div>
-        )}
+        .ozt-modern-icon {
+          flex: 0 0 44px;
+          width: 44px;
+          height: 44px;
+          border-radius: 15px;
+          display: grid;
+          place-items: center;
+          font-size: 22px;
+          background: rgba(255,255,255,.72);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+        }
 
-      </section>
+        .featured .ozt-modern-icon {
+          background: rgba(255,255,255,.17);
+        }
 
+        .ozt-modern-action-copy {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
 
-      {/* ==================================================
-          BUTONLAR
-      ================================================== */}
+        .ozt-modern-action-title {
+          font-size: 14px;
+          font-weight: 900;
+          line-height: 1.1;
+        }
 
-      <section className="actions">
+        .ozt-modern-action-sub {
+          font-size: 10px;
+          line-height: 1.25;
+          opacity: .72;
+          font-weight: 700;
+        }
 
-        <a
-          href={`/restoran/${restaurant.slug}/menu${tableQuery}`}
-          className="action-button primary-action"
-        >
-          🍽️ Dijital Menü
-        </a>
+        .featured .ozt-modern-action-sub { opacity: .86; }
 
-        {restaurant.google_review_url && (
-          <a
-            href={restaurant.google_review_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="action-button"
-          >
-            ⭐ Google'da Yorum Yap
-          </a>
-        )}
+        .ozt-modern-section {
+          margin-top: 23px;
+        }
 
-        {restaurant.instagram_url && (
-          <a
-            href={restaurant.instagram_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="action-button"
-          >
-            📷 Instagram
-          </a>
-        )}
+        .ozt-modern-section-head {
+          display: flex;
+          align-items: end;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
 
-        {table && (
-          <form action={callWaiter} style={{ margin: 0 }}>
-            <input
-              type="hidden"
-              name="slug"
-              value={restaurant.slug}
-            />
-            <input
-              type="hidden"
-              name="masa"
-              value={table.public_token}
-            />
+        .ozt-modern-section-kicker {
+          margin: 0 0 4px;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 2px;
+          color: var(--ozt-gold-dark);
+        }
 
-            <button
-              type="submit"
-              className="action-button"
-              style={{
-                width: "100%",
-                border: "none",
-                cursor: "pointer",
-                font: "inherit",
-              }}
-            >
-              🔔 Garsonu Çağır
-            </button>
-          </form>
-        )}
+        .ozt-modern-section-title {
+          margin: 0;
+          font-size: 24px;
+          letter-spacing: -.4px;
+          line-height: 1.08;
+          font-weight: 950;
+        }
 
-        <a
-          href={`/restoran/${restaurant.slug}/calisan${tableQuery}`}
-          className="action-button"
-        >
-          👤 Çalışanı Değerlendir
-        </a>
+        .ozt-modern-rating-card {
+          display: grid;
+          grid-template-columns: 110px 1fr;
+          gap: 14px;
+          align-items: center;
+          padding: 17px;
+          border-radius: 24px;
+          border: 1px solid rgba(135,111,76,.12);
+          background: rgba(255,255,255,.86);
+          box-shadow:
+            0 14px 30px rgba(82,65,43,.09),
+            inset 0 1px 0 rgba(255,255,255,.92);
+        }
 
-        <a
-          href={`/restoran/${restaurant.slug}/odeme${tableQuery}`}
-          className="action-button"
-        >
-          💳 Ödeme Yap
-        </a>
+        .ozt-modern-rating-score {
+          padding-right: 14px;
+          border-right: 1px solid rgba(115,92,58,.10);
+          text-align: center;
+        }
 
-      </section>
+        .ozt-modern-score {
+          font-size: 42px;
+          line-height: .95;
+          font-weight: 950;
+          letter-spacing: -1.5px;
+        }
 
-      {garsonStatus === "ok" && (
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "520px",
-            margin: "10px auto 0",
-            padding: "12px 16px",
-            borderRadius: "12px",
-            background: "#edf9f0",
-            border: "1px solid #b9e3c2",
-            color: "#17652a",
-            fontSize: "13px",
-            fontWeight: 800,
-            textAlign: "center",
-            boxSizing: "border-box",
-          }}
-        >
-          ✅ Garson çağrınız gönderildi. Masa {table?.table_number}.
-        </div>
-      )}
+        .ozt-modern-stars {
+          margin-top: 8px;
+          color: #d89b12;
+          font-size: 17px;
+          letter-spacing: 1px;
+        }
 
-      {garsonStatus === "hata" && (
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "520px",
-            margin: "10px auto 0",
-            padding: "12px 16px",
-            borderRadius: "12px",
-            background: "#fff1f1",
-            border: "1px solid #efc1c1",
-            color: "#9d2424",
-            fontSize: "13px",
-            fontWeight: 800,
-            textAlign: "center",
-            boxSizing: "border-box",
-          }}
-        >
-          ❌ Garson çağrısı gönderilemedi. Lütfen tekrar deneyin.
-        </div>
-      )}
+        .ozt-modern-count {
+          margin-top: 4px;
+          color: #8a7e6f;
+          font-size: 9px;
+          font-weight: 800;
+        }
 
+        .ozt-modern-bars {
+          display: grid;
+          gap: 6px;
+        }
 
-      {/* ==================================================
-          MÜŞTERİ DEĞERLENDİRMELERİ
-      ================================================== */}
+        .ozt-modern-bar-row {
+          display: grid;
+          grid-template-columns: 18px 1fr 18px;
+          align-items: center;
+          gap: 7px;
+          font-size: 10px;
+          color: #766b5c;
+          font-weight: 800;
+        }
 
-      <section
-        style={{
-          width: "100%",
-          maxWidth: "520px",
-          margin: "30px auto 0",
-          padding: "0 16px 40px",
-          boxSizing: "border-box",
-        }}
-      >
+        .ozt-modern-bar-bg {
+          height: 7px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: #ece9e4;
+        }
 
-        {/* BAŞLIK */}
+        .ozt-modern-bar-fill {
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #dca71f, #efc65f);
+        }
 
-        <div
-          style={{
-            marginBottom: "18px",
-          }}
-        >
+        .ozt-modern-reviews {
+          display: grid;
+          gap: 10px;
+        }
 
-          <div
-            style={{
-              fontSize: "11px",
-              fontWeight: 800,
-              letterSpacing: "2px",
-              color: "#d99b00",
-              marginBottom: "6px",
-            }}
-          >
-            MÜŞTERİ YORUMLARI
-          </div>
+        .ozt-modern-review {
+          padding: 16px;
+          border-radius: 22px;
+          border: 1px solid rgba(135,111,76,.10);
+          background: rgba(255,255,255,.88);
+          box-shadow: 0 9px 22px rgba(82,65,43,.07);
+        }
 
-          <h2
-            style={{
-              margin: 0,
-              fontSize: "25px",
-              fontWeight: 800,
-            }}
-          >
-            Müşterilerimiz Ne Diyor?
-          </h2>
+        .ozt-modern-review-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+        }
 
-        </div>
+        .ozt-modern-review-user {
+          font-size: 12px;
+          font-weight: 900;
+        }
 
+        .ozt-modern-review-date {
+          color: #978b7c;
+          font-size: 9px;
+        }
 
-        {/* ==================================================
-            PUAN ÖZETİ
-        ================================================== */}
+        .ozt-modern-review-stars {
+          margin-top: 8px;
+          color: #d89b12;
+          font-size: 15px;
+          letter-spacing: 1px;
+        }
 
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "18px",
-            padding: "22px",
-            marginBottom: "18px",
-            border: "1px solid #eee",
-            boxShadow:
-              "0 8px 25px rgba(0,0,0,0.05)",
-          }}
-        >
+        .ozt-modern-review-text {
+          margin: 8px 0 0;
+          color: #5f564c;
+          font-size: 12px;
+          line-height: 1.55;
+        }
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "18px",
-            }}
-          >
+        .ozt-modern-empty {
+          padding: 26px 18px;
+          border-radius: 22px;
+          text-align: center;
+          background: rgba(255,255,255,.84);
+          border: 1px dashed rgba(124,101,66,.18);
+        }
 
-            {/* ORTALAMA */}
+        .ozt-modern-empty-icon { font-size: 34px; }
+        .ozt-modern-empty-title { margin: 8px 0 5px; font-size: 16px; font-weight: 900; }
+        .ozt-modern-empty-text { margin: 0; color: #7c7266; font-size: 11px; }
 
-            <div
-              style={{
-                textAlign: "center",
-                minWidth: "90px",
-              }}
-            >
+        .ozt-modern-footer {
+          padding: 24px 0 4px;
+          text-align: center;
+          color: #8f8374;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 1px;
+        }
 
-              <div
-                style={{
-                  fontSize: "38px",
-                  fontWeight: 900,
-                  lineHeight: 1,
-                }}
-              >
-                {averageRating}
-              </div>
+        @media (max-width: 380px) {
+          .ozt-modern-rating-card { grid-template-columns: 96px 1fr; padding: 14px; }
+          .ozt-modern-action-title { font-size: 13px; }
+          .ozt-modern-action-sub { display: none; }
+        }
 
-              <div
-                style={{
-                  color: "#e0a000",
-                  fontSize: "20px",
-                  marginTop: "6px",
-                }}
-              >
-                {"★".repeat(
-                  Math.round(
-                    Number(averageRating)
-                  )
-                )}
-              </div>
+        @media (min-width: 700px) {
+          .ozt-modern-home { padding-top: 28px; }
+          .ozt-modern-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+          .ozt-modern-action.featured { grid-column: 1 / -1; }
+        }
+      `}</style>
 
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "#777",
-                  marginTop: "4px",
-                }}
-              >
-                {totalReviews} değerlendirme
-              </div>
+      <main className="ozt-modern-home">
+        <div className="ozt-modern-shell">
 
+          {/* HERO */}
+          <section className="ozt-modern-hero">
+            <div className="ozt-modern-logo-wrap">
+              {restaurant.logo_url ? (
+                <img
+                  src={restaurant.logo_url}
+                  alt={`${restaurant.name} logosu`}
+                  className="ozt-modern-logo"
+                />
+              ) : (
+                <div className="ozt-modern-logo-fallback">OZT</div>
+              )}
             </div>
 
+            <div className="ozt-modern-kicker">DİJİTAL RESTORAN DENEYİMİ</div>
+            <h1 className="ozt-modern-title">{restaurant.name}</h1>
 
-            {/* DAĞILIM */}
+            {restaurant.description && (
+              <p className="ozt-modern-description">
+                {restaurant.description}
+              </p>
+            )}
 
-            <div
-              style={{
-                flex: 1,
-              }}
+            <div className="ozt-modern-meta">
+              <span className="ozt-modern-pill is-open">● Açık</span>
+              <span className="ozt-modern-pill">✨ Hızlı & Pratik</span>
+              {table && (
+                <span className="ozt-modern-pill">📍 Masa {table.table_number}</span>
+              )}
+            </div>
+          </section>
+
+          {/* AKSİYONLAR */}
+          <section className="ozt-modern-actions">
+
+            <a
+              href={`/restoran/${restaurant.slug}/menu${tableQuery}`}
+              className="ozt-modern-action featured"
             >
+              <span className="ozt-modern-icon">🍽️</span>
+              <span className="ozt-modern-action-copy">
+                <span className="ozt-modern-action-title">MENÜ</span>
+                <span className="ozt-modern-action-sub">
+                  Menüye göz atın, ürünleri keşfedin ve siparişinizi oluşturun.
+                </span>
+              </span>
+            </a>
 
-              {[5, 4, 3, 2, 1].map(
-                (star) => {
+            {restaurant.google_review_url && (
+              <a
+                href={restaurant.google_review_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ozt-modern-action google"
+              >
+                <span className="ozt-modern-icon">⭐</span>
+                <span className="ozt-modern-action-copy">
+                  <span className="ozt-modern-action-title">Google'da Bizi Değerlendirin</span>
+                  <span className="ozt-modern-action-sub">
+                    Deneyiminizi paylaşın
+                  </span>
+                </span>
+              </a>
+            )}
 
-                  const count =
-                    ratingCounts[
-                      star as keyof typeof ratingCounts
-                    ];
+            {table && (
+              <form action={callWaiter} style={{ margin: 0 }}>
+                <input type="hidden" name="slug" value={restaurant.slug} />
+                <input type="hidden" name="masa" value={table.public_token} />
+                <button
+                  type="submit"
+                  className="ozt-modern-action"
+                  style={{ width: "100%", border: "none", cursor: "pointer", font: "inherit", textAlign: "left" }}
+                >
+                  <span className="ozt-modern-icon">🛎️</span>
+                  <span className="ozt-modern-action-copy">
+                    <span className="ozt-modern-action-title">
+                      {garsonStatus === "ok" ? "Garson Çağrıldı" : "Garsonu Çağır"}
+                    </span>
+                    <span className="ozt-modern-action-sub">
+                      {garsonStatus === "ok"
+                        ? "Talebiniz ekibe iletildi"
+                        : "Tek dokunuşla ekipten yardım isteyin"}
+                    </span>
+                  </span>
+                </button>
+              </form>
+            )}
 
+            {restaurant.instagram_url && (
+              <a
+                href={restaurant.instagram_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ozt-modern-action"
+              >
+                <span className="ozt-modern-icon">📸</span>
+                <span className="ozt-modern-action-copy">
+                  <span className="ozt-modern-action-title">Instagram</span>
+                  <span className="ozt-modern-action-sub">Bizi Takip Edin</span>
+                </span>
+              </a>
+            )}
+
+            <a
+              href={`/restoran/${restaurant.slug}/calisan${tableQuery}`}
+              className="ozt-modern-action"
+            >
+              <span className="ozt-modern-icon">💬</span>
+              <span className="ozt-modern-action-copy">
+                <span className="ozt-modern-action-title">Çalışanı Değerlendir</span>
+                <span className="ozt-modern-action-sub">Hizmet deneyiminizi paylaşın</span>
+              </span>
+            </a>
+
+            <a
+              href={`/restoran/${restaurant.slug}/odeme${tableQuery}`}
+              className="ozt-modern-action"
+            >
+              <span className="ozt-modern-icon">💳</span>
+              <span className="ozt-modern-action-copy">
+                <span className="ozt-modern-action-title">Ödeme Yap</span>
+                <span className="ozt-modern-action-sub">Hızlıca hesabınızı tamamlayın</span>
+              </span>
+            </a>
+          </section>
+
+          {/* GARSON BİLDİRİMİ */}
+          {garsonStatus === "ok" && (
+            <div style={{
+              marginTop: 10,
+              padding: "12px 14px",
+              borderRadius: 16,
+              background: "rgba(229,247,236,.94)",
+              border: "1px solid rgba(35,102,65,.14)",
+              color: "#236641",
+              textAlign: "center",
+              fontSize: 11,
+              fontWeight: 900
+            }}>
+              ✅ Garson çağrınız başarıyla iletildi.
+            </div>
+          )}
+
+          {garsonStatus === "hata" && (
+            <div style={{
+              marginTop: 10,
+              padding: "12px 14px",
+              borderRadius: 16,
+              background: "rgba(255,239,239,.95)",
+              border: "1px solid rgba(162,47,47,.15)",
+              color: "#a22f2f",
+              textAlign: "center",
+              fontSize: 11,
+              fontWeight: 900
+            }}>
+              ❌ Garson çağrısı gönderilemedi. Lütfen tekrar deneyin.
+            </div>
+          )}
+
+          {/* YORUMLAR */}
+          <section className="ozt-modern-section">
+            <div className="ozt-modern-section-head">
+              <div>
+                <p className="ozt-modern-section-kicker">MÜŞTERİ DENEYİMİ</p>
+                <h2 className="ozt-modern-section-title">Müşterilerimiz Ne Diyor?</h2>
+              </div>
+              <span className="ozt-modern-pill">💛 Gerçek deneyimler</span>
+            </div>
+
+            <div className="ozt-modern-rating-card">
+              <div className="ozt-modern-rating-score">
+                <div className="ozt-modern-score">{averageRating}</div>
+                <div className="ozt-modern-stars">
+                  {"★".repeat(Math.round(Number(averageRating)))}
+                </div>
+                <div className="ozt-modern-count">{totalReviews} değerlendirme</div>
+              </div>
+
+              <div className="ozt-modern-bars">
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const count = ratingCounts[star as keyof typeof ratingCounts];
                   const percentage =
-                    totalReviews > 0
-                      ? (count / totalReviews) *
-                        100
-                      : 0;
+                    totalReviews > 0 ? (count / totalReviews) * 100 : 0;
 
                   return (
-                    <div
-                      key={star}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        marginBottom: "5px",
-                        fontSize: "12px",
-                      }}
-                    >
-
-                      <span
-                        style={{
-                          width: "20px",
-                          fontWeight: 700,
-                        }}
-                      >
-                        {star}★
-                      </span>
-
-                      <div
-                        style={{
-                          flex: 1,
-                          height: "7px",
-                          background: "#eee",
-                          borderRadius: "20px",
-                          overflow: "hidden",
-                        }}
-                      >
-
+                    <div className="ozt-modern-bar-row" key={star}>
+                      <span>{star}★</span>
+                      <div className="ozt-modern-bar-bg">
                         <div
-                          style={{
-                            width: `${percentage}%`,
-                            height: "100%",
-                            background:
-                              "#e0a000",
-                            borderRadius:
-                              "20px",
-                          }}
+                          className="ozt-modern-bar-fill"
+                          style={{ width: `${percentage}%` }}
                         />
-
                       </div>
-
-                      <span
-                        style={{
-                          width: "18px",
-                          textAlign: "right",
-                          color: "#777",
-                        }}
-                      >
-                        {count}
-                      </span>
-
+                      <span style={{ textAlign: "right" }}>{count}</span>
                     </div>
                   );
-                }
-              )}
-
+                })}
+              </div>
             </div>
+          </section>
 
-          </div>
+          <section className="ozt-modern-section" style={{ marginTop: 12 }}>
+            {totalReviews === 0 ? (
+              <div className="ozt-modern-empty">
+                <div className="ozt-modern-empty-icon">⭐</div>
+                <h3 className="ozt-modern-empty-title">Henüz değerlendirme yok</h3>
+                <p className="ozt-modern-empty-text">İlk deneyimi paylaşan siz olun.</p>
+              </div>
+            ) : (
+              <div className="ozt-modern-reviews">
+                {reviews?.map((review) => (
+                  <article key={review.id} className="ozt-modern-review">
+                    <div className="ozt-modern-review-top">
+                      <strong className="ozt-modern-review-user">
+                        👤 {review.customer_name || "Misafir"}
+                      </strong>
+                      <span className="ozt-modern-review-date">
+                        {new Date(review.created_at).toLocaleDateString("tr-TR")}
+                      </span>
+                    </div>
 
+                    <div className="ozt-modern-review-stars">
+                      {"★".repeat(Number(review.rating))}
+                      <span style={{ color: "#e8e2d9" }}>
+                        {"★".repeat(5 - Number(review.rating))}
+                      </span>
+                    </div>
+
+                    {review.comment && (
+                      <p className="ozt-modern-review-text">
+                        “{review.comment}”
+                      </p>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <footer className="ozt-modern-footer">
+            OZT DIGITAL · DİJİTAL RESTORAN DENEYİMİ
+          </footer>
         </div>
-
-
-        {/* ==================================================
-            YORUMLAR
-        ================================================== */}
-
-        {totalReviews === 0 ? (
-
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: "18px",
-              padding: "35px 20px",
-              textAlign: "center",
-              border: "1px solid #eee",
-            }}
-          >
-
-            <div
-              style={{
-                fontSize: "42px",
-                marginBottom: "10px",
-              }}
-            >
-              ⭐
-            </div>
-
-            <h3
-              style={{
-                margin: "0 0 8px",
-                fontSize: "18px",
-              }}
-            >
-              Henüz değerlendirme yok
-            </h3>
-
-            <p
-              style={{
-                margin: 0,
-                color: "#777",
-                fontSize: "14px",
-              }}
-            >
-              İlk değerlendirmeyi siz yapın!
-            </p>
-
-          </div>
-
-        ) : (
-
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "14px",
-            }}
-          >
-
-            {reviews?.map((review) => (
-
-              <article
-                key={review.id}
-                style={{
-                  background: "#fff",
-                  borderRadius: "18px",
-                  padding: "20px",
-                  border: "1px solid #eee",
-                  boxShadow:
-                    "0 6px 20px rgba(0,0,0,0.04)",
-                }}
-              >
-
-                {/* MÜŞTERİ + TARİH */}
-
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent:
-                      "space-between",
-                    alignItems: "center",
-                    gap: "10px",
-                    marginBottom: "8px",
-                  }}
-                >
-
-                  <strong
-                    style={{
-                      fontSize: "15px",
-                    }}
-                  >
-                    👤{" "}
-                    {review.customer_name ||
-                      "Misafir"}
-                  </strong>
-
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      color: "#888",
-                    }}
-                  >
-                    {new Date(
-                      review.created_at
-                    ).toLocaleDateString(
-                      "tr-TR"
-                    )}
-                  </span>
-
-                </div>
-
-
-                {/* YILDIZ */}
-
-                <div
-                  style={{
-                    color: "#e0a000",
-                    fontSize: "20px",
-                    letterSpacing: "1px",
-                    marginBottom: "10px",
-                  }}
-                >
-                  {"★".repeat(
-                    Number(review.rating)
-                  )}
-                  <span
-                    style={{
-                      color: "#ddd",
-                    }}
-                  >
-                    {"★".repeat(
-                      5 -
-                        Number(
-                          review.rating
-                        )
-                    )}
-                  </span>
-                </div>
-
-
-                {/* YORUM */}
-
-                {review.comment && (
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#444",
-                      lineHeight: 1.6,
-                      fontSize: "14px",
-                    }}
-                  >
-                    “{review.comment}”
-                  </p>
-                )}
-
-              </article>
-
-            ))}
-
-          </div>
-
-        )}
-
-      </section>
-
-
-      {/* ==================================================
-          FOOTER
-      ================================================== */}
-
-      <footer className="restaurant-footer">
-        <p>
-          OZT Dijital Menü
-        </p>
-      </footer>
-
       </main>
     </>
   );
-
 }

@@ -93,14 +93,21 @@ export default function Home() {
             href="/admin/login"
             className="nav-login"
           >
-            🔐 İşletme Girişi
+            İşletme Girişi
           </Link>
 
           <Link
-            href="/abonelik"
+            href="/urunler"
+            className="nav-login"
+          >
+            📦 Ürünler
+          </Link>
+
+          <Link
+            href="/demo"
             className="nav-cta"
           >
-            14 Gün Ücretsiz Dene →
+            🎯 Demoyu İncele →
           </Link>
         </div>
       </header>
@@ -143,10 +150,10 @@ export default function Home() {
             </Link>
 
             <Link
-              href="/abonelik"
-              className="landing-secondary"
+              href="/demo"
+              className="landing-primary"
             >
-              14 Gün Ücretsiz Dene →
+              🎯 Demoyu İncele <span>→</span>
             </Link>
           </div>
 
@@ -435,9 +442,9 @@ export default function Home() {
                 ))}
               </ul>
 
-              <a href="#iletisim">
-                Demo / Bilgi Al →
-              </a>
+              <Link href="/demo">
+                🎯 Demoyu İncele →
+              </Link>
             </article>
           ))}
         </div>
@@ -465,12 +472,20 @@ export default function Home() {
           </p>
         </div>
 
-        <Link
-          href="/admin/login"
-          className="landing-primary"
-        >
-          İşletme Paneline Git <span>→</span>
-        </Link>
+        <div className="landing-hero-actions">
+          <Link
+            href="/demo"
+            className="landing-primary"
+          >
+            🎯 Demoyu İncele <span>→</span>
+          </Link>
+          <Link
+            href="/admin/login"
+            className="landing-secondary"
+          >
+            🔐 İşletme Girişi <span>→</span>
+          </Link>
+        </div>
       </section>
 
       {/* =====================================================
