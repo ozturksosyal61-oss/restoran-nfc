@@ -72,6 +72,77 @@ async function callWaiter(formData: FormData) {
   );
 }
 
+async function requestBill(formData: FormData) {
+  "use server";
+
+  const slug = String(formData.get("slug") || "").trim();
+  const masa = String(formData.get("masa") || "").trim();
+
+  if (!slug || !masa) {
+    return;
+  }
+
+  const { data: restaurant, error: restaurantError } = await supabase
+    .from("restaurants")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (restaurantError || !restaurant) {
+    console.error(
+      "Hesap isteği restoran doğrulama hatası:",
+      restaurantError
+    );
+
+    redirect(
+      `/restoran/${slug}?masa=${encodeURIComponent(masa)}&hesap=hata`
+    );
+  }
+
+  const { data: table, error: tableError } = await supabase
+    .from("restaurant_tables")
+    .select("id")
+    .eq("restaurant_id", restaurant.id)
+    .eq("public_token", masa)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (tableError || !table) {
+    console.error(
+      "Hesap isteği masa doğrulama hatası:",
+      tableError
+    );
+
+    redirect(
+      `/restoran/${slug}?masa=${encodeURIComponent(masa)}&hesap=hata`
+    );
+  }
+
+  const { data: requestId, error: requestError } = await supabase.rpc(
+    "create_public_service_request",
+    {
+      p_restaurant_id: restaurant.id,
+      p_table_id: table.id,
+      p_request_type: "hesap",
+    }
+  );
+
+  if (requestError || !requestId) {
+    console.error(
+      "Ana sayfa hesap talebi RPC hatası:",
+      requestError
+    );
+
+    redirect(
+      `/restoran/${slug}?masa=${encodeURIComponent(masa)}&hesap=hata`
+    );
+  }
+
+  redirect(
+    `/restoran/${slug}?masa=${encodeURIComponent(masa)}&hesap=ok`
+  );
+}
+
 export default async function RestaurantPage({
   params,
   searchParams,
@@ -80,6 +151,7 @@ export default async function RestaurantPage({
   searchParams: Promise<{
     masa?: string | string[];
     garson?: string | string[];
+    hesap?: string | string[];
   }>;
 }) {
   const { slug } = await params;
@@ -93,6 +165,11 @@ export default async function RestaurantPage({
   const garsonStatus = Array.isArray(rawGarsonStatus)
     ? rawGarsonStatus[0]
     : rawGarsonStatus;
+
+  const rawHesapStatus = resolvedSearchParams.hesap;
+  const hesapStatus = Array.isArray(rawHesapStatus)
+    ? rawHesapStatus[0]
+    : rawHesapStatus;
 
   // --------------------------------------------------
   // RESTORANI GETİR
@@ -673,7 +750,7 @@ export default async function RestaurantPage({
               >
                 <span className="ozt-modern-icon">⭐</span>
                 <span className="ozt-modern-action-copy">
-                  <span className="ozt-modern-action-title">Google'da Bizi Değerlendirin</span>
+                  <span className="ozt-modern-action-title">Bizi Değerlendirin</span>
                   <span className="ozt-modern-action-sub">
                     Deneyiminizi paylaşın
                   </span>
@@ -699,6 +776,36 @@ export default async function RestaurantPage({
                       {garsonStatus === "ok"
                         ? "Talebiniz ekibe iletildi"
                         : "Tek dokunuşla ekipten yardım isteyin"}
+                    </span>
+                  </span>
+                </button>
+              </form>
+            )}
+
+            {table && (
+              <form action={requestBill} style={{ margin: 0 }}>
+                <input type="hidden" name="slug" value={restaurant.slug} />
+                <input type="hidden" name="masa" value={table.public_token} />
+                <button
+                  type="submit"
+                  className="ozt-modern-action"
+                  style={{
+                    width: "100%",
+                    border: "none",
+                    cursor: "pointer",
+                    font: "inherit",
+                    textAlign: "left",
+                  }}
+                >
+                  <span className="ozt-modern-icon">🧾</span>
+                  <span className="ozt-modern-action-copy">
+                    <span className="ozt-modern-action-title">
+                      {hesapStatus === "ok" ? "Hesap İstendi" : "Hesap İste"}
+                    </span>
+                    <span className="ozt-modern-action-sub">
+                      {hesapStatus === "ok"
+                        ? "Talebiniz ekibe iletildi"
+                        : "Hesabınızı istemek için dokunun"}
                     </span>
                   </span>
                 </button>
@@ -778,6 +885,38 @@ export default async function RestaurantPage({
               fontWeight: 900
             }}>
               ❌ Garson çağrısı gönderilemedi. Lütfen tekrar deneyin.
+            </div>
+          )}
+
+          {hesapStatus === "ok" && (
+            <div style={{
+              marginTop: 10,
+              padding: "12px 14px",
+              borderRadius: 16,
+              background: "rgba(229,247,236,.94)",
+              border: "1px solid rgba(35,102,65,.14)",
+              color: "#236641",
+              textAlign: "center",
+              fontSize: 11,
+              fontWeight: 900
+            }}>
+              ✅ Hesap talebiniz başarıyla iletildi.
+            </div>
+          )}
+
+          {hesapStatus === "hata" && (
+            <div style={{
+              marginTop: 10,
+              padding: "12px 14px",
+              borderRadius: 16,
+              background: "rgba(255,239,239,.95)",
+              border: "1px solid rgba(162,47,47,.15)",
+              color: "#a22f2f",
+              textAlign: "center",
+              fontSize: 11,
+              fontWeight: 900
+            }}>
+              ❌ Hesap talebi gönderilemedi. Lütfen tekrar deneyin.
             </div>
           )}
 
