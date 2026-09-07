@@ -5,6 +5,8 @@ type AuroraRestaurant = {
   name: string;
   slug: string;
   description: string | null;
+  phone: string | null;
+  address: string | null;
   instagram_url: string | null;
   google_review_url: string | null;
   logo_url: string | null;
@@ -1485,9 +1487,15 @@ export default function AuroraRestaurantHome({
                     </div>
 
                     <div className="aurora-address">
-                      Restoran adres bilgisi
-                      <br />
-                      İstanbul / Türkiye
+                      {restaurant.address?.trim() ? (
+                        restaurant.address
+                      ) : (
+                        <>
+                          Restoran adres bilgisi
+                          <br />
+                          İstanbul / Türkiye
+                        </>
+                      )}
                     </div>
 
                     <a
@@ -1512,10 +1520,14 @@ export default function AuroraRestaurantHome({
                     </div>
 
                     <a
-                      href="tel:+905000000000"
+                      href={
+                        restaurant.phone?.trim()
+                          ? `tel:${restaurant.phone.replace(/[^\d+]/g, "")}`
+                          : undefined
+                      }
                       className="aurora-phone"
                     >
-                      ☎ +90 500 000 00 00
+                      ☎ {restaurant.phone?.trim() || "+90 500 000 00 00"}
                     </a>
 
                   </section>
@@ -1936,9 +1948,15 @@ export default function AuroraRestaurantHome({
                 </div>
 
                 <div className="aurora-dialog-value">
-                  Restoran adres bilgisi
-                  <br />
-                  İstanbul / Türkiye
+                  {restaurant.address?.trim() ? (
+                    restaurant.address
+                  ) : (
+                    <>
+                      Restoran adres bilgisi
+                      <br />
+                      İstanbul / Türkiye
+                    </>
+                  )}
                 </div>
 
               </div>
