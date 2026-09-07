@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import SiparisTakipLink from "./SiparisTakipLink";
+import NovaRestaurantHome from "./NovaRestaurantHome";
+import AuroraRestaurantHome from "./AuroraRestaurantHome";
 
 async function callWaiter(formData: FormData) {
   "use server";
@@ -38,33 +40,24 @@ async function callWaiter(formData: FormData) {
     );
   }
 
-  // Aynı masa için bekleyen çağrıyı tekrar oluşturma.
-  const { data: existingRequest } = await supabase
-    .from("service_requests")
-    .select("id")
-    .eq("restaurant_id", restaurant.id)
-    .eq("table_id", table.id)
-    .eq("request_type", "garson")
-    .eq("status", "pending")
-    .maybeSingle();
+  // Garson çağrısı doğrudan tabloya INSERT etmek yerine
+  // güvenli public RPC üzerinden oluşturulur.
+  const { data: requestId, error: requestError } =
+    await supabase.rpc("create_public_service_request", {
+      p_restaurant_id: restaurant.id,
+      p_table_id: table.id,
+      p_request_type: "garson",
+    });
 
-  if (!existingRequest) {
-    const { error: insertError } = await supabase
-      .from("service_requests")
-      .insert({
-        restaurant_id: restaurant.id,
-        table_id: table.id,
-        request_type: "garson",
-        status: "pending",
-      });
+  if (requestError || !requestId) {
+    console.error(
+      "Ana sayfa garson çağrısı RPC hatası:",
+      requestError
+    );
 
-    if (insertError) {
-      console.error("Ana sayfa garson çağrısı hatası:", insertError);
-
-      redirect(
-        `/restoran/${slug}?masa=${encodeURIComponent(masa)}&garson=hata`
-      );
-    }
+    redirect(
+      `/restoran/${slug}?masa=${encodeURIComponent(masa)}&garson=hata`
+    );
   }
 
   redirect(
@@ -178,7 +171,7 @@ export default async function RestaurantPage({
   const { data: restaurant, error } = await supabase
     .from("restaurants")
     .select(
-      "id, name, slug, description, instagram_url, google_review_url, logo_url, theme"
+      "id, name, slug, description, instagram_url, google_review_url, logo_url, cover_image_url, theme"
     )
     .eq("slug", slug)
     .single();
@@ -278,6 +271,59 @@ export default async function RestaurantPage({
   };
 
   const isGlassPremium = restaurant.theme === "ozt-glass-premium";
+
+  // Nova Premium yalnızca ana restoran sayfasını değiştirir.
+  // Menü tarafındaki mevcut OZT App Premium altyapısı aynen korunur.
+  if (restaurant.theme === "ozt-nova-premium") {
+    return (
+      <NovaRestaurantHome
+        restaurant={{
+          ...restaurant,
+          cover_image_url: restaurant.cover_image_url ?? null,
+        }}
+        table={table}
+        tableQuery={tableQuery}
+        reviews={(reviews ?? []).map((review) => ({
+          id: Number(review.id),
+          customer_name: review.customer_name ?? null,
+          rating: Number(review.rating),
+          comment: review.comment ?? null,
+          created_at: review.created_at,
+        }))}
+        averageRating={averageRating}
+        ratingCounts={ratingCounts}
+        garsonStatus={garsonStatus ?? ""}
+        hesapStatus={hesapStatus ?? ""}
+        callWaiter={callWaiter}
+        requestBill={requestBill}
+      />
+    );
+  }
+  if (restaurant.theme === "aurora") {
+  return (
+    <AuroraRestaurantHome
+      restaurant={{
+        ...restaurant,
+        cover_image_url: restaurant.cover_image_url ?? null,
+      }}
+      table={table}
+      tableQuery={tableQuery}
+      reviews={(reviews ?? []).map((review) => ({
+        id: Number(review.id),
+        customer_name: review.customer_name ?? null,
+        rating: Number(review.rating),
+        comment: review.comment ?? null,
+        created_at: review.created_at,
+      }))}
+      averageRating={averageRating}
+      ratingCounts={ratingCounts}
+      garsonStatus={garsonStatus ?? ""}
+      hesapStatus={hesapStatus ?? ""}
+      callWaiter={callWaiter}
+      requestBill={requestBill}
+    />
+  );
+}
 
   return (
     <>

@@ -157,6 +157,235 @@ const statusSteps = [
   },
 ];
 
+function AuroraTrackingStyles() {
+  return (
+    <style>{`
+      .aurora-tracking-page,
+      .aurora-tracking-page * { box-sizing: border-box; }
+
+      .aurora-tracking-page {
+        min-height: 100vh;
+        padding: 26px 14px 110px;
+        background:
+          radial-gradient(circle at 15% 4%, rgba(212,191,146,.10), transparent 34%),
+          radial-gradient(circle at 86% 18%, rgba(120,70,34,.12), transparent 30%),
+          linear-gradient(145deg, #070707 0%, #0c0b09 52%, #15100c 100%);
+        color: #f3efe7;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .aurora-tracking-page .order-tracking-page {
+        width: min(100%, 980px) !important;
+        max-width: 980px !important;
+        margin: 0 auto;
+        padding: 0 0 40px !important;
+      }
+
+      .aurora-tracking-page .tracking-loading,
+      .aurora-tracking-page .tracking-error,
+      .aurora-tracking-page .order-tracking-hero,
+      .aurora-tracking-page .current-order-status,
+      .aurora-tracking-page .tracking-card,
+      .aurora-tracking-page .tracking-info-card,
+      .aurora-tracking-page .review-card {
+        border: 1px solid rgba(255,255,255,.11) !important;
+        border-radius: 24px !important;
+        background: rgba(18,17,15,.88) !important;
+        color: #f3efe7 !important;
+        box-shadow: 0 24px 70px rgba(0,0,0,.28) !important;
+        backdrop-filter: blur(15px);
+      }
+
+      .aurora-tracking-page .tracking-loading,
+      .aurora-tracking-page .tracking-error { padding: 42px 28px !important; }
+
+      .aurora-tracking-page .order-tracking-page > div:first-child {
+        margin: 0 0 14px !important;
+        padding: 0 !important;
+      }
+
+      .aurora-tracking-page .order-tracking-page > div:first-child a {
+        border-color: rgba(212,191,146,.30) !important;
+        background: rgba(255,255,255,.035) !important;
+        color: #d9c08d !important;
+        border-radius: 999px !important;
+      }
+
+      .aurora-tracking-page .order-tracking-hero {
+        padding: 30px 32px !important;
+        margin-bottom: 14px !important;
+        background: linear-gradient(135deg, rgba(25,22,18,.92), rgba(10,10,9,.88)) !important;
+        border-color: rgba(212,191,146,.24) !important;
+      }
+
+      .aurora-tracking-page .tracking-eyebrow,
+      .aurora-tracking-page .tracking-card-header > div > span,
+      .aurora-tracking-page .tracking-info-header > span,
+      .aurora-tracking-page .review-eyebrow {
+        color: #d1b77f !important;
+        letter-spacing: .16em !important;
+      }
+
+      .aurora-tracking-page .order-tracking-hero h1,
+      .aurora-tracking-page .current-status-content h2,
+      .aurora-tracking-page .tracking-card-header h2,
+      .aurora-tracking-page .tracking-info-header h2,
+      .aurora-tracking-page .review-header h2 {
+        color: #f7f2e9 !important;
+        font-family: Georgia, "Times New Roman", serif !important;
+      }
+
+      .aurora-tracking-page .order-tracking-hero h1 {
+        font-size: clamp(34px, 5vw, 54px) !important;
+      }
+
+      .aurora-tracking-page .order-tracking-hero p,
+      .aurora-tracking-page .current-status-content p,
+      .aurora-tracking-page .tracking-step-content p,
+      .aurora-tracking-page .review-header p {
+        color: rgba(243,239,231,.60) !important;
+      }
+
+      .aurora-tracking-page .tracking-live-badge,
+      .aurora-tracking-page .live-dot {
+        border-color: rgba(212,191,146,.24) !important;
+        background: rgba(212,191,146,.07) !important;
+        color: #e3d5b8 !important;
+      }
+
+      .aurora-tracking-page .tracking-live-badge span,
+      .aurora-tracking-page .live-dot span { background: #88d8c8 !important; }
+
+      .aurora-tracking-page .current-order-status {
+        display: grid !important;
+        grid-template-columns: auto 1fr auto;
+        align-items: center !important;
+        gap: 18px !important;
+        margin-bottom: 14px !important;
+      }
+
+      .aurora-tracking-page .current-status-icon {
+        width: 58px !important;
+        height: 58px !important;
+        border-radius: 18px !important;
+        background: linear-gradient(135deg, rgba(212,191,146,.16), rgba(255,255,255,.04)) !important;
+        border: 1px solid rgba(212,191,146,.25) !important;
+      }
+
+      .aurora-tracking-page .tracking-card,
+      .aurora-tracking-page .tracking-info-card,
+      .aurora-tracking-page .review-card {
+        padding: 28px !important;
+        margin-top: 14px !important;
+      }
+
+      .aurora-tracking-page .tracking-card-header,
+      .aurora-tracking-page .tracking-info-header {
+        border-bottom: 1px solid rgba(255,255,255,.08) !important;
+      }
+
+      .aurora-tracking-page .tracking-order-number {
+        color: #d1b77f !important;
+        border-color: rgba(212,191,146,.20) !important;
+        background: rgba(255,255,255,.035) !important;
+      }
+
+      .aurora-tracking-page .tracking-step-icon {
+        border-color: rgba(255,255,255,.18) !important;
+        background: #11100e !important;
+        color: rgba(243,239,231,.45) !important;
+      }
+
+      .aurora-tracking-page .tracking-step.completed .tracking-step-icon {
+        border-color: #9f8860 !important;
+        background: #a78954 !important;
+        color: #17120d !important;
+      }
+
+      .aurora-tracking-page .tracking-step.active .tracking-step-icon {
+        border-color: #d1b77f !important;
+        background: rgba(209,183,127,.14) !important;
+        color: #e3d5b8 !important;
+        box-shadow: 0 0 0 6px rgba(209,183,127,.08) !important;
+      }
+
+      .aurora-tracking-page .tracking-step-line {
+        background: rgba(255,255,255,.10) !important;
+      }
+
+      .aurora-tracking-page .tracking-step.completed .tracking-step-line {
+        background: rgba(167,137,84,.72) !important;
+      }
+
+      .aurora-tracking-page .tracking-active-label { color: #88d8c8 !important; }
+
+      .aurora-tracking-page .tracking-info-grid {
+        grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+        gap: 10px !important;
+      }
+
+      .aurora-tracking-page .tracking-info-item {
+        padding: 15px !important;
+        border: 1px solid rgba(255,255,255,.08) !important;
+        border-radius: 16px !important;
+        background: rgba(255,255,255,.035) !important;
+      }
+
+      .aurora-tracking-page .tracking-info-item span { color: rgba(243,239,231,.42) !important; }
+      .aurora-tracking-page .tracking-info-item strong { color: #f3efe7 !important; }
+
+      .aurora-tracking-page .tracking-note {
+        border-color: rgba(212,191,146,.20) !important;
+        background: rgba(212,191,146,.06) !important;
+      }
+
+      .aurora-tracking-page .tracking-note span { color: #d1b77f !important; }
+      .aurora-tracking-page .tracking-note p { color: rgba(243,239,231,.64) !important; }
+
+      .aurora-tracking-page .review-card {
+        background: linear-gradient(145deg, rgba(21,19,16,.96), rgba(11,10,9,.92)) !important;
+      }
+
+      .aurora-tracking-page .review-star { color: rgba(255,255,255,.16) !important; }
+      .aurora-tracking-page .review-star.active { color: #d4bf92 !important; }
+      .aurora-tracking-page .review-rating-text { color: #d1b77f !important; }
+
+      .aurora-tracking-page .review-textarea {
+        border: 1px solid rgba(255,255,255,.12) !important;
+        border-radius: 14px !important;
+        background: rgba(255,255,255,.045) !important;
+        color: #f3efe7 !important;
+      }
+
+      .aurora-tracking-page .review-submit-button {
+        border: 1px solid rgba(212,191,146,.55) !important;
+        border-radius: 15px !important;
+        background: linear-gradient(135deg, #d9c08d, #a98240) !important;
+        color: #17120b !important;
+        font-weight: 900 !important;
+      }
+
+      .aurora-tracking-page .tracking-footer { color: rgba(243,239,231,.40) !important; }
+
+      @media (max-width: 700px) {
+        .aurora-tracking-page { padding: 12px 10px 92px; }
+        .aurora-tracking-page .order-tracking-hero { padding: 24px 20px !important; }
+        .aurora-tracking-page .current-order-status {
+          grid-template-columns: auto 1fr !important;
+        }
+        .aurora-tracking-page .live-dot { display: none !important; }
+        .aurora-tracking-page .tracking-card,
+        .aurora-tracking-page .tracking-info-card,
+        .aurora-tracking-page .review-card {
+          padding: 20px 16px !important;
+          border-radius: 20px !important;
+        }
+        .aurora-tracking-page .tracking-info-grid { grid-template-columns: 1fr !important; }
+      }
+    `}</style>
+  );
+}
+
 export default function OrderTrackingPage() {
   const params = useParams();
 
@@ -164,6 +393,7 @@ export default function OrderTrackingPage() {
   const orderId = Number(params.id);
 
   const [tableToken, setTableToken] = useState("");
+  const [restaurantTheme, setRestaurantTheme] = useState<string | null>(null);
 
   // =====================================================
   // QR / NFC MASA TOKENINI GÜVENLİ ŞEKİLDE BUL
@@ -238,6 +468,40 @@ export default function OrderTrackingPage() {
     }
   }, []);
 
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadRestaurantTheme() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("restaurants")
+          .select("theme")
+          .eq("slug", slug)
+          .maybeSingle();
+
+        if (!mounted) return;
+
+        if (error) {
+          console.warn("Restoran tema bilgisi alınamadı:", error);
+          setRestaurantTheme(null);
+          return;
+        }
+
+        setRestaurantTheme(data?.theme ?? null);
+      } catch (error) {
+        console.warn("Restoran tema sorgusu başarısız:", error);
+        if (mounted) setRestaurantTheme(null);
+      }
+    }
+
+    loadRestaurantTheme();
+
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
 
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -689,7 +953,14 @@ export default function OrderTrackingPage() {
     : `/restoran/${slug}`;
 
   return (
-    <main className="restaurant-page">
+    <main
+      className={
+        restaurantTheme === "aurora"
+          ? "restaurant-page aurora-tracking-page"
+          : "restaurant-page"
+      }
+    >
+      {restaurantTheme === "aurora" && <AuroraTrackingStyles />}
 
       {/* =================================================
           ANA SAYFAYA DÖN

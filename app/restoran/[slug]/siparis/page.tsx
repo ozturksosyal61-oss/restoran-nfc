@@ -28,8 +28,6 @@ type RestaurantTable = {
   is_active: boolean;
 };
 
-type PaymentMethod = "cash" | "card" | "online";
-
 export default function OrderPage() {
   const params = useParams();
   const router = useRouter();
@@ -104,12 +102,6 @@ export default function OrderPage() {
     setNote,
   ] =
     useState("");
-
-  const [
-    paymentMethod,
-    setPaymentMethod,
-  ] =
-    useState<PaymentMethod>("cash");
 
   const [
     loadingRestaurant,
@@ -547,15 +539,15 @@ export default function OrderPage() {
     try {
       const supabase = createClient();
 
-      const { error: requestError } =
-        await supabase
-          .from("service_requests")
-          .insert({
-            restaurant_id: restaurant.id,
-            table_id: table.id,
-            request_type: "garson",
-            status: "pending",
-          });
+     const { error: requestError } =
+  await supabase.rpc(
+    "create_public_service_request",
+    {
+      p_restaurant_id: restaurant.id,
+      p_table_id: table.id,
+      p_request_type: "garson",
+    }
+  );
 
       if (requestError) {
         console.error(
@@ -564,7 +556,7 @@ export default function OrderPage() {
         );
 
         setServiceRequestMessage(
-          "Garson çağrısı gönderilemedi. Lütfen tekrar deneyin."
+          `HATA: ${requestError.message}`
         );
 
         return;
@@ -637,20 +629,6 @@ export default function OrderPage() {
     if (!tableNumber.trim()) {
       setError(
         "Lütfen masa numaranızı seçin."
-      );
-
-      return;
-    }
-
-    /*
-     * =================================================
-     * ÖDEME YÖNTEMİ
-     * =================================================
-     */
-
-    if (!paymentMethod) {
-      setError(
-        "Lütfen ödeme yönteminizi seçin."
       );
 
       return;
@@ -854,7 +832,7 @@ export default function OrderPage() {
           p_customer_name: customerName.trim() || null,
           p_note: note.trim() || null,
           p_total_amount: total,
-          p_payment_method: paymentMethod,
+          p_payment_method: "cash",
           p_items: orderItems,
         }
       );
@@ -945,7 +923,7 @@ export default function OrderPage() {
     loadingRestaurant
   ) {
     return (
-      <main className="restaurant-page">
+      <main className="restaurant-page aurora-order-page">
         <section className="hero">
           <h1>
             Sipariş Ver
@@ -990,7 +968,7 @@ export default function OrderPage() {
    */
 
   return (
-    <main className="restaurant-page">
+    <main className="restaurant-page aurora-order-page">
       {/* HEADER */}
 
       <section className="hero">
@@ -1070,6 +1048,7 @@ export default function OrderPage() {
 
         {table && (
           <div
+            className="aurora-waiter-card"
             style={{
               marginBottom: "18px",
               padding: "16px",
@@ -1107,6 +1086,7 @@ export default function OrderPage() {
                   serviceRequestLoading ||
                   !table.is_active
                 }
+                className="aurora-waiter-button"
                 style={{
                   border: "none",
                   borderRadius: "10px",
@@ -1129,6 +1109,7 @@ export default function OrderPage() {
 
             {serviceRequestMessage && (
               <p
+                className="aurora-waiter-message"
                 style={{
                   margin: "10px 0 0",
                   fontSize: "12px",
@@ -1255,46 +1236,6 @@ export default function OrderPage() {
             />
           </label>
 
-          {/* ÖDEME YÖNTEMİ */}
-
-          <label>
-            Ödeme Yöntemi
-
-            <select
-              value={
-                paymentMethod
-              }
-              onChange={(
-                event
-              ) =>
-                setPaymentMethod(
-                  event.target.value as PaymentMethod
-                )
-              }
-              required
-            >
-              <option value="cash">
-                💵 Nakit
-              </option>
-
-              <option value="card">
-                💳 Kart / POS
-              </option>
-
-              <option value="online">
-                🌐 Online Ödeme
-              </option>
-            </select>
-
-            <small>
-              Ödeme yönteminizi seçin.
-              Online ödeme seçeneği şimdilik
-              siparişe ödeme yöntemi olarak kaydedilir;
-              gerçek online tahsilat için ödeme sağlayıcısı
-              entegrasyonu ayrıca yapılacaktır.
-            </small>
-          </label>
-
           {/* HATA */}
 
           {error && (
@@ -1320,6 +1261,161 @@ export default function OrderPage() {
           </button>
         </form>
       </section>
+
+      <style jsx global>{`
+        /* AURORA - ORDER PAGE ONLY */
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page {
+          min-height: 100vh;
+          background: #0b0b0a;
+          color: #f6f1e8;
+          padding-bottom: 40px;
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .hero {
+          position: relative;
+          overflow: hidden;
+          padding: 34px 20px 28px;
+          text-align: center;
+          background: radial-gradient(circle at 15% 120%, rgba(173,135,67,.13), transparent 34%), radial-gradient(circle at 100% 0%, rgba(255,255,255,.05), transparent 28%), #11110f;
+          border-bottom: 1px solid rgba(255,255,255,.08);
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .hero h1 {
+          margin: 0;
+          color: #f8f3ea;
+          font-family: Georgia, serif;
+          font-size: clamp(30px, 5vw, 46px);
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .hero p {
+          margin: 8px 0 0;
+          color: rgba(255,255,255,.58);
+          font-size: 12px;
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-section {
+          width: min(760px, calc(100% - 28px));
+          margin: 24px auto 0;
+          padding: 22px;
+          box-sizing: border-box;
+          background: rgba(21,21,19,.90);
+          border: 1px solid rgba(255,255,255,.08);
+          border-radius: 22px;
+          box-shadow: 0 24px 70px rgba(0,0,0,.32);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-section h2 {
+          margin: 0 0 16px;
+          color: #f7f1e7;
+          font-family: Georgia, serif;
+          font-size: 24px;
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-items {
+          display: grid;
+          gap: 10px;
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 15px 16px;
+          background: rgba(255,255,255,.045);
+          border: 1px solid rgba(255,255,255,.08);
+          border-radius: 14px;
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-item strong { color: #f6f0e7; }
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-item span { display: block; margin-top: 5px; color: rgba(255,255,255,.54); font-size: 12px; }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-total {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin: 16px 0 20px;
+          padding: 17px 4px;
+          border-top: 1px solid rgba(255,255,255,.10);
+          border-bottom: 1px solid rgba(255,255,255,.10);
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-total span { color: rgba(255,255,255,.50); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-total strong { color: #e4c681; font-size: 24px; }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .aurora-waiter-card {
+          border: 1px solid rgba(205,171,103,.24) !important;
+          background: linear-gradient(135deg, rgba(190,154,88,.10), rgba(255,255,255,.035)) !important;
+          color: #f4eee5;
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .aurora-waiter-card p { color: rgba(255,255,255,.54) !important; }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .aurora-waiter-button {
+          background: #171715 !important;
+          border: 1px solid rgba(218,184,113,.34) !important;
+          color: #f8f2e8 !important;
+          box-shadow: 0 8px 20px rgba(0,0,0,.22);
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page form { display: grid; gap: 15px; }
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page form > label { display: grid; gap: 8px; color: rgba(255,255,255,.86); font-size: 12px; font-weight: 700; }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page input,
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page textarea,
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page select {
+          width: 100%;
+          box-sizing: border-box;
+          border: 1px solid rgba(255,255,255,.11) !important;
+          background: rgba(255,255,255,.055) !important;
+          color: #f5efe6 !important;
+          border-radius: 13px !important;
+          outline: none;
+          padding: 13px 14px !important;
+          font-size: 14px;
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page input:focus,
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page textarea:focus,
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page select:focus {
+          border-color: rgba(214,179,105,.55) !important;
+          box-shadow: 0 0 0 3px rgba(214,179,105,.09);
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page input::placeholder,
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page textarea::placeholder { color: rgba(255,255,255,.34); }
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page select option { background: #171715; color: #f5efe6; }
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page form > label small { color: rgba(255,255,255,.44) !important; font-size: 10px; line-height: 1.45; }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .submit-button {
+          width: 100%;
+          min-height: 52px;
+          margin-top: 3px;
+          border: 1px solid rgba(218,184,113,.34) !important;
+          border-radius: 14px !important;
+          background: linear-gradient(135deg, #b48b4a, #8f6a35) !important;
+          color: #fff8ed !important;
+          font-weight: 800;
+          box-shadow: 0 14px 26px rgba(0,0,0,.24);
+        }
+
+        .restaurant-shell[data-theme="aurora"] .aurora-order-page .login-error {
+          margin: 0;
+          border: 1px solid rgba(222,115,115,.25);
+          background: rgba(171,49,49,.10);
+          color: #f3b4b4;
+          border-radius: 12px;
+          padding: 12px 13px;
+          font-size: 12px;
+        }
+
+        @media (max-width: 640px) {
+          .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-section { width: calc(100% - 18px); margin-top: 18px; padding: 15px; border-radius: 18px; }
+          .restaurant-shell[data-theme="aurora"] .aurora-order-page .hero { padding: 27px 16px 23px; }
+        }
+      `}</style>
     </main>
   );
 }

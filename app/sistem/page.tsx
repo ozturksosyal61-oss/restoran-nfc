@@ -3,12 +3,41 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
 import LogoutButton from "./LogoutButton";
 import ArchiveRestaurantButton from "./ArchiveRestaurantButton";
+import { revalidatePath } from "next/cache";
+import { updateSubscription, createSubscription } from "./abonelikler/actions";
+import { RESTAURANT_THEMES, normalizeRestaurantTheme, type RestaurantTheme } from "../../lib/themes";
 
 type Restaurant = {
   id: number;
   name: string;
   slug: string;
+  theme?: string | null;
   is_active?: boolean | null;
+};
+
+type Plan = {
+  id: string;
+  name: string;
+  slug: string;
+  monthly_price: number;
+  yearly_price: number;
+};
+
+type Subscription = {
+  id: string;
+  restaurant_id: number;
+  plan_id: string;
+  status: string;
+  billing_interval: string;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  subscription_plans?: {
+    id: string;
+    name: string;
+    slug: string;
+    monthly_price: number;
+    yearly_price: number;
+  } | null;
 };
 
 type RestaurantTable = {
@@ -59,7 +88,7 @@ export default async function SystemOwnerPage() {
     error: restaurantsError,
   } = await supabase
     .from("restaurants")
-    .select("id, name, slug, is_active")
+    .select("id, name, slug, theme, is_active")
     .order("id", { ascending: true });
 
   /*
@@ -77,6 +106,271 @@ export default async function SystemOwnerPage() {
       "id, restaurant_id, table_number, public_token, is_active"
     )
     .order("table_number", { ascending: true });
+
+  /*
+   * ============================================================
+   * PAKETLER
+   * ============================================================
+   */
+
+  const {
+    data: plansData,
+    error: plansError,
+  } = await supabase
+    .from("subscription_plans")
+    .select(
+      "id, name, slug, monthly_price, yearly_price"
+    )
+    .order("monthly_price", {
+      ascending: true,
+    });
+
+  if (plansError) {
+    console.error(
+      "Paketler yüklenemedi:",
+      plansError
+    );
+  }
+
+  const plans: Plan[] =
+    (plansData ?? []) as Plan[];
+
+  /*
+   * ============================================================
+   * ABONELİKLER
+   * ============================================================
+   */
+
+  const {
+    data: subscriptionsData,
+    error: subscriptionsError,
+  } = await supabase
+    .from("subscriptions")
+    .select(`
+      id,
+      restaurant_id,
+      plan_id,
+      status,
+      billing_interval,
+      current_period_start,
+      current_period_end,
+      subscription_plans (
+        id,
+        name,
+        slug,
+        monthly_price,
+        yearly_price
+      )
+    `)
+    .order("current_period_start", {
+      ascending: false,
+      nullsFirst: false,
+    });
+
+  if (subscriptionsError) {
+    console.error(
+      "Abonelikler yüklenemedi:",
+      subscriptionsError
+    );
+  }
+
+  const subscriptionList: Subscription[] =
+    (subscriptionsData ?? []).map(
+      (subscription: any) => ({
+        ...subscription,
+        subscription_plans:
+          Array.isArray(
+            subscription.subscription_plans
+          )
+            ? subscription.subscription_plans[0] ?? null
+            : subscription.subscription_plans ?? null,
+      })
+    ) as Subscription[];
+
+  /*
+   * ============================================================
+   * HIZLI ABONELİK BULUCU
+   * ============================================================
+   */
+
+  function getRestaurantSubscription(
+    restaurantId: number
+  ) {
+    return (
+      subscriptionList.find(
+        (subscription) =>
+          subscription.restaurant_id ===
+            restaurantId &&
+          (subscription.status === "active" ||
+            subscription.status === "trial")
+      ) ??
+      subscriptionList.find(
+        (subscription) =>
+          subscription.restaurant_id ===
+          restaurantId
+      ) ??
+      null
+    );
+  }
+
+  /*
+   * ============================================================
+   * TEMA DEĞİŞTİR
+   * ============================================================
+   */
+
+  async function updateRestaurantTheme(
+    formData: FormData
+  ) {
+    "use server";
+
+    const restaurantId = Number(
+      formData.get("restaurant_id")
+    );
+
+    const theme = String(
+      formData.get("theme") || "classic"
+    );
+
+    if (
+      !Number.isInteger(restaurantId) ||
+      restaurantId <= 0
+    ) {
+      return;
+    }
+
+    const isAllowedTheme = RESTAURANT_THEMES.some(
+      (item) => item.value === theme
+    );
+
+    if (!isAllowedTheme) {
+      return;
+    }
+
+    const themeSupabase =
+      await createSupabaseServerClient();
+
+    const {
+      data: { user: themeUser },
+    } = await themeSupabase.auth.getUser();
+
+    if (!themeUser) {
+      redirect("/sistem/login");
+    }
+
+    const { data: themeAdmin } =
+      await themeSupabase
+        .from("system_admins")
+        .select("user_id")
+        .eq("user_id", themeUser.id)
+        .maybeSingle();
+
+    if (!themeAdmin) {
+      redirect("/admin");
+    }
+
+    const { data: updatedTheme, error } =
+      await themeSupabase.rpc(
+        "set_system_restaurant_theme",
+        {
+          p_restaurant_id: restaurantId,
+          p_theme: theme,
+        }
+      );
+
+    if (error) {
+      console.error(
+        "TEMA RPC GÜNCELLEME HATASI:",
+        error
+      );
+      return;
+    }
+
+    console.log(
+      "Restoran teması güncellendi:",
+      updatedTheme
+    );
+
+    revalidatePath("/sistem");
+    revalidatePath("/restoran", "layout");
+    revalidatePath("/admin/ayarlar");
+
+    redirect("/sistem");
+  }
+
+  /*
+   * ============================================================
+   * PAKET DEĞİŞTİR
+   * ============================================================
+   */
+
+  async function changeRestaurantPlan(
+    formData: FormData
+  ) {
+    "use server";
+
+    const restaurantId = Number(
+      formData.get("restaurant_id")
+    );
+
+    const planId = String(
+      formData.get("plan_id") || ""
+    );
+
+    const currentSubscriptionId = String(
+      formData.get("subscription_id") || ""
+    );
+
+    const status = String(
+      formData.get("status") || "active"
+    );
+
+    const billingInterval = String(
+      formData.get("billing_interval") ||
+        "monthly"
+    );
+
+    if (
+      !Number.isInteger(restaurantId) ||
+      restaurantId <= 0 ||
+      !planId
+    ) {
+      return;
+    }
+
+    const nextFormData = new FormData();
+    nextFormData.set(
+      "restaurant_id",
+      String(restaurantId)
+    );
+    nextFormData.set("plan_id", planId);
+    nextFormData.set(
+      "status",
+      status
+    );
+    nextFormData.set(
+      "billing_interval",
+      billingInterval
+    );
+
+    if (currentSubscriptionId) {
+      nextFormData.set(
+        "subscription_id",
+        currentSubscriptionId
+      );
+      await updateSubscription(
+        nextFormData
+      );
+    } else {
+      await createSubscription(
+        nextFormData
+      );
+    }
+
+    revalidatePath("/sistem");
+    revalidatePath("/sistem/abonelikler");
+    revalidatePath("/admin");
+  }
 
   /*
    * ============================================================
@@ -589,6 +883,189 @@ export default async function SystemOwnerPage() {
                     </div>
 
 
+                    {/* =================================================
+                        PAKET & TEMA
+                    ================================================= */}
+
+                    {(() => {
+                      const currentSubscription =
+                        getRestaurantSubscription(
+                          restaurant.id
+                        );
+
+                      const currentPlan =
+                        currentSubscription
+                          ?.subscription_plans;
+
+                      const currentTheme =
+                        normalizeRestaurantTheme(
+                          restaurant.theme
+                        );
+
+                      return (
+                        <section className="restaurant-controls">
+                          <div className="restaurant-control-header">
+                            <div>
+                              <span>
+                                MÜŞTERİ DENEYİMİ
+                              </span>
+                              <strong>
+                                Paket & Tema
+                              </strong>
+                            </div>
+
+                            <span className="control-current-badge">
+                              {currentPlan?.name ||
+                                "Paket yok"}{" "}
+                              ·{" "}
+                              {RESTAURANT_THEMES.find(
+                                (item) =>
+                                  item.value ===
+                                  currentTheme
+                              )?.label || "Klasik"}
+                            </span>
+                          </div>
+
+                          <div className="restaurant-control-grid">
+                            <form
+                              action={changeRestaurantPlan}
+                              className="restaurant-control-card"
+                            >
+                              <input
+                                type="hidden"
+                                name="restaurant_id"
+                                value={restaurant.id}
+                              />
+
+                              {currentSubscription?.id && (
+                                <>
+                                  <input
+                                    type="hidden"
+                                    name="subscription_id"
+                                    value={
+                                      currentSubscription.id
+                                    }
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="status"
+                                    value={
+                                      currentSubscription.status ===
+                                        "active" ||
+                                      currentSubscription.status ===
+                                        "trial"
+                                        ? currentSubscription.status
+                                        : "active"
+                                    }
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="billing_interval"
+                                    value={
+                                      currentSubscription.billing_interval ||
+                                      "monthly"
+                                    }
+                                  />
+                                </>
+                              )}
+
+                              <label>
+                                <span>Paket</span>
+                                <select
+                                  name="plan_id"
+                                  defaultValue={
+                                    currentSubscription?.plan_id ||
+                                    plans[0]?.id ||
+                                    ""
+                                  }
+                                >
+                                  {plans.length ===
+                                  0 ? (
+                                    <option value="">
+                                      Paket bulunamadı
+                                    </option>
+                                  ) : (
+                                    plans.map(
+                                      (plan) => (
+                                        <option
+                                          key={
+                                            plan.id
+                                          }
+                                          value={
+                                            plan.id
+                                          }
+                                        >
+                                          {
+                                            plan.name
+                                          }
+                                        </option>
+                                      )
+                                    )
+                                  )}
+                                </select>
+                              </label>
+
+                              <button
+                                type="submit"
+                                disabled={
+                                  plans.length ===
+                                  0
+                                }
+                                className="control-save-button"
+                              >
+                                💳 Paketi Uygula
+                              </button>
+                            </form>
+
+                            <form
+                              action={updateRestaurantTheme}
+                              className="restaurant-control-card"
+                            >
+                              <input
+                                type="hidden"
+                                name="restaurant_id"
+                                value={restaurant.id}
+                              />
+
+                              <label>
+                                <span>Tema</span>
+                                <select
+                                  name="theme"
+                                  defaultValue={
+                                    currentTheme
+                                  }
+                                >
+                                  {RESTAURANT_THEMES.map(
+                                    (theme) => (
+                                      <option
+                                        key={
+                                          theme.value
+                                        }
+                                        value={
+                                          theme.value
+                                        }
+                                      >
+                                        {
+                                          theme.label
+                                        }
+                                      </option>
+                                    )
+                                  )}
+                                </select>
+                              </label>
+
+                              <button
+                                type="submit"
+                                className="control-save-button theme-save-button"
+                              >
+                                🎨 Temayı Uygula
+                              </button>
+                            </form>
+                          </div>
+                        </section>
+                      );
+                    })()}
+
                     {/* BUTONLAR */}
 
                     <div className="restaurant-actions">
@@ -1046,6 +1523,135 @@ export default async function SystemOwnerPage() {
           color: #c54038;
         }
 
+        /* =====================================================
+           PAKET & TEMA KONTROLLERİ
+        ====================================================== */
+
+        .restaurant-controls {
+          margin-top: 17px;
+          padding: 14px;
+          border-radius: 16px;
+          background:
+            linear-gradient(180deg, #fffdf7 0%, #faf7ef 100%);
+          border: 1px solid #eadfc5;
+        }
+
+        .restaurant-control-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+
+        .restaurant-control-header > div {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          min-width: 0;
+        }
+
+        .restaurant-control-header > div span {
+          color: #a67a00;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 1.4px;
+        }
+
+        .restaurant-control-header > div strong {
+          font-size: 12px;
+          font-weight: 900;
+          color: #2a2925;
+        }
+
+        .control-current-badge {
+          flex-shrink: 0;
+          padding: 7px 9px;
+          border-radius: 999px;
+          background: #171717;
+          color: #fff;
+          font-size: 9px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .restaurant-control-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .restaurant-control-card {
+          padding: 11px;
+          border-radius: 13px;
+          background: #fff;
+          border: 1px solid #e8e0cf;
+        }
+
+        .restaurant-control-card label {
+          display: block;
+        }
+
+        .restaurant-control-card label > span {
+          display: block;
+          margin-bottom: 6px;
+          color: #777;
+          font-size: 9px;
+          font-weight: 800;
+        }
+
+        .restaurant-control-card select {
+          width: 100%;
+          min-height: 38px;
+          border: 1px solid #ddd5c5;
+          border-radius: 9px;
+          padding: 0 10px;
+          background: #faf9f5;
+          color: #25231f;
+          font-size: 11px;
+          font-weight: 800;
+          outline: none;
+        }
+
+        .restaurant-control-card select:focus {
+          border-color: #c79500;
+          box-shadow: 0 0 0 3px rgba(199,149,0,.10);
+        }
+
+        .control-save-button {
+          width: 100%;
+          min-height: 38px;
+          margin-top: 8px;
+          border: 1px solid #191919;
+          border-radius: 9px;
+          background: #171717;
+          color: #fff;
+          font-size: 10px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: .2s ease;
+        }
+
+        .control-save-button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          background: #2a2a2a;
+        }
+
+        .control-save-button:disabled {
+          opacity: .5;
+          cursor: not-allowed;
+        }
+
+        .theme-save-button {
+          border-color: #d8b866;
+          background: #fff4d2;
+          color: #7a5900;
+        }
+
+        .theme-save-button:hover:not(:disabled) {
+          background: #ffe9ae;
+        }
+
         /* ACTIONS */
 
         .restaurant-actions {
@@ -1198,6 +1804,10 @@ export default async function SystemOwnerPage() {
           }
 
           .restaurant-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .restaurant-control-grid {
             grid-template-columns: 1fr;
           }
 
