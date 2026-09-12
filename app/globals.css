@@ -18614,3 +18614,81 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     min-width: 29px !important;
   }
 }
+/* AURORA MOBİL — RESTORAN ODAKLI PREMIUM GÖRÜNÜM */
+@media (max-width: 760px) {
+  .aurora-root .aurora-category {
+    min-height: 76px !important;
+    padding: 0 15px !important;
+    background: linear-gradient(145deg, rgba(31,28,24,.72), rgba(12,11,10,.58)) !important;
+    border: 1px solid rgba(255,255,255,.16) !important;
+    box-shadow: 0 12px 28px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.07) !important;
+    backdrop-filter: blur(16px) saturate(115%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(115%) !important;
+  }
+
+  .aurora-root .aurora-category:hover,
+  .aurora-root .aurora-category-button:hover {
+    transform: none !important;
+  }
+
+  .aurora-root .aurora-category-name {
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    font-weight: 900 !important;
+    letter-spacing: .15px !important;
+  }
+
+  .aurora-root .aurora-category-arrow {
+    display: none !important;
+  }
+
+  .aurora-root .aurora-category-icon {
+    width: 34px !important;
+    height: 34px !important;
+    margin-right: 11px !important;
+    display: grid !important;
+    place-items: center !important;
+    font-size: 0 !important;
+    color: #ead8ae !important;
+  }
+
+  .aurora-root .aurora-category-icon::after {
+    font-size: 20px !important;
+    line-height: 1 !important;
+  }
+
+  .aurora-root .aurora-category:nth-child(1) .aurora-category-icon::after { content: "🍽️"; }
+  .aurora-root .aurora-category:nth-child(2) .aurora-category-icon::after { content: "🔔"; }
+  .aurora-root .aurora-category:nth-child(3) .aurora-category-icon::after { content: "🧾"; }
+  .aurora-root .aurora-category:nth-child(4) .aurora-category-icon::after { content: "💳"; }
+  .aurora-root .aurora-category:nth-child(5) .aurora-category-icon::after { content: "⭐"; }
+
+  .aurora-root .aurora-main-action-form .aurora-category {
+    background: linear-gradient(145deg, rgba(31,28,24,.70), rgba(12,11,10,.56)) !important;
+  }
+
+  .aurora-root .aurora-category-wide-mobile {
+    min-height: 72px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .aurora-root .aurora-category {
+    min-height: 72px !important;
+    padding: 0 12px !important;
+  }
+
+  .aurora-root .aurora-category-name {
+    font-size: 9px !important;
+  }
+
+  .aurora-root .aurora-category-icon {
+    width: 30px !important;
+    height: 30px !important;
+    margin-right: 8px !important;
+  }
+
+  .aurora-root .aurora-category-icon::after {
+    font-size: 18px !important;
+  }
+}
