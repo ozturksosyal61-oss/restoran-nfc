@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
 import LogoutButton from "./LogoutButton";
 import ArchiveRestaurantButton from "./ArchiveRestaurantButton";
+import DeleteRestaurantButton from "./DeleteRestaurantButton";
 import { revalidatePath } from "next/cache";
 import { updateSubscription, createSubscription } from "./abonelikler/actions";
 import { RESTAURANT_THEMES, normalizeRestaurantTheme, type RestaurantTheme } from "../../lib/themes";
@@ -211,6 +212,60 @@ export default async function SystemOwnerPage() {
       ) ??
       null
     );
+  }
+
+  /*
+   * ============================================================
+   * RESTORAN KALICI SİL
+   * ============================================================
+   */
+
+  async function deleteRestaurant(formData: FormData) {
+    "use server";
+
+    const restaurantId = Number(
+      formData.get("restaurant_id")
+    );
+
+    if (!Number.isInteger(restaurantId) || restaurantId <= 0) {
+      return;
+    }
+
+    const deleteSupabase = await createSupabaseServerClient();
+
+    const {
+      data: { user: deleteUser },
+    } = await deleteSupabase.auth.getUser();
+
+    if (!deleteUser) {
+      redirect("/sistem/login");
+    }
+
+    const { data: deleteAdmin } = await deleteSupabase
+      .from("system_admins")
+      .select("user_id")
+      .eq("user_id", deleteUser.id)
+      .maybeSingle();
+
+    if (!deleteAdmin) {
+      redirect("/admin");
+    }
+
+    const { error: deleteError } = await deleteSupabase.rpc(
+      "delete_restaurant_completely",
+      {
+        p_restaurant_id: restaurantId,
+      }
+    );
+
+    if (deleteError) {
+      console.error("RESTORAN KALICI SİLME HATASI:", deleteError);
+      redirect("/sistem?delete=hata");
+    }
+
+    revalidatePath("/sistem");
+    revalidatePath("/admin");
+    redirect("/sistem?delete=ok");
   }
 
   /*
@@ -1089,6 +1144,12 @@ export default async function SystemOwnerPage() {
                         restaurantName={restaurant.name}
                       />
 
+                      <DeleteRestaurantButton
+                        restaurantId={restaurant.id}
+                        restaurantName={restaurant.name}
+                        action={deleteRestaurant}
+                      />
+
                     </div>
 
                   </article>
@@ -1838,6 +1899,31 @@ export default async function SystemOwnerPage() {
           .view-button {
             min-height: 42px;
           }
+
+        .restaurant-delete-button {
+          min-height: 42px;
+          padding: 0 13px;
+          border: 1px solid #b42318;
+          border-radius: 11px;
+          background: #b42318;
+          color: #fff;
+          font-size: 11px;
+          font-weight: 900;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: .2s ease;
+        }
+
+        .restaurant-delete-button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          background: #8f1d14;
+          border-color: #8f1d14;
+        }
+
+        .restaurant-delete-button:disabled {
+          opacity: .6;
+          cursor: not-allowed;
+        }
 
         .restaurant-archive-button {
           min-height: 42px;

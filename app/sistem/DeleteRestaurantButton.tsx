@@ -1,80 +1,53 @@
 "use client";
 
-import { useState } from "react";
-
 type Props = {
   restaurantId: number;
   restaurantName: string;
+  action: (formData: FormData) => void | Promise<void>;
 };
 
 export default function DeleteRestaurantButton({
   restaurantId,
   restaurantName,
+  action,
 }: Props) {
-  const [loading, setLoading] = useState(false);
-
-  async function handleDelete() {
-    const confirmed = window.confirm(
-      `"${restaurantName}" restoranını tamamen silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz. Devam etmek için Tamam'a basın.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await fetch(
-        "/api/sistem/restoran-sil",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            restaurant_id: restaurantId,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(
-          data.error ||
-            "Restoran silinemedi."
-        );
-      }
-
-      window.location.reload();
-    } catch (error) {
-      console.error(
-        "RESTORAN SİLME HATASI:",
-        error
-      );
-
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : "Restoran silinemedi."
-      );
-
-      setLoading(false);
-    }
-  }
-
   return (
-    <button
-      type="button"
-      className="restaurant-delete-button"
-      onClick={handleDelete}
-      disabled={loading}
-      title="Restoranı tamamen sil"
+    <form
+      action={action}
+      onSubmit={(event) => {
+        const phrase = window.prompt(
+          `"${restaurantName}" restoranını KALICI olarak silmek üzeresiniz.\n\n` +
+            `Bu işlem geri alınamaz. Restorana bağlı menü, ürün, masa, sipariş, yorum, hizmet talepleri ve abonelik kayıtları da silinir.\n\n` +
+            `Onaylamak için RESTORANI SIL yazın.`
+        );
+
+        if (phrase !== "RESTORANI SIL") {
+          event.preventDefault();
+          return;
+        }
+
+        if (
+          !window.confirm(
+            `"${restaurantName}" kalıcı olarak silinsin mi?`
+          )
+        ) {
+          event.preventDefault();
+        }
+      }}
     >
-      {loading
-        ? "Siliniyor..."
-        : "🗑️ Restoranı Sil"}
-    </button>
+      <input
+        type="hidden"
+        name="restaurant_id"
+        value={restaurantId}
+      />
+
+      <button
+        type="submit"
+        className="restaurant-delete-button"
+        title="Restoranı ve bağlı verilerini kalıcı olarak sil"
+      >
+        🗑️ Kalıcı Sil
+      </button>
+    </form>
   );
 }
