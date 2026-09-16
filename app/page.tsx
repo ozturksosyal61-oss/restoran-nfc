@@ -1,4 +1,12 @@
+"use client";
+
 import Link from "next/link";
+
+function trackMetaEvent(eventName: string, params?: Record<string, string>) {
+  if (typeof window !== "undefined" && (window as any).fbq) {
+    (window as any).fbq("track", eventName, params);
+  }
+}
 
 type Feature = {
   icon: string;
@@ -139,6 +147,12 @@ export default function Home() {
           <Link
             href="/demo"
             className="nav-cta"
+            onClick={() =>
+              trackMetaEvent("ViewContent", {
+                content_name: "Demo",
+                content_category: "OZT Digital",
+              })
+            }
           >
             🎯 Demoyu İncele →
           </Link>
@@ -178,6 +192,12 @@ export default function Home() {
             <Link
               href="/urunler"
               className="landing-products-button"
+              onClick={() =>
+                trackMetaEvent("ViewContent", {
+                  content_name: "Ürünler",
+                  content_category: "OZT Digital",
+                })
+              }
             >
               📦 Ürünleri İncele <span>→</span>
             </Link>
@@ -192,6 +212,12 @@ export default function Home() {
             <Link
               href="/demo"
               className="landing-primary"
+              onClick={() =>
+                trackMetaEvent("ViewContent", {
+                  content_name: "Demo",
+                  content_category: "OZT Digital",
+                })
+              }
             >
               🎯 Demoyu İncele <span>→</span>
             </Link>
@@ -482,7 +508,15 @@ export default function Home() {
                 ))}
               </ul>
 
-              <Link href="/demo">
+              <Link
+                href="/demo"
+                onClick={() =>
+                  trackMetaEvent("ViewContent", {
+                    content_name: "Demo",
+                    content_category: "OZT Digital",
+                  })
+                }
+              >
                 🎯 Demoyu İncele →
               </Link>
             </article>
