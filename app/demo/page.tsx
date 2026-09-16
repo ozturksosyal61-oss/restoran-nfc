@@ -1,4 +1,15 @@
+"use client";
+
 import Link from "next/link";
+
+function trackMetaEvent(
+  eventName: string,
+  params?: Record<string, string>
+) {
+  if (typeof window !== "undefined" && (window as any).fbq) {
+    (window as any).fbq("track", eventName, params);
+  }
+}
 
 export default function DemoPage() {
   return (
@@ -11,7 +22,16 @@ export default function DemoPage() {
           </span>
         </Link>
 
-        <Link href="/abonelik" className="demo-nav-button">
+        <Link
+          href="/abonelik"
+          className="demo-nav-button"
+          onClick={() =>
+            trackMetaEvent("Lead", {
+              content_name: "14 Gün Ücretsiz Dene",
+              content_category: "Abonelik",
+            })
+          }
+        >
           14 GÜN ÜCRETSİZ DENE
         </Link>
       </nav>
@@ -40,6 +60,12 @@ export default function DemoPage() {
             <Link
               href="/restoran/mira-kitchen?masa=2a8149f1-624c-4d3e-ad8c-dd50f72e13b0"
               className="demo-primary-button"
+              onClick={() =>
+                trackMetaEvent("ViewContent", {
+                  content_name: "Mira Kitchen Canlı Demo",
+                  content_category: "Demo",
+                })
+              }
             >
               MİRA KITCHEN DEMOSUNU AÇ →
             </Link>
@@ -47,6 +73,12 @@ export default function DemoPage() {
             <Link
               href="/abonelik"
               className="demo-secondary-button"
+              onClick={() =>
+                trackMetaEvent("Lead", {
+                  content_name: "14 Gün Ücretsiz Dene",
+                  content_category: "Abonelik",
+                })
+              }
             >
               14 GÜN ÜCRETSİZ DENE
             </Link>
@@ -200,6 +232,12 @@ export default function DemoPage() {
         <Link
           href="/abonelik"
           className="demo-primary-button"
+          onClick={() =>
+            trackMetaEvent("Lead", {
+              content_name: "14 Gün Ücretsiz Dene",
+              content_category: "Abonelik",
+            })
+          }
         >
           14 GÜN ÜCRETSİZ DENE →
         </Link>
