@@ -38,6 +38,17 @@ const cardProducts = [
   },
 ];
 
+const qrProducts = [
+  {
+    title: "Gold Metal QR Menü Plağı",
+    image: "/products/gold-metal-qr-menu-plaque.png",
+    accent: "PREMIUM QR",
+    text: "Restoran ve kafelerin masalarında şık bir şekilde konumlandırılabilen gold metal QR menü plağı. Müşteriler QR kodu telefonlarıyla okutarak dijital menünüze hızlıca ulaşır.",
+    tags: ["QR Menü", "Gold Metal", "Premium Görünüm", "Özel Tasarım"],
+    kind: "stand" as const,
+  },
+];
+
 function ProductCard({
   title,
   image,
@@ -469,6 +480,22 @@ export default function ProductsPage() {
         </div>
         <div className="products-grid">
           {cardProducts.map((product) => <ProductCard key={product.title} {...product} />)}
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="section-heading">
+          <div className="eyebrow">▣ QR MENÜ PLAKLARI</div>
+          <h2>Masada şıklık, telefonda menü.</h2>
+          <p>
+            Gold metal QR menü plağı ile dijital menünüzü masanın üzerinde
+            premium ve dikkat çekici bir şekilde sunun.
+          </p>
+        </div>
+        <div className="products-grid">
+          {qrProducts.map((product) => (
+            <ProductCard key={product.title} {...product} />
+          ))}
         </div>
       </section>
 
