@@ -7,6 +7,8 @@ type RestaurantThemeValue = {
   restaurantId: number;
   // Aurora temalarından biri değilse null.
   auroraPalette: AuroraPalette | null;
+  // Sadece menü restoranı: sipariş, garson çağırma ve ödeme gizlenir.
+  menuOnly: boolean;
 };
 
 const RestaurantThemeContext = createContext<RestaurantThemeValue | null>(null);

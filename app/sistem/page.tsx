@@ -100,6 +100,19 @@ export default async function SystemOwnerPage() {
     .select("id, name, slug, theme, is_active")
     .order("id", { ascending: true });
 
+  // Restoran türü ayrı okunur: menu_only sütunu migration ile eklenir ve
+  // henüz yoksa yukarıdaki sorgu bozulmasın.
+  const { data: menuOnlyRows, error: menuOnlyError } = await supabase
+    .from("restaurants")
+    .select("id, menu_only");
+
+  const menuOnlyReady = !menuOnlyError;
+  const menuOnlyIds = new Set(
+    (menuOnlyRows ?? [])
+      .filter((row) => row.menu_only === true)
+      .map((row) => Number(row.id))
+  );
+
   /*
    * ============================================================
    * MASALARI GETİR
@@ -278,6 +291,59 @@ export default async function SystemOwnerPage() {
     revalidatePath("/sistem");
     revalidatePath("/admin");
     redirect("/sistem?delete=ok");
+  }
+
+  /*
+   * ============================================================
+   * RESTORAN TÜRÜ (TAM SÜRÜM / SADECE MENÜ)
+   * ============================================================
+   */
+
+  async function updateRestaurantType(formData: FormData) {
+    "use server";
+
+    const restaurantId = Number(formData.get("restaurant_id"));
+    const menuOnly = formData.get("restaurant_type") === "menu";
+
+    if (!Number.isInteger(restaurantId) || restaurantId <= 0) {
+      return;
+    }
+
+    const typeSupabase = await createSupabaseServerClient();
+
+    const {
+      data: { user: typeUser },
+    } = await typeSupabase.auth.getUser();
+
+    if (!typeUser) {
+      redirect("/sistem/login");
+    }
+
+    const { data: typeAdmin } = await typeSupabase
+      .from("system_admins")
+      .select("user_id")
+      .eq("user_id", typeUser.id)
+      .maybeSingle();
+
+    if (!typeAdmin) {
+      redirect("/admin");
+    }
+
+    const { error } = await createSupabaseAdminClient()
+      .from("restaurants")
+      .update({ menu_only: menuOnly })
+      .eq("id", restaurantId);
+
+    if (error) {
+      console.error("RESTORAN TÜRÜ GÜNCELLEME HATASI:", error);
+      return;
+    }
+
+    revalidatePath("/sistem");
+    revalidatePath("/restoran", "layout");
+    revalidatePath("/admin", "layout");
+
+    redirect("/sistem");
   }
 
   /*
@@ -993,10 +1059,58 @@ export default async function SystemOwnerPage() {
                                   item.value ===
                                   currentTheme
                               )?.label || "Klasik"}
+                              {menuOnlyIds.has(restaurant.id) &&
+                                " · Sadece menü"}
                             </span>
                           </div>
 
                           <div className="restaurant-control-grid">
+                            <form
+                              action={updateRestaurantType}
+                              className="restaurant-control-card restaurant-type-card"
+                            >
+                              <input
+                                type="hidden"
+                                name="restaurant_id"
+                                value={restaurant.id}
+                              />
+
+                              <label>
+                                <span>Restoran türü</span>
+                                <select
+                                  name="restaurant_type"
+                                  defaultValue={
+                                    menuOnlyIds.has(restaurant.id)
+                                      ? "menu"
+                                      : "full"
+                                  }
+                                  disabled={!menuOnlyReady}
+                                >
+                                  <option value="full">
+                                    Tam sürüm · sipariş, garson, ödeme
+                                  </option>
+                                  <option value="menu">
+                                    Sadece menü · tek QR, sipariş yok
+                                  </option>
+                                </select>
+                              </label>
+
+                              {!menuOnlyReady && (
+                                <p className="restaurant-type-hint">
+                                  Bu seçenek için önce 20260930_menu_only_restaurants.sql
+                                  dosyasını Supabase&apos;de çalıştırın.
+                                </p>
+                              )}
+
+                              <button
+                                type="submit"
+                                disabled={!menuOnlyReady}
+                                className="control-save-button"
+                              >
+                                Türü Uygula
+                              </button>
+                            </form>
+
                             <form
                               action={changeRestaurantPlan}
                               className="restaurant-control-card"
@@ -1701,6 +1815,17 @@ export default async function SystemOwnerPage() {
           border: 1px solid #e8e0cf;
         }
 
+        .restaurant-type-card {
+          grid-column: 1 / -1;
+        }
+
+        .restaurant-type-hint {
+          margin: 8px 0 0;
+          color: #9a6b12;
+          font-size: 10px;
+          line-height: 1.45;
+        }
+
         .restaurant-control-card label {
           display: block;
         }
@@ -2036,4 +2161,4 @@ export default async function SystemOwnerPage() {
 
     </main>
   );
-}
+}

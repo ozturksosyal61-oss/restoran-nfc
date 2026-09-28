@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import { readMenuOnly, restaurantMenuPath } from "../../../lib/restaurant-type";
 import { isAuroraTheme } from "../../../lib/themes";
 import SiparisTakipLink from "./SiparisTakipLink";
 import NovaRestaurantHome from "./NovaRestaurantHome";
@@ -145,6 +146,11 @@ export default async function RestaurantPage({
 
   if (error || !restaurant) {
     notFound();
+  }
+
+  // Sadece menü restoranlarında ana sayfa yok; QR doğrudan menüye açılır.
+  if (await readMenuOnly(supabase, Number(restaurant.id))) {
+    redirect(restaurantMenuPath(restaurant.slug));
   }
 
   // --------------------------------------------------

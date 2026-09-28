@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import AdminIcon from "../AdminIcon";
+import { useAdminMenuOnly } from "../AdminShell";
 
 // Yeni ürün ve ürün düzenleme sayfalarının ortak form görünümü.
 // Kaydetme mantığı her sayfanın kendisinde kalır.
@@ -60,6 +61,8 @@ export default function ProductFormView({
   loading: boolean;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const menuOnly = useAdminMenuOnly();
+
   // Seçilen dosyanın önizlemesi; bileşen kapanınca adres serbest bırakılır.
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -249,7 +252,11 @@ export default function ProductFormView({
                   <span>
                     <strong>Menüde göster</strong>
                     <small className={isAvailable ? "is-open" : "is-closed"}>
-                      {isAvailable ? "Müşteriler görebilir ve sipariş verebilir" : "Menüde gizli"}
+                      {isAvailable
+                        ? menuOnly
+                          ? "Müşteriler menüde görebilir"
+                          : "Müşteriler görebilir ve sipariş verebilir"
+                        : "Menüde gizli"}
                     </small>
                   </span>
                   <input

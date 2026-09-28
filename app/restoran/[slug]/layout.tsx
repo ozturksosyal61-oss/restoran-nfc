@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { supabase } from "../../../lib/supabase";
+import { readMenuOnly, restaurantMenuPath } from "../../../lib/restaurant-type";
 import { getAuroraPalette, normalizeRestaurantTheme } from "../../../lib/themes";
 import { auroraFontVariables } from "./aurora-fonts";
 import palette from "./aurora-palette.module.css";
 import { CartProvider } from "./menu/CartContext";
+import MenuOnlyGate from "./MenuOnlyGate";
 import NovaThemeStyles from "./NovaThemeStyles";
 import { RestaurantThemeProvider } from "./RestaurantThemeContext";
 
@@ -29,10 +31,15 @@ export default async function RestaurantLayout({
   }
 
   const theme = normalizeRestaurantTheme(restaurant.theme);
+  const menuOnly = await readMenuOnly(supabase, Number(restaurant.id));
 
   // Aurora temalarında renkler ve yazı tipleri kabuk üzerinden tüm
   // müşteri ekranlarına (ana sayfa, menü, sipariş, takip) aktarılır.
-  const auroraPalette = getAuroraPalette(theme);
+  // Sadece menü restoranları her zaman Aurora menüsünü kullanır; Aurora
+  // dışı bir tema seçiliyse koyu renk teması uygulanır.
+  const forcedAurora = menuOnly && !getAuroraPalette(theme);
+  const shellTheme = forcedAurora ? "aurora" : theme;
+  const auroraPalette = getAuroraPalette(shellTheme);
   const shellClass = auroraPalette
     ? `restaurant-shell ${palette.shell} ${auroraFontVariables}`
     : "restaurant-shell";
@@ -40,15 +47,19 @@ export default async function RestaurantLayout({
   return (
     <CartProvider>
       <RestaurantThemeProvider
-        value={{ restaurantId: Number(restaurant.id), auroraPalette }}
+        value={{ restaurantId: Number(restaurant.id), auroraPalette, menuOnly }}
       >
         <div
           className={shellClass}
-          data-theme={theme}
+          data-theme={shellTheme}
           data-palette={auroraPalette ?? undefined}
         >
           <NovaThemeStyles />
-          {children}
+          {menuOnly ? (
+            <MenuOnlyGate menuPath={restaurantMenuPath(slug)}>{children}</MenuOnlyGate>
+          ) : (
+            children
+          )}
         </div>
       </RestaurantThemeProvider>
     </CartProvider>

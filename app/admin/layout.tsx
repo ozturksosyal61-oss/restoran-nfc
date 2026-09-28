@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
 import { getPlanLabel, hasPlanFeature } from "../../lib/plan";
+import { readMenuOnly } from "../../lib/restaurant-type";
 import AdminShell, { type AdminShellRestaurant } from "./AdminShell";
 import "./admin.css";
 
@@ -22,6 +23,7 @@ const sans = DM_Sans({
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   let restaurant: AdminShellRestaurant | null = null;
   let plan: string | null = null;
+  let menuOnly = false;
 
   try {
     const supabase = await createSupabaseServerClient();
@@ -46,6 +48,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         if (data) {
           restaurant = { name: data.name, slug: data.slug, logo_url: data.logo_url ?? null };
           plan = data.plan ?? null;
+          menuOnly = await readMenuOnly(supabase, Number(membership.restaurant_id));
         }
       }
     }
@@ -57,9 +60,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     <div className={`${display.variable} ${sans.variable}`}>
       <AdminShell
         restaurant={restaurant}
-        planLabel={getPlanLabel(plan)}
+        planLabel={menuOnly ? "MENÜ" : getPlanLabel(plan)}
         canUseOrders={hasPlanFeature(plan, "orders")}
         canUseStaff={hasPlanFeature(plan, "multi_user")}
+        menuOnly={menuOnly}
       >
         {children}
       </AdminShell>

@@ -51,6 +51,11 @@
   display: none;
 }
 
+/* Sadece menü: altta sepet çubuğu olmadığı için boşluk daha az */
+.layoutMenuOnly {
+  padding-bottom: 40px;
+}
+
 .main {
   min-width: 0;
 }
@@ -74,6 +79,22 @@
   border-color: transparent;
   background: var(--au-tile);
   color: var(--au-tile-ink);
+}
+
+/* Sadece menü: geri düğmesinin yerinde restoran logosu */
+.topLogo {
+  overflow: hidden;
+  background: var(--au-tile);
+  color: var(--au-tile-ink);
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.topLogo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .kicker {
@@ -431,6 +452,11 @@
 
 .productNoImage .productMain {
   padding-right: 52px;
+}
+
+/* Sadece menü: sepete ekle düğmesi yok, metin tüm genişliği kullanır */
+.productReadOnly .productMain {
+  padding-right: 0;
 }
 
 .productText {
@@ -1221,6 +1247,12 @@
     grid-template-columns: 232px minmax(0, 1fr) 340px;
     align-items: start;
     padding-bottom: 0;
+  }
+
+  /* Sepet paneli olmadığı için menü sağa kadar uzanır */
+  .layoutMenuOnly {
+    grid-template-columns: 232px minmax(0, 1fr);
+    max-width: 1120px;
   }
 
   .side {

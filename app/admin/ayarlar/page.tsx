@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ChangeEvent, ReactNode } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import AdminIcon from "../AdminIcon";
+import { useAdminMenuOnly } from "../AdminShell";
 
 type Restaurant = {
   id: number;
@@ -34,6 +35,7 @@ type ImageType = "logo" | "cover";
 
 export default function RestaurantSettingsPage() {
   const supabase = createClient();
+  const menuOnly = useAdminMenuOnly();
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
 
@@ -699,13 +701,23 @@ export default function RestaurantSettingsPage() {
           {/* ============ ÇALIŞMA DURUMU ============ */}
           <SettingsSection
             title="Çalışma durumu"
-            description="Kapalıyken müşteriler menüyü görür ama sipariş veremez."
+            description={
+              menuOnly
+                ? "Kapalıyken menünün üstünde “Şu an kapalıyız” notu görünür."
+                : "Kapalıyken müşteriler menüyü görür ama sipariş veremez."
+            }
           >
             <label className="adm-switch-row">
               <span>
-                <strong>Sipariş alıyoruz</strong>
+                <strong>{menuOnly ? "Açığız" : "Sipariş alıyoruz"}</strong>
                 <small className={isOpen ? "is-open" : "is-closed"}>
-                  {isOpen ? "Şu an sipariş almaya açık" : "Şu an sipariş almaya kapalı"}
+                  {menuOnly
+                    ? isOpen
+                      ? "Şu an açık"
+                      : "Şu an kapalı"
+                    : isOpen
+                      ? "Şu an sipariş almaya açık"
+                      : "Şu an sipariş almaya kapalı"}
                 </small>
               </span>
               <input
@@ -713,7 +725,7 @@ export default function RestaurantSettingsPage() {
                 className="adm-switch"
                 checked={isOpen}
                 onChange={(event) => setIsOpen(event.target.checked)}
-                aria-label="Sipariş alma durumu"
+                aria-label={menuOnly ? "Açık / kapalı durumu" : "Sipariş alma durumu"}
               />
             </label>
 
@@ -819,6 +831,10 @@ export default function RestaurantSettingsPage() {
             </details>
           </SettingsSection>
 
+          {/* Sadece menü restoranında WiFi, bağlantılar ve menü düzeni
+              müşteriye gösterilmediği için bu bölümler gizlenir. */}
+          {!menuOnly && (
+          <>
           {/* ============ WIFI ============ */}
           <SettingsSection
             title="WiFi"
@@ -884,6 +900,8 @@ export default function RestaurantSettingsPage() {
               })}
             </div>
           </SettingsSection>
+          </>
+          )}
 
           {/* ============ KAYDET ============ */}
           <div className="adm-sticky-actions">

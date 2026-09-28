@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
-import { normalizeRestaurantTheme } from "../../../../lib/themes";
+import {
+  RESTAURANT_THEMES,
+  isAuroraTheme,
+  normalizeRestaurantTheme,
+} from "../../../../lib/themes";
 
 export async function POST(request: Request) {
   let restaurantId: number | null = null;
@@ -21,7 +25,11 @@ export async function POST(request: Request) {
       manager_password,
       table_count,
       theme,
+      restaurant_type,
     } = body;
+
+    // "menu": sadece menü restoranı (masa yok, sipariş yok, tek QR).
+    const menuOnly = restaurant_type === "menu";
 
     if (!name || !slug || !manager_email || !manager_password) {
       return NextResponse.json(
@@ -37,12 +45,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const tableCount = Number(table_count);
+    const tableCount = menuOnly ? 0 : Number(table_count);
 
     if (
-      !Number.isInteger(tableCount) ||
-      tableCount < 1 ||
-      tableCount > 500
+      !menuOnly &&
+      (!Number.isInteger(tableCount) ||
+        tableCount < 1 ||
+        tableCount > 500)
     ) {
       return NextResponse.json(
         { error: "Masa sayısı 1 ile 500 arasında olmalıdır." },
@@ -52,16 +61,18 @@ export async function POST(request: Request) {
 
     const restaurantTheme = String(theme || "classic").toLowerCase();
 
-    const allowedThemes = [
-      "classic",
-      "dark-modern",
-      "luxury-gold",
-      "ozt-glass-premium",
-    ];
-
-    if (!allowedThemes.includes(restaurantTheme)) {
+    // İzin listesi lib/themes.ts ile aynı (Aurora renk temaları dahil).
+    if (!RESTAURANT_THEMES.some((item) => item.value === restaurantTheme)) {
       return NextResponse.json(
         { error: "Geçersiz restoran teması." },
+        { status: 400 }
+      );
+    }
+
+    // Sadece menü restoranları Aurora menüsünü kullanır.
+    if (menuOnly && !isAuroraTheme(restaurantTheme)) {
+      return NextResponse.json(
+        { error: "Sadece menü restoranları için bir Aurora renk teması seçin." },
         { status: 400 }
       );
     }
@@ -157,6 +168,9 @@ export async function POST(request: Request) {
           instagram_url: instagram_url || null,
           google_review_url: google_review_url || null,
           theme: normalizeRestaurantTheme(restaurantTheme),
+          // Tam sürümde sütun gönderilmez (varsayılan false); böylece
+          // menu_only migration'ı çalışmamış olsa da restoran açılabilir.
+          ...(menuOnly ? { menu_only: true } : {}),
         })
         .select("id")
         .single();
@@ -164,10 +178,14 @@ export async function POST(request: Request) {
     if (restaurantError || !restaurant) {
       console.error("Restaurant oluşturma hatası:", restaurantError);
 
+      const missingColumn =
+        menuOnly && /menu_only/i.test(restaurantError?.message || "");
+
       return NextResponse.json(
         {
-          error:
-            restaurantError?.message || "Restoran oluşturulamadı.",
+          error: missingColumn
+            ? "Sadece menü restoranı için önce 20260930_menu_only_restaurants.sql dosyasını Supabase'de çalıştırın."
+            : restaurantError?.message || "Restoran oluşturulamadı.",
         },
         { status: 500 }
       );
@@ -237,9 +255,11 @@ export async function POST(request: Request) {
       })
     );
 
-    const { error: tablesError } = await supabaseAdmin
-      .from("restaurant_tables")
-      .insert(tables);
+    // Sadece menü restoranında masa yok; tek QR menüye açılır.
+    const { error: tablesError } =
+      tables.length > 0
+        ? await supabaseAdmin.from("restaurant_tables").insert(tables)
+        : { error: null };
 
     if (tablesError) {
       console.error("Masa oluşturma hatası:", tablesError);
@@ -273,6 +293,7 @@ export async function POST(request: Request) {
       manager_user_id: createdUserId,
       table_count: tableCount,
       theme: normalizeRestaurantTheme(restaurantTheme),
+      menu_only: menuOnly,
     });
   } catch (error) {
     console.error("Yeni restoran API hatası:", error);

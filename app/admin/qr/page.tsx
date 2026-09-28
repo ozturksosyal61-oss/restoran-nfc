@@ -2,6 +2,7 @@
 import QRCode from "qrcode";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "../../../lib/supabase-server";
+import { readMenuOnly, restaurantMenuPath } from "../../../lib/restaurant-type";
 import AdminIcon from "../AdminIcon";
 
 export const dynamic = "force-dynamic";
@@ -54,14 +55,18 @@ export default async function AdminQRPage() {
   const baseUrl =
     "https://www.oztdigital.com.tr";
 
+  // Sadece menü restoranında masa yok; tek QR doğrudan menüye açılır.
+  const menuOnly = await readMenuOnly(supabase, Number(restaurant.id));
+
   /*
     =====================================================
     GENEL QR
     =====================================================
   */
 
-  const restaurantUrl =
-    `${baseUrl}/restoran/${restaurant.slug}`;
+  const restaurantUrl = menuOnly
+    ? `${baseUrl}${restaurantMenuPath(restaurant.slug)}`
+    : `${baseUrl}/restoran/${restaurant.slug}`;
 
   const generalQrCode = await QRCode.toDataURL(
     restaurantUrl,
@@ -71,6 +76,55 @@ export default async function AdminQRPage() {
       errorCorrectionLevel: "H",
     }
   );
+
+  if (menuOnly) {
+    return (
+      <main className="adm-page">
+        <header className="adm-head">
+          <div className="adm-head-text">
+            <span className="adm-eyebrow">Menü</span>
+            <h1>QR kod</h1>
+            <p>Tek bir QR kod yeterli. Tüm masalara, vitrine ve broşüre aynı kodu koyabilirsiniz.</p>
+          </div>
+        </header>
+
+        <section className="adm-card adm-general-qr" aria-labelledby="menu-qr">
+          <div className="adm-general-qr-code">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={generalQrCode} alt={`${restaurant.name} menü QR kodu`} />
+          </div>
+          <div className="adm-general-qr-text">
+            <span className="adm-badge s-accent">Dijital menü</span>
+            <h2 id="menu-qr">{restaurant.name}</h2>
+            <p>
+              Müşteri kodu okuttuğunda doğrudan menünüz açılır. Menüde yaptığınız
+              değişiklikler anında görünür; kodu yeniden basmanız gerekmez.
+            </p>
+            <code className="adm-code">{restaurantUrl}</code>
+            <div className="adm-head-actions">
+              <a
+                className="adm-btn adm-btn-primary"
+                href={generalQrCode}
+                download={`${restaurant.slug}-menu-qr.png`}
+              >
+                <AdminIcon name="download" size={16} />
+                QR&apos;ı indir
+              </a>
+              <a className="adm-btn" href={restaurantUrl} target="_blank" rel="noopener noreferrer">
+                <AdminIcon name="external" size={16} />
+                Menüyü aç
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <p className="adm-alert adm-alert-info" style={{ margin: 0 }}>
+          <AdminIcon name="info" size={16} />
+          NFC etiketi kullanacaksanız etikete bu adresi yazmanız yeterli.
+        </p>
+      </main>
+    );
+  }
 
   /*
     =====================================================

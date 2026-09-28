@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
@@ -33,22 +33,49 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+// Sayfalar restoranın "sadece menü" olup olmadığını buradan okur.
+const MenuOnlyContext = createContext(false);
+
+export function useAdminMenuOnly() {
+  return useContext(MenuOnlyContext);
+}
+
+// Sadece menü restoranında açılabilen sayfalar. Diğerleri (panel,
+// siparişler, masalar, çalışanlar, ödemeler...) ürünler sayfasına yönlenir.
+const MENU_ONLY_HOME = "/admin/menu";
+
+function isAllowedForMenuOnly(pathname: string) {
+  if (pathname.startsWith("/admin/login")) return true;
+  if (pathname.startsWith("/admin/menu/promosyon")) return false;
+  return ["/admin/menu", "/admin/qr", "/admin/ayarlar"].some(
+    (href) => pathname === href || pathname.startsWith(`${href}/`)
+  );
+}
+
 export default function AdminShell({
   restaurant,
   planLabel,
   canUseOrders,
   canUseStaff,
+  menuOnly = false,
   children,
 }: {
   restaurant: AdminShellRestaurant | null;
   planLabel: string;
   canUseOrders: boolean;
   canUseStaff: boolean;
+  menuOnly?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname() || "/admin";
   const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  const blocked = Boolean(restaurant) && menuOnly && !isAllowedForMenuOnly(pathname);
+
+  useEffect(() => {
+    if (blocked) router.replace(MENU_ONLY_HOME);
+  }, [blocked, router]);
 
   // Sayfa değişince mobil menüyü kapat.
   const [lastPath, setLastPath] = useState(pathname);
@@ -77,7 +104,22 @@ export default function AdminShell({
     router.refresh();
   }
 
-  const groups: { label: string; items: NavItem[] }[] = [
+  const menuOnlyGroups: { label: string; items: NavItem[] }[] = [
+    {
+      label: "Menü",
+      items: [
+        { href: "/admin/menu", label: "Ürünler", icon: "menu" },
+        { href: "/admin/menu/kategori", label: "Kategoriler", icon: "category" },
+        { href: "/admin/qr", label: "QR kod", icon: "qr" },
+      ],
+    },
+    {
+      label: "Ayarlar",
+      items: [{ href: "/admin/ayarlar", label: "İşletme bilgileri", icon: "settings" }],
+    },
+  ];
+
+  const fullGroups: { label: string; items: NavItem[] }[] = [
     {
       label: "Genel",
       items: [
@@ -111,6 +153,8 @@ export default function AdminShell({
       ],
     },
   ];
+
+  const groups = menuOnly ? menuOnlyGroups : fullGroups;
 
   const initial = restaurant.name.trim().charAt(0).toLocaleUpperCase("tr-TR");
 
@@ -165,12 +209,12 @@ export default function AdminShell({
         <div className="adm-side-foot">
           <a
             className="adm-nav-item"
-            href={`/restoran/${restaurant.slug}`}
+            href={menuOnly ? `/restoran/${restaurant.slug}/menu` : `/restoran/${restaurant.slug}`}
             target="_blank"
             rel="noopener noreferrer"
           >
             <AdminIcon name="external" />
-            Müşteri sayfası
+            {menuOnly ? "Menüyü görüntüle" : "Müşteri sayfası"}
           </a>
           <button type="button" className="adm-nav-item" onClick={logout}>
             <AdminIcon name="logout" />
@@ -194,7 +238,10 @@ export default function AdminShell({
           <span className="adm-badge s-accent">{planLabel}</span>
         </header>
 
-        {children}
+        {/* Sadece menü restoranında izin verilmeyen sayfa yönlenene kadar boş kalır. */}
+        <MenuOnlyContext.Provider value={menuOnly}>
+          {blocked ? null : children}
+        </MenuOnlyContext.Provider>
       </div>
     </div>
   );

@@ -53,7 +53,15 @@ function smoothBehavior(): ScrollBehavior {
     : "smooth";
 }
 
-export default function AuroraMenu({ slug }: { slug: string }) {
+// menuOnly: "sadece menü" restoranı. Sepet, sipariş, garson çağırma, ödeme
+// ve masa kodu yoktur; müşteri yalnızca ürünleri ve fiyatları görür.
+export default function AuroraMenu({
+  slug,
+  menuOnly = false,
+}: {
+  slug: string;
+  menuOnly?: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlToken = searchParams.get("masa")?.trim() || "";
@@ -127,7 +135,7 @@ export default function AuroraMenu({ slug }: { slug: string }) {
         }
 
         // Masa yalnızca QR/NFC kodu bu restoranla eşleşirse kabul edilir.
-        const token = urlToken || readSavedTableToken();
+        const token = menuOnly ? "" : urlToken || readSavedTableToken();
         let nextTable: Table | null = null;
 
         if (token) {
@@ -166,7 +174,7 @@ export default function AuroraMenu({ slug }: { slug: string }) {
         // Sepet tüm restoranlar için tek bir tarayıcı kaydında tutulur. Bu
         // menüde olmayan (başka restorana ait ya da satıştan kalkmış) ürünler
         // çıkarılır; aksi hâlde sipariş veritabanında reddedilir.
-        if (safeProducts.length > 0) {
+        if (!menuOnly && safeProducts.length > 0) {
           const valid = new Set(safeProducts.map((product) => product.id));
           const stale = cartRef.current.items.filter((item) => !valid.has(item.id));
 
@@ -190,7 +198,7 @@ export default function AuroraMenu({ slug }: { slug: string }) {
     return () => {
       cancelled = true;
     };
-  }, [slug, urlToken]);
+  }, [slug, urlToken, menuOnly]);
 
   /* ---------------- Liste ---------------- */
 
@@ -412,13 +420,15 @@ export default function AuroraMenu({ slug }: { slug: string }) {
 
   return (
     <div className={styles.page}>
-      <div className={styles.layout}>
+      <div className={`${styles.layout} ${menuOnly ? styles.layoutMenuOnly : ""}`}>
         {/* ===== Masaüstü: sol sütun ===== */}
         <aside className={styles.side}>
-          <a className={styles.sideBack} href={homeHref}>
-            <AuroraIcon name="back" size={16} />
-            Ana sayfa
-          </a>
+          {!menuOnly && (
+            <a className={styles.sideBack} href={homeHref}>
+              <AuroraIcon name="back" size={16} />
+              Ana sayfa
+            </a>
+          )}
 
           <div className={styles.sideBrand}>
             <span className={styles.sideLogo}>
@@ -455,40 +465,55 @@ export default function AuroraMenu({ slug }: { slug: string }) {
             )}
           </nav>
 
-          <div className={styles.sideHelp}>
-            <span className={styles.kicker}>Masaya hizmet</span>
-            <SideServiceButtons {...serviceProps} />
-            {lastOrderHref && (
-              <a className={styles.sideButton} href={lastOrderHref}>
-                <AuroraIcon name="clock" size={16} />
-                Siparişim
+          {!menuOnly && (
+            <div className={styles.sideHelp}>
+              <span className={styles.kicker}>Masaya hizmet</span>
+              <SideServiceButtons {...serviceProps} />
+              {lastOrderHref && (
+                <a className={styles.sideButton} href={lastOrderHref}>
+                  <AuroraIcon name="clock" size={16} />
+                  Siparişim
+                </a>
+              )}
+              <a className={styles.sideButton} href={billHref}>
+                <AuroraIcon name="card" size={16} />
+                Ödeme yap
               </a>
-            )}
-            <a className={styles.sideButton} href={billHref}>
-              <AuroraIcon name="card" size={16} />
-              Ödeme yap
-            </a>
-          </div>
+            </div>
+          )}
         </aside>
 
         {/* ===== Menü ===== */}
         <main className={styles.main}>
           <header className={styles.top}>
-            <a className={styles.round} href={homeHref} aria-label="Ana sayfaya dön">
-              <AuroraIcon name="back" />
-            </a>
+            {menuOnly ? (
+              <span className={`${styles.round} ${styles.topLogo}`} aria-hidden="true">
+                {restaurant.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={restaurant.logo_url} alt="" />
+                ) : (
+                  initial
+                )}
+              </span>
+            ) : (
+              <a className={styles.round} href={homeHref} aria-label="Ana sayfaya dön">
+                <AuroraIcon name="back" />
+              </a>
+            )}
             <div className={styles.brand}>
               <strong>{restaurant.name}</strong>
               <small>{table ? `Masa ${table.number} · Menü` : "Menü"}</small>
             </div>
-            <button
-              type="button"
-              className={`${styles.round} ${styles.roundAccent}`}
-              onClick={() => setSheet("service")}
-              aria-label="Garson çağır veya hesap iste"
-            >
-              <AuroraIcon name="bell" />
-            </button>
+            {!menuOnly && (
+              <button
+                type="button"
+                className={`${styles.round} ${styles.roundAccent}`}
+                onClick={() => setSheet("service")}
+                aria-label="Garson çağır veya hesap iste"
+              >
+                <AuroraIcon name="bell" />
+              </button>
+            )}
           </header>
 
           <div className={styles.headRow}>
@@ -517,17 +542,26 @@ export default function AuroraMenu({ slug }: { slug: string }) {
             </label>
           </div>
 
-          {restaurant.is_open === false && (
-            <div className={`${styles.notice} ${styles.noticeWarn}`} role="status">
-              <AuroraIcon name="clock" />
-              <span>
-                <strong>Şu an sipariş alınmıyor</strong>
-                Menüyü inceleyebilirsiniz; siparişler işletme açıldığında alınır.
-              </span>
-            </div>
-          )}
+          {restaurant.is_open === false &&
+            (menuOnly ? (
+              <div className={`${styles.notice} ${styles.noticeWarn}`} role="status">
+                <AuroraIcon name="clock" />
+                <span>
+                  <strong>Şu an kapalıyız</strong>
+                  Menümüzü inceleyebilirsiniz.
+                </span>
+              </div>
+            ) : (
+              <div className={`${styles.notice} ${styles.noticeWarn}`} role="status">
+                <AuroraIcon name="clock" />
+                <span>
+                  <strong>Şu an sipariş alınmıyor</strong>
+                  Menüyü inceleyebilirsiniz; siparişler işletme açıldığında alınır.
+                </span>
+              </div>
+            ))}
 
-          {!table && (
+          {!table && !menuOnly && (
             <div className={styles.notice}>
               <AuroraIcon name="qr" />
               <span>
@@ -588,7 +622,7 @@ export default function AuroraMenu({ slug }: { slug: string }) {
                     product={product}
                     quantity={quantities.get(product.id) ?? 0}
                     onOpen={() => setOpenProduct(product)}
-                    onAdd={() => addProduct(product)}
+                    onAdd={menuOnly ? undefined : () => addProduct(product)}
                   />
                 ))}
               </div>
@@ -613,18 +647,20 @@ export default function AuroraMenu({ slug }: { slug: string }) {
         </main>
 
         {/* ===== Masaüstü: sepet ===== */}
-        <aside className={styles.cartPanel} aria-label="Sepet">
-          <CartContents
-            cart={cart}
-            table={table}
-            onCheckout={goToCheckout}
-            headingId="sepet-panel-baslik"
-          />
-        </aside>
+        {!menuOnly && (
+          <aside className={styles.cartPanel} aria-label="Sepet">
+            <CartContents
+              cart={cart}
+              table={table}
+              onCheckout={goToCheckout}
+              headingId="sepet-panel-baslik"
+            />
+          </aside>
+        )}
       </div>
 
       {/* ===== Mobil: sepet çubuğu ===== */}
-      {cart.itemCount > 0 && (
+      {!menuOnly && cart.itemCount > 0 && (
         <button type="button" className={styles.cartBar} onClick={() => setSheet("cart")}>
           <span className={styles.cartCount}>{cart.itemCount}</span>
           <span className={styles.cartBarText}>
@@ -657,10 +693,14 @@ export default function AuroraMenu({ slug }: { slug: string }) {
           product={openProduct}
           inCart={quantities.get(openProduct.id) ?? 0}
           onClose={() => setOpenProduct(null)}
-          onAdd={(quantity) => {
-            addProduct(openProduct, quantity);
-            setOpenProduct(null);
-          }}
+          onAdd={
+            menuOnly
+              ? undefined
+              : (quantity) => {
+                  addProduct(openProduct, quantity);
+                  setOpenProduct(null);
+                }
+          }
         />
       )}
 
@@ -746,10 +786,13 @@ function ProductRow({
   product: Product;
   quantity: number;
   onOpen: () => void;
-  onAdd: () => void;
+  // Yoksa (sadece menü) sepete ekleme düğmesi gösterilmez.
+  onAdd?: () => void;
 }) {
   return (
-    <article className={`${styles.product} ${product.image_url ? "" : styles.productNoImage}`}>
+    <article
+      className={`${styles.product} ${product.image_url ? "" : styles.productNoImage} ${onAdd ? "" : styles.productReadOnly}`}
+    >
       <button type="button" className={styles.productMain} onClick={onOpen}>
         <span className={styles.productText}>
           <strong>{product.name}</strong>
@@ -766,19 +809,21 @@ function ProductRow({
         )}
       </button>
 
-      <button
-        type="button"
-        className={`${styles.add} ${quantity > 0 ? styles.addHas : ""}`}
-        onClick={onAdd}
-        aria-label={
-          quantity > 0
-            ? `${product.name} sepette ${quantity} adet, bir tane daha ekle`
-            : `${product.name} sepete ekle`
-        }
-      >
-        <AuroraIcon name="plus" size={quantity > 0 ? 13 : 17} strokeWidth={2.4} />
-        {quantity > 0 && <span>{quantity}</span>}
-      </button>
+      {onAdd && (
+        <button
+          type="button"
+          className={`${styles.add} ${quantity > 0 ? styles.addHas : ""}`}
+          onClick={onAdd}
+          aria-label={
+            quantity > 0
+              ? `${product.name} sepette ${quantity} adet, bir tane daha ekle`
+              : `${product.name} sepete ekle`
+          }
+        >
+          <AuroraIcon name="plus" size={quantity > 0 ? 13 : 17} strokeWidth={2.4} />
+          {quantity > 0 && <span>{quantity}</span>}
+        </button>
+      )}
     </article>
   );
 }
@@ -827,7 +872,8 @@ function ProductDialog({
   product: Product;
   inCart: number;
   onClose: () => void;
-  onAdd: (quantity: number) => void;
+  // Yoksa (sadece menü) adet seçimi ve "Sepete ekle" gösterilmez.
+  onAdd?: (quantity: number) => void;
 }) {
   const [quantity, setQuantity] = useState(1);
   const ingredients = splitList(product.ingredients);
@@ -889,35 +935,37 @@ function ProductDialog({
             </div>
           )}
 
-          {inCart > 0 && <p className={styles.inCart}>Sepetinizde {inCart} adet var.</p>}
+          {onAdd && inCart > 0 && <p className={styles.inCart}>Sepetinizde {inCart} adet var.</p>}
         </div>
       </div>
 
-      <div className={styles.productFoot}>
-        <div className={`${styles.stepper} ${styles.stepperLg}`}>
-          <button
-            type="button"
-            onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-            disabled={quantity <= 1}
-            aria-label="Adedi azalt"
-          >
-            <AuroraIcon name="minus" strokeWidth={2.2} />
-          </button>
-          <b aria-live="polite">{quantity}</b>
-          <button
-            type="button"
-            onClick={() => setQuantity((value) => Math.min(99, value + 1))}
-            aria-label="Adedi artır"
-          >
-            <AuroraIcon name="plus" strokeWidth={2.2} />
+      {onAdd && (
+        <div className={styles.productFoot}>
+          <div className={`${styles.stepper} ${styles.stepperLg}`}>
+            <button
+              type="button"
+              onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+              disabled={quantity <= 1}
+              aria-label="Adedi azalt"
+            >
+              <AuroraIcon name="minus" strokeWidth={2.2} />
+            </button>
+            <b aria-live="polite">{quantity}</b>
+            <button
+              type="button"
+              onClick={() => setQuantity((value) => Math.min(99, value + 1))}
+              aria-label="Adedi artır"
+            >
+              <AuroraIcon name="plus" strokeWidth={2.2} />
+            </button>
+          </div>
+
+          <button type="button" className={styles.cta} onClick={() => onAdd?.(quantity)}>
+            <span>Sepete ekle</span>
+            <span className={styles.ctaPrice}>{formatLira(price * quantity)}</span>
           </button>
         </div>
-
-        <button type="button" className={styles.cta} onClick={() => onAdd(quantity)}>
-          <span>Sepete ekle</span>
-          <span className={styles.ctaPrice}>{formatLira(price * quantity)}</span>
-        </button>
-      </div>
+      )}
     </Sheet>
   );
 }

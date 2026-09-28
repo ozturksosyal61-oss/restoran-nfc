@@ -2,11 +2,46 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { RESTAURANT_THEMES, normalizeRestaurantTheme } from "../../../lib/themes";
+import { RESTAURANT_THEMES, isAuroraTheme, normalizeRestaurantTheme } from "../../../lib/themes";
 
 type RestaurantTheme = (typeof RESTAURANT_THEMES)[number]["value"];
 
+// full: sipariş, garson çağırma, ödeme ve masa QR'ları olan tam sürüm.
+// menu: yalnızca dijital menü; tek QR, masa yok. Aurora menüsünü kullanır.
+type RestaurantType = "full" | "menu";
+
+const RESTAURANT_TYPES: {
+  value: RestaurantType;
+  title: string;
+  description: string;
+  features: string[];
+}[] = [
+  {
+    value: "full",
+    title: "Premium restoran",
+    description: "Masadan sipariş ve servis isteyen işletmeler için tam sürüm.",
+    features: [
+      "Masaya özel QR / NFC",
+      "Sipariş ve sipariş takibi",
+      "Garson çağırma, hesap ve ödeme",
+      "Çalışanlar ve değerlendirmeler",
+    ],
+  },
+  {
+    value: "menu",
+    title: "Sadece menü",
+    description: "Müşteri QR'ı okutup yalnızca menüyü görür.",
+    features: [
+      "Tek QR kod, masa kurulumu yok",
+      "Ürün ve kategori yönetimi",
+      "Sipariş, garson ve ödeme ekranı yok",
+      "Aurora menü tasarımı, 7 renk",
+    ],
+  },
+];
+
 type NewRestaurantForm = {
+  restaurant_type: RestaurantType;
   name: string;
   slug: string;
   description: string;
@@ -31,6 +66,7 @@ export default function YeniRestoranPage() {
   const [success, setSuccess] = useState("");
 
   const [form, setForm] = useState<NewRestaurantForm>({
+    restaurant_type: "full",
     name: "",
     slug: "",
     description: "",
@@ -65,6 +101,24 @@ export default function YeniRestoranPage() {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
   }
+
+  // Sadece menü restoranları Aurora menüsünü kullanır; tema listesi buna
+  // göre daralır ve seçili tema Aurora değilse koyu Aurora'ya geçilir.
+  function handleTypeChange(value: RestaurantType) {
+    setForm((prev) => ({
+      ...prev,
+      restaurant_type: value,
+      theme:
+        value === "menu" && !isAuroraTheme(prev.theme)
+          ? normalizeRestaurantTheme("aurora")
+          : prev.theme,
+    }));
+  }
+
+  const isMenuOnly = form.restaurant_type === "menu";
+  const themeChoices = isMenuOnly
+    ? RESTAURANT_THEMES.filter((theme) => isAuroraTheme(theme.value))
+    : RESTAURANT_THEMES;
 
   function handleNameChange(value: string) {
     setForm((prev) => ({
@@ -107,9 +161,10 @@ export default function YeniRestoranPage() {
     }
 
     if (
-      !Number.isInteger(tableCount) ||
-      tableCount < 1 ||
-      tableCount > 500
+      !isMenuOnly &&
+      (!Number.isInteger(tableCount) ||
+        tableCount < 1 ||
+        tableCount > 500)
     ) {
       setError("Masa sayısı 1 ile 500 arasında olmalıdır.");
       return;
@@ -136,7 +191,8 @@ export default function YeniRestoranPage() {
           google_review_url: form.google_review_url.trim(),
           manager_email: managerEmail,
           manager_password: form.manager_password,
-          table_count: tableCount,
+          restaurant_type: form.restaurant_type,
+          table_count: isMenuOnly ? 0 : tableCount,
           theme: selectedTheme,
         }),
       });
@@ -206,12 +262,61 @@ export default function YeniRestoranPage() {
             autoComplete="off"
           >
 
-            {/* RESTORAN BİLGİLERİ */}
+            {/* RESTORAN TÜRÜ */}
             <section className="new-restaurant-card">
 
               <div className="new-restaurant-section-header">
                 <div className="section-number">
                   01
+                </div>
+
+                <div>
+                  <h2>Restoran Türü</h2>
+
+                  <p>
+                    Premium mu, yoksa sadece menü restoranı mı oluşturuyorsunuz?
+                  </p>
+                </div>
+              </div>
+
+              <div className="type-picker-grid" role="radiogroup" aria-label="Restoran türü">
+                {RESTAURANT_TYPES.map((type) => (
+                  <label
+                    key={type.value}
+                    className={`type-option ${form.restaurant_type === type.value ? "is-selected" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="restaurant_type"
+                      value={type.value}
+                      checked={form.restaurant_type === type.value}
+                      onChange={() => handleTypeChange(type.value)}
+                    />
+
+                    <span className="type-option-head">
+                      <span className="type-option-radio" aria-hidden="true" />
+                      <strong>{type.title}</strong>
+                    </span>
+
+                    <span className="type-option-desc">{type.description}</span>
+
+                    <ul>
+                      {type.features.map((feature) => (
+                        <li key={feature}>{feature}</li>
+                      ))}
+                    </ul>
+                  </label>
+                ))}
+              </div>
+
+            </section>
+
+            {/* RESTORAN BİLGİLERİ */}
+            <section className="new-restaurant-card">
+
+              <div className="new-restaurant-section-header">
+                <div className="section-number">
+                  02
                 </div>
 
                 <div>
@@ -263,29 +368,39 @@ export default function YeniRestoranPage() {
                   </small>
                 </label>
 
-                {/* MASA SAYISI */}
-                <label>
-                  <span>Masa Sayısı *</span>
+                {/* MASA SAYISI (sadece menüde masa yok) */}
+                {isMenuOnly ? (
+                  <div className="menu-only-qr-note">
+                    <span>QR Kod</span>
+                    <p>
+                      Masa oluşturulmaz. Tek bir QR kod menüye açılır:
+                      <strong>/restoran/{form.slug || "ozt-kafe"}/menu</strong>
+                    </p>
+                  </div>
+                ) : (
+                  <label>
+                    <span>Masa Sayısı *</span>
 
-                  <input
-                    required
-                    min="1"
-                    max="500"
-                    type="number"
-                    value={form.table_count}
-                    onChange={(e) =>
-                      updateField(
-                        "table_count",
-                        e.target.value
-                      )
-                    }
-                    placeholder="20"
-                  />
+                    <input
+                      required
+                      min="1"
+                      max="500"
+                      type="number"
+                      value={form.table_count}
+                      onChange={(e) =>
+                        updateField(
+                          "table_count",
+                          e.target.value
+                        )
+                      }
+                      placeholder="20"
+                    />
 
-                  <small>
-                    Her masa için otomatik QR/NFC tokenı oluşturulur.
-                  </small>
-                </label>
+                    <small>
+                      Her masa için otomatik QR/NFC tokenı oluşturulur.
+                    </small>
+                  </label>
+                )}
 
                 {/* AÇIKLAMA */}
                 <label className="full-width">
@@ -346,20 +461,22 @@ export default function YeniRestoranPage() {
 
               <div className="new-restaurant-section-header">
                 <div className="section-number">
-                  02
+                  03
                 </div>
 
                 <div>
-                  <h2>Premium Tema</h2>
+                  <h2>{isMenuOnly ? "Menü Rengi" : "Premium Tema"}</h2>
 
                   <p>
-                    Restoranın müşterilere göstereceği tasarımı seçin.
+                    {isMenuOnly
+                      ? "Sadece menü restoranları Aurora menüsünü kullanır; renk temasını seçin."
+                      : "Restoranın müşterilere göstereceği tasarımı seçin."}
                   </p>
                 </div>
               </div>
 
               <div className="theme-picker-grid">
-                {RESTAURANT_THEMES.map((theme) => (
+                {themeChoices.map((theme) => (
                   <label
                     key={theme.value}
                     className={`theme-option theme-option-${theme.value}`}
@@ -377,22 +494,38 @@ export default function YeniRestoranPage() {
                       }
                     />
 
-                    <div className="theme-option-preview">
+                    <div
+                      className="theme-option-preview"
+                      style={
+                        isAuroraTheme(theme.value)
+                          ? { background: theme.surface, color: theme.accent }
+                          : undefined
+                      }
+                    >
                       <div className="theme-preview-top">
-                        <span className="theme-preview-dot" />
+                        <span
+                          className="theme-preview-dot"
+                          style={
+                            isAuroraTheme(theme.value)
+                              ? { background: theme.accent }
+                              : undefined
+                          }
+                        />
                         <span>{theme.label}</span>
                       </div>
                       <div className="theme-preview-title">
-                        {theme.value === "classic"
-                          ? "Sade & Zarif"
-                          : theme.value === "dark-modern"
-                            ? "Modern & Teknolojik"
-                            : "Lüks & Prestij"}
+                        {isAuroraTheme(theme.value)
+                          ? "Aurora"
+                          : theme.value === "classic"
+                            ? "Sade & Zarif"
+                            : theme.value === "dark-modern"
+                              ? "Modern & Teknolojik"
+                              : "Lüks & Prestij"}
                       </div>
                       <div className="theme-preview-actions">
                         <span>Menü</span>
-                        <span>Sipariş</span>
-                        <span>⭐</span>
+                        {!isMenuOnly && <span>Sipariş</span>}
+                        {!isMenuOnly && <span>⭐</span>}
                       </div>
                     </div>
 
@@ -421,7 +554,7 @@ export default function YeniRestoranPage() {
 
               <div className="new-restaurant-section-header">
                 <div className="section-number">
-                  03
+                  04
                 </div>
 
                 <div>
@@ -721,6 +854,135 @@ export default function YeniRestoranPage() {
           font-weight: 800;
         }
 
+        .type-picker-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .type-option {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 20px;
+          border: 1px solid #ddd6c9;
+          border-radius: 17px;
+          background: #faf9f6;
+          cursor: pointer;
+          transition: .2s ease;
+        }
+
+        .type-option:hover {
+          border-color: #c49a43;
+        }
+
+        .type-option.is-selected {
+          border: 2px solid #b88920;
+          padding: 19px;
+          background: #fffaf0;
+          box-shadow: 0 12px 28px rgba(171, 120, 23, .12);
+        }
+
+        .type-option:focus-within {
+          box-shadow: 0 0 0 4px rgba(196, 154, 67, .22);
+        }
+
+        .type-option input {
+          position: absolute;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .type-option-head {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .type-option-head strong {
+          font-size: 17px;
+          font-weight: 900;
+        }
+
+        .type-option-radio {
+          width: 18px;
+          height: 18px;
+          flex-shrink: 0;
+          border: 2px solid #c9c0ae;
+          border-radius: 50%;
+          background: #fff;
+        }
+
+        .type-option.is-selected .type-option-radio {
+          border: 5px solid #b88920;
+        }
+
+        .type-option-desc {
+          color: #6f6a62;
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .type-option ul {
+          display: grid;
+          gap: 6px;
+          margin: 4px 0 0;
+          padding: 0;
+          list-style: none;
+        }
+
+        .type-option li {
+          position: relative;
+          padding-left: 18px;
+          color: #3a362f;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .type-option li::before {
+          content: "";
+          position: absolute;
+          left: 2px;
+          top: 5px;
+          width: 8px;
+          height: 5px;
+          border-left: 2px solid #b88920;
+          border-bottom: 2px solid #b88920;
+          transform: rotate(-45deg);
+        }
+
+        .menu-only-qr-note {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .menu-only-qr-note > span {
+          color: #292621;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .menu-only-qr-note p {
+          margin: 0;
+          padding: 13px 15px;
+          border: 1px dashed #d8c69c;
+          border-radius: 12px;
+          background: #fffaf0;
+          color: #6f6a62;
+          font-size: 12px;
+          line-height: 1.5;
+        }
+
+        .menu-only-qr-note strong {
+          display: block;
+          margin-top: 3px;
+          color: #a67c18;
+          font-weight: 800;
+          word-break: break-all;
+        }
+
         .theme-picker-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1016,7 +1278,8 @@ export default function YeniRestoranPage() {
           }
         }
         @media (max-width: 780px) {
-          .theme-picker-grid {
+          .theme-picker-grid,
+          .type-picker-grid {
             grid-template-columns: 1fr;
           }
         }
@@ -1024,4 +1287,4 @@ export default function YeniRestoranPage() {
       `}</style>
     </>
   );
-}
+}
