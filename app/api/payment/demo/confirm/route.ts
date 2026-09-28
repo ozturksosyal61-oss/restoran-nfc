@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import {
+  checkRestaurantAccess,
+  demoPaymentsEnabled,
+  DEMO_PAYMENTS_DISABLED_MESSAGE,
+} from "@/lib/restaurant-access";
 
 export async function POST(request: NextRequest) {
   try {
+    // Demo onayı gerçek para almadan ücretli abonelik açar; canlıda kapalı.
+    if (!demoPaymentsEnabled()) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "PAYMENTS_DISABLED",
+          error: DEMO_PAYMENTS_DISABLED_MESSAGE,
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     const checkoutReference = body.checkout_reference;
@@ -21,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabaseAdminClient();
 
     // ---------------------------------------------------
     // ÖDEMEYİ BUL
@@ -65,6 +82,18 @@ export async function POST(request: NextRequest) {
           error: "Ödeme işlemi bulunamadı.",
         },
         { status: 404 }
+      );
+    }
+
+    // Ödeme, isteği yapan kullanıcının restoranına ait olmalı.
+    const access = await checkRestaurantAccess(
+      Number(payment.restaurant_id)
+    );
+
+    if (!access.ok) {
+      return NextResponse.json(
+        { success: false, error: access.error },
+        { status: access.status }
       );
     }
 

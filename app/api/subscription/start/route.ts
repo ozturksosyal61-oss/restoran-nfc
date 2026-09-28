@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import { checkRestaurantAccess } from "@/lib/restaurant-access";
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,8 +45,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase =
-      await createSupabaseServerClient();
+    // ---------------------------------------------------
+    // YETKİ: yalnızca bu restoranın yöneticisi veya sistem yöneticisi
+    // ---------------------------------------------------
+
+    const access = await checkRestaurantAccess(restaurantId);
+
+    if (!access.ok) {
+      return NextResponse.json(
+        { success: false, error: access.error },
+        { status: access.status }
+      );
+    }
+
+    // Abonelik yazma izni veritabanında yalnızca sunucuya açık.
+    const supabase = createSupabaseAdminClient();
 
     // ---------------------------------------------------
     // RESTORAN
@@ -176,6 +190,48 @@ export async function POST(request: NextRequest) {
           error:
             "Bu restoranın zaten aktif bir aboneliği veya devam eden ücretsiz denemesi bulunuyor.",
           subscription: existingSubscription,
+        },
+        { status: 409 }
+      );
+    }
+
+    // ---------------------------------------------------
+    // ÜCRETSİZ DENEME RESTORAN BAŞINA BİR KEZ
+    // ---------------------------------------------------
+
+    const {
+      data: previousTrial,
+      error: previousTrialError,
+    } = await supabase
+      .from("subscriptions")
+      .select("id")
+      .eq("restaurant_id", restaurantId)
+      .not("trial_started_at", "is", null)
+      .limit(1)
+      .maybeSingle();
+
+    if (previousTrialError) {
+      console.error(
+        "PREVIOUS TRIAL LOOKUP ERROR:",
+        previousTrialError
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Deneme geçmişi kontrol edilemedi.",
+        },
+        { status: 500 }
+      );
+    }
+
+    if (previousTrial) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "TRIAL_ALREADY_USED",
+          error:
+            "Bu restoran ücretsiz deneme hakkını daha önce kullandı.",
         },
         { status: 409 }
       );

@@ -87,54 +87,26 @@ async function callWaiter(
     );
   }
 
-  const {
-    data: table,
-  } = await supabase
-    .from("restaurant_tables")
-    .select("id")
-    .eq("restaurant_id", restaurant.id)
-    .eq("public_token", masa)
-    .eq("is_active", true)
-    .maybeSingle();
+  // Masa kodu veritabanı fonksiyonunda doğrulanır. Fonksiyon aynı masa
+  // için bekleyen çağrı varsa yenisini oluşturmaz.
+  const { error } = await supabase.rpc(
+    "create_table_service_request",
+    {
+      p_restaurant_id: restaurant.id,
+      p_public_token: masa,
+      p_request_type: "garson",
+    }
+  );
 
-  if (!table) {
+  if (error) {
+    console.error(
+      "Garson çağırma hatası:",
+      error
+    );
+
     redirect(
       `/restoran/${slug}/menu?masa=${encodeURIComponent(masa)}&garson=hata`
     );
-  }
-
-  /* Aynı masa için bekleyen çağrıyı tekrar oluşturma. */
-  const {
-    data: existingRequest,
-  } = await supabase
-    .from("service_requests")
-    .select("id")
-    .eq("restaurant_id", restaurant.id)
-    .eq("table_id", table.id)
-    .eq("request_type", "garson")
-    .eq("status", "pending")
-    .maybeSingle();
-
-  if (!existingRequest) {
-    const { error } = await supabase
-      .from("service_requests")
-      .insert({
-        restaurant_id: restaurant.id,
-        table_id: table.id,
-        request_type: "garson",
-        status: "pending",
-      });
-
-    if (error) {
-      console.error(
-        "Garson çağırma hatası:",
-        error
-      );
-
-      redirect(
-        `/restoran/${slug}/menu?masa=${encodeURIComponent(masa)}&garson=hata`
-      );
-    }
   }
 
   redirect(
@@ -357,29 +329,17 @@ export default async function RestaurantMenuPage({
     tableToken =
       masa.trim();
 
+    // Masa tablosu herkese açık değil; kod yalnızca bu fonksiyonla doğrulanır.
     const {
       data: tableData,
       error: tableError,
-    } = await supabase
-      .from(
-        "restaurant_tables"
-      )
-      .select(
-        "id, table_number, public_token, is_active"
-      )
-      .eq(
-        "restaurant_id",
-        restaurantData.id
-      )
-      .eq(
-        "public_token",
-        tableToken
-      )
-      .eq(
-        "is_active",
-        true
-      )
-      .maybeSingle();
+    } = await supabase.rpc(
+      "get_public_table",
+      {
+        p_restaurant_id: restaurantData.id,
+        p_public_token: tableToken,
+      }
+    );
 
     if (tableError) {
       console.error(

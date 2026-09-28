@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import { checkRestaurantAccess } from "@/lib/restaurant-access";
 
 export async function GET(
   request: NextRequest
@@ -30,8 +31,19 @@ export async function GET(
       );
     }
 
+    const access =
+      await checkRestaurantAccess(restaurantId);
+
+    if (!access.ok) {
+      return NextResponse.json(
+        { success: false, error: access.error },
+        { status: access.status }
+      );
+    }
+
+    // restaurants.plan ve abonelik durumu yalnızca sunucudan yazılabilir.
     const supabase =
-      await createSupabaseServerClient();
+      createSupabaseAdminClient();
 
     const now =
       new Date().toISOString();

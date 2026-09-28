@@ -28,25 +28,12 @@ async function createPublicRequest(
     );
   }
 
-  const { data: table } = await supabase
-    .from("restaurant_tables")
-    .select("id")
-    .eq("restaurant_id", restaurant.id)
-    .eq("public_token", masa)
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (!table) {
-    redirect(
-      `/restoran/${encodeURIComponent(slug)}/menu?masa=${encodeURIComponent(masa)}&${requestType}=hata`
-    );
-  }
-
+  // Masa kodu veritabanı fonksiyonunda doğrulanır; kod yanlışsa hata döner.
   const { error } = await supabase.rpc(
-    "create_public_service_request",
+    "create_table_service_request",
     {
       p_restaurant_id: restaurant.id,
-      p_table_id: table.id,
+      p_public_token: masa,
       p_request_type: requestType,
     }
   );

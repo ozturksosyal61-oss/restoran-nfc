@@ -217,21 +217,14 @@ export default function OztNovaPremiumMenu({
           const {
             data: tableData,
             error: tableError,
-          } = await supabase
-            .from("restaurant_tables")
-            .select(
-              "id,table_number,public_token,is_active"
-            )
-            .eq(
-              "restaurant_id",
-              restaurantData.id
-            )
-            .eq(
-              "public_token",
-              nextTableToken
-            )
-            .eq("is_active", true)
-            .maybeSingle();
+          } = await supabase.rpc(
+            // Masa tablosu herkese açık değil; kod yalnızca bu fonksiyonla doğrulanır.
+            "get_public_table",
+            {
+              p_restaurant_id: restaurantData.id,
+              p_public_token: nextTableToken,
+            }
+          );
 
           if (tableError) {
             console.error(

@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import {
+  checkRestaurantAccess,
+  demoPaymentsEnabled,
+  DEMO_PAYMENTS_DISABLED_MESSAGE,
+} from "@/lib/restaurant-access";
 
 export async function POST(request: NextRequest) {
   try {
+    if (!demoPaymentsEnabled()) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "PAYMENTS_DISABLED",
+          error: DEMO_PAYMENTS_DISABLED_MESSAGE,
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     const restaurantId =
@@ -57,8 +73,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const access =
+      await checkRestaurantAccess(restaurantId);
+
+    if (!access.ok) {
+      return NextResponse.json(
+        { success: false, error: access.error },
+        { status: access.status }
+      );
+    }
+
     const supabase =
-      await createSupabaseServerClient();
+      createSupabaseAdminClient();
 
     // ---------------------------------------------------
     // RESTORAN
