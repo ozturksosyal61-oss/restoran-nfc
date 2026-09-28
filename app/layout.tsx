@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://oztmenu.com"),
+  metadataBase: new URL("https://oztdigital.com.tr"),
   title: {
     default: "OZT Digital Menu | QR & NFC Restoran Sistemi",
     template: "%s | OZT Digital Menu",

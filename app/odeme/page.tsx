@@ -72,6 +72,9 @@ export default function PaymentPage() {
           "billing_interval"
         ) || "monthly";
 
+      const changePlan =
+        params.get("change_plan") === "true";
+
       if (
         !restaurantId ||
         !planId
@@ -329,6 +332,39 @@ export default function PaymentPage() {
               }}
             >
               PAKETLERE DÖN
+            </button>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (activeSubscription) {
+    return (
+      <>
+        <style>{styles}</style>
+        <main className="payment-page">
+          <div className="success-card">
+            <div className="success-icon">✓</div>
+            <div className="brand">OZT DIGITAL</div>
+            <h1>Aboneliğiniz Aktif</h1>
+            <p>
+              Bu restoranın zaten aktif bir aboneliği bulunuyor.
+              Yeni bir ödeme başlatılamaz.
+            </p>
+            <button
+              onClick={() => {
+                const params = new URLSearchParams(
+                  window.location.search
+                );
+                const restaurantId =
+                  params.get("restaurant_id");
+                window.location.href = restaurantId
+                  ? `/abonelik?restaurant_id=${restaurantId}`
+                  : "/abonelik";
+              }}
+            >
+              ABONELİĞİ GÖR
             </button>
           </div>
         </main>
