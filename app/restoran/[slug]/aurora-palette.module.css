@@ -1,0 +1,273 @@
+/* =========================================================
+   AURORA RENK TEMALARI
+   Restoran kabuğuna (layout) eklenir; ana sayfa, menü, sepet,
+   sipariş onayı ve takip ekranı bu değişkenleri kullanır.
+   Tema sistem panelinden restoran bazında seçilir
+   (restaurants.theme → lib/themes.ts → data-palette).
+   ========================================================= */
+
+.shell {
+  /* Varsayılan: DARK */
+  --au-bg: #12100d;
+  --au-surface: #1c1915;
+  --au-raised: #25211b;
+  --au-field: #16130f;
+  --au-ink: #f3ece0;
+  --au-muted: #a99e8f;
+  --au-faint: #756c60;
+  --au-line: rgba(243, 236, 224, 0.1);
+  --au-tile: rgba(201, 162, 74, 0.16);
+  --au-tile-ink: #e0c07c;
+  --au-accent: #e0c07c;
+  --au-cta-bg: #d7b56d;
+  --au-cta-ink: #16130f;
+  --au-cta-sub: rgba(22, 19, 15, 0.66);
+  --au-cta-tile: #16130f;
+  --au-cta-tile-ink: #e0c07c;
+  --au-order-bg: rgba(201, 162, 74, 0.1);
+  --au-order-line: rgba(201, 162, 74, 0.3);
+  --au-track: rgba(243, 236, 224, 0.12);
+  --au-fill: #e0c07c;
+  --au-secondary-bg: rgba(255, 255, 255, 0.02);
+  --au-tab-on-bg: #f3ece0;
+  --au-tab-on-ink: #16130f;
+  --au-badge-bg: #d7b56d;
+  --au-badge-ink: #16130f;
+  --au-ok: #6fcf97;
+  --au-ok-tile: rgba(111, 207, 151, 0.14);
+  --au-danger: #f08b7a;
+  --au-danger-bg: rgba(240, 139, 122, 0.1);
+  --au-warn: #f0b36a;
+  --au-warn-tile: rgba(240, 179, 106, 0.12);
+  --au-overlay: rgba(5, 4, 3, 0.62);
+  --au-shadow: 0 16px 34px -20px rgba(0, 0, 0, 0.7);
+  --au-float-shadow: 0 18px 32px -14px rgba(0, 0, 0, 0.75);
+  --au-scheme: dark;
+
+  /* Kabuk yalnızca değişken taşır; zemin ve yazı rengini her Aurora
+     ekranı kendisi verir. Böylece henüz Aurora görünümü olmayan
+     sayfalar (ödeme, değerlendirme) koyu zemine düşmez. */
+}
+
+/* ---------- KREM (açık) ---------- */
+.shell[data-palette="krem"] {
+  --au-bg: #f4efe6;
+  --au-surface: #fffdf9;
+  --au-raised: #ffffff;
+  --au-field: #fbf8f2;
+  --au-ink: #1d1914;
+  --au-muted: #7b7166;
+  --au-faint: #a39787;
+  --au-line: rgba(70, 52, 28, 0.13);
+  --au-tile: #f4e7cd;
+  --au-tile-ink: #8a6424;
+  --au-accent: #8a6424;
+  --au-cta-bg: #1f1b16;
+  --au-cta-ink: #ffffff;
+  --au-cta-sub: rgba(255, 255, 255, 0.66);
+  --au-cta-tile: #c49a4e;
+  --au-cta-tile-ink: #1f1b16;
+  --au-order-bg: #f5e9d2;
+  --au-order-line: rgba(176, 130, 56, 0.34);
+  --au-track: rgba(138, 100, 36, 0.18);
+  --au-fill: #8a6424;
+  --au-secondary-bg: rgba(255, 253, 249, 0.55);
+  --au-tab-on-bg: #1f1b16;
+  --au-tab-on-ink: #ffffff;
+  --au-badge-bg: #c08a2e;
+  --au-badge-ink: #ffffff;
+  --au-ok: #2f8a57;
+  --au-ok-tile: rgba(47, 138, 87, 0.13);
+  --au-danger: #a33a2b;
+  --au-danger-bg: rgba(163, 58, 43, 0.09);
+  --au-warn: #9a5a12;
+  --au-warn-tile: rgba(196, 120, 40, 0.13);
+  --au-overlay: rgba(29, 25, 20, 0.45);
+  --au-shadow: 0 1px 2px rgba(60, 44, 20, 0.05), 0 12px 28px -18px rgba(60, 44, 20, 0.35);
+  --au-float-shadow: 0 18px 32px -16px rgba(60, 44, 20, 0.45);
+  --au-scheme: light;
+}
+
+/* ---------- GOLD ---------- */
+.shell[data-palette="gold"] {
+  --au-bg: #140e07;
+  --au-surface: #21180d;
+  --au-raised: #2a1f12;
+  --au-field: #181109;
+  --au-ink: #f8edd2;
+  --au-muted: #bda985;
+  --au-faint: #86755a;
+  --au-line: rgba(226, 180, 79, 0.18);
+  --au-tile: rgba(226, 180, 79, 0.16);
+  --au-tile-ink: #edc979;
+  --au-accent: #edc979;
+  --au-cta-bg: linear-gradient(135deg, #f0cf7d, #c9973a);
+  --au-cta-ink: #1b1207;
+  --au-cta-sub: rgba(27, 18, 7, 0.66);
+  --au-cta-tile: #1b1207;
+  --au-cta-tile-ink: #edc979;
+  --au-order-bg: rgba(226, 180, 79, 0.1);
+  --au-order-line: rgba(226, 180, 79, 0.32);
+  --au-track: rgba(248, 237, 210, 0.13);
+  --au-fill: #edc979;
+  --au-secondary-bg: rgba(255, 255, 255, 0.02);
+  --au-tab-on-bg: #edc979;
+  --au-tab-on-ink: #1b1207;
+  --au-badge-bg: #edc979;
+  --au-badge-ink: #1b1207;
+  --au-ok: #7fd6a3;
+  --au-ok-tile: rgba(127, 214, 163, 0.14);
+  --au-danger: #f39a86;
+  --au-danger-bg: rgba(243, 154, 134, 0.1);
+  --au-warn: #f3b870;
+  --au-warn-tile: rgba(243, 184, 112, 0.13);
+  --au-overlay: rgba(8, 5, 2, 0.66);
+  --au-shadow: 0 16px 34px -20px rgba(0, 0, 0, 0.75);
+}
+
+/* ---------- ZEYTİN ---------- */
+.shell[data-palette="zeytin"] {
+  --au-bg: #10140f;
+  --au-surface: #181e16;
+  --au-raised: #20271d;
+  --au-field: #131810;
+  --au-ink: #eef0e4;
+  --au-muted: #a2aa93;
+  --au-faint: #6d7563;
+  --au-line: rgba(238, 240, 228, 0.1);
+  --au-tile: rgba(176, 194, 128, 0.16);
+  --au-tile-ink: #c5d29b;
+  --au-accent: #c5d29b;
+  --au-cta-bg: #b9c78e;
+  --au-cta-ink: #141a10;
+  --au-cta-sub: rgba(20, 26, 16, 0.66);
+  --au-cta-tile: #141a10;
+  --au-cta-tile-ink: #c5d29b;
+  --au-order-bg: rgba(176, 194, 128, 0.1);
+  --au-order-line: rgba(176, 194, 128, 0.3);
+  --au-track: rgba(238, 240, 228, 0.12);
+  --au-fill: #c5d29b;
+  --au-secondary-bg: rgba(255, 255, 255, 0.02);
+  --au-tab-on-bg: #eef0e4;
+  --au-tab-on-ink: #141a10;
+  --au-badge-bg: #b9c78e;
+  --au-badge-ink: #141a10;
+  --au-ok: #7fd3a0;
+  --au-ok-tile: rgba(127, 211, 160, 0.14);
+  --au-danger: #f09482;
+  --au-danger-bg: rgba(240, 148, 130, 0.1);
+  --au-warn: #e9bb6d;
+  --au-warn-tile: rgba(233, 187, 109, 0.13);
+  --au-overlay: rgba(4, 6, 3, 0.64);
+}
+
+/* ---------- BORDO ---------- */
+.shell[data-palette="bordo"] {
+  --au-bg: #170c0f;
+  --au-surface: #231317;
+  --au-raised: #2c181d;
+  --au-field: #1b0e12;
+  --au-ink: #f7eae6;
+  --au-muted: #bc9d9c;
+  --au-faint: #856668;
+  --au-line: rgba(247, 234, 230, 0.1);
+  --au-tile: rgba(226, 150, 138, 0.16);
+  --au-tile-ink: #eab0a2;
+  --au-accent: #eab0a2;
+  --au-cta-bg: #e4b3a3;
+  --au-cta-ink: #2a1014;
+  --au-cta-sub: rgba(42, 16, 20, 0.66);
+  --au-cta-tile: #2a1014;
+  --au-cta-tile-ink: #eab0a2;
+  --au-order-bg: rgba(226, 150, 138, 0.1);
+  --au-order-line: rgba(226, 150, 138, 0.3);
+  --au-track: rgba(247, 234, 230, 0.12);
+  --au-fill: #eab0a2;
+  --au-secondary-bg: rgba(255, 255, 255, 0.02);
+  --au-tab-on-bg: #f7eae6;
+  --au-tab-on-ink: #2a1014;
+  --au-badge-bg: #e4b3a3;
+  --au-badge-ink: #2a1014;
+  --au-ok: #7fd3a0;
+  --au-ok-tile: rgba(127, 211, 160, 0.14);
+  --au-danger: #ff9c8a;
+  --au-danger-bg: rgba(255, 156, 138, 0.11);
+  --au-warn: #f2bd78;
+  --au-warn-tile: rgba(242, 189, 120, 0.13);
+  --au-overlay: rgba(8, 3, 4, 0.66);
+}
+
+/* ---------- LACİVERT ---------- */
+.shell[data-palette="lacivert"] {
+  --au-bg: #0c1221;
+  --au-surface: #141c2f;
+  --au-raised: #1b2439;
+  --au-field: #0f1627;
+  --au-ink: #eef1f7;
+  --au-muted: #9aa6bd;
+  --au-faint: #65708a;
+  --au-line: rgba(238, 241, 247, 0.1);
+  --au-tile: rgba(231, 205, 146, 0.14);
+  --au-tile-ink: #e7cd92;
+  --au-accent: #e7cd92;
+  --au-cta-bg: #e7cd92;
+  --au-cta-ink: #0f1627;
+  --au-cta-sub: rgba(15, 22, 39, 0.66);
+  --au-cta-tile: #0f1627;
+  --au-cta-tile-ink: #e7cd92;
+  --au-order-bg: rgba(231, 205, 146, 0.09);
+  --au-order-line: rgba(231, 205, 146, 0.28);
+  --au-track: rgba(238, 241, 247, 0.12);
+  --au-fill: #e7cd92;
+  --au-secondary-bg: rgba(255, 255, 255, 0.02);
+  --au-tab-on-bg: #eef1f7;
+  --au-tab-on-ink: #0f1627;
+  --au-badge-bg: #e7cd92;
+  --au-badge-ink: #0f1627;
+  --au-ok: #77d4a6;
+  --au-ok-tile: rgba(119, 212, 166, 0.14);
+  --au-danger: #f7947f;
+  --au-danger-bg: rgba(247, 148, 127, 0.1);
+  --au-warn: #f1bb6f;
+  --au-warn-tile: rgba(241, 187, 111, 0.13);
+  --au-overlay: rgba(3, 5, 10, 0.66);
+}
+
+/* ---------- MERMER (açık) ---------- */
+.shell[data-palette="mermer"] {
+  --au-bg: #f3f2ef;
+  --au-surface: #ffffff;
+  --au-raised: #ffffff;
+  --au-field: #f8f7f5;
+  --au-ink: #17171a;
+  --au-muted: #6b6b70;
+  --au-faint: #a2a1a4;
+  --au-line: rgba(23, 23, 26, 0.1);
+  --au-tile: #ebe6db;
+  --au-tile-ink: #7a6230;
+  --au-accent: #7a6230;
+  --au-cta-bg: #17171a;
+  --au-cta-ink: #ffffff;
+  --au-cta-sub: rgba(255, 255, 255, 0.66);
+  --au-cta-tile: #b99a5b;
+  --au-cta-tile-ink: #17171a;
+  --au-order-bg: #efe9dc;
+  --au-order-line: rgba(122, 98, 48, 0.28);
+  --au-track: rgba(23, 23, 26, 0.12);
+  --au-fill: #17171a;
+  --au-secondary-bg: rgba(255, 255, 255, 0.6);
+  --au-tab-on-bg: #17171a;
+  --au-tab-on-ink: #ffffff;
+  --au-badge-bg: #b08a3e;
+  --au-badge-ink: #ffffff;
+  --au-ok: #257a4b;
+  --au-ok-tile: rgba(37, 122, 75, 0.11);
+  --au-danger: #a8321f;
+  --au-danger-bg: rgba(168, 50, 31, 0.08);
+  --au-warn: #95560f;
+  --au-warn-tile: rgba(190, 118, 32, 0.12);
+  --au-overlay: rgba(20, 20, 24, 0.42);
+  --au-shadow: 0 1px 2px rgba(20, 20, 24, 0.05), 0 12px 28px -18px rgba(20, 20, 24, 0.3);
+  --au-float-shadow: 0 18px 32px -16px rgba(20, 20, 24, 0.4);
+  --au-scheme: light;
+}

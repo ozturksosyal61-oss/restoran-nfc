@@ -1,4 +1,5 @@
 import { supabase } from "../../../../lib/supabase";
+import { isAuroraTheme } from "../../../../lib/themes";
 import OztNovaPremiumMenu from "./OztNovaPremiumMenu";
 import AuroraMenu from "./AuroraMenu";
 
@@ -20,7 +21,8 @@ export default async function RestaurantMenuRouteLayout({
     .eq("is_active", true)
     .maybeSingle();
 
-  if (restaurant?.theme === "aurora") {
+  // Tüm Aurora renk temaları aynı menüyü kullanır.
+  if (isAuroraTheme(restaurant?.theme)) {
     return <AuroraMenu slug={slug} />;
   }
 

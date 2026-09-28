@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import { isAuroraTheme } from "../../../lib/themes";
 import SiparisTakipLink from "./SiparisTakipLink";
 import NovaRestaurantHome from "./NovaRestaurantHome";
 import AuroraRestaurantHome from "./AuroraRestaurantHome";
@@ -26,26 +27,11 @@ async function callWaiter(formData: FormData) {
     );
   }
 
-  const { data: table } = await supabase
-    .from("restaurant_tables")
-    .select("id, table_number")
-    .eq("restaurant_id", restaurant.id)
-    .eq("public_token", masa)
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (!table) {
-    redirect(
-      `/restoran/${slug}?masa=${encodeURIComponent(masa)}&garson=hata`
-    );
-  }
-
-  // Garson çağrısı doğrudan tabloya INSERT etmek yerine
-  // güvenli public RPC üzerinden oluşturulur.
+  // Masa kodu veritabanı fonksiyonunda doğrulanır; kod yanlışsa hata döner.
   const { data: requestId, error: requestError } =
-    await supabase.rpc("create_public_service_request", {
+    await supabase.rpc("create_table_service_request", {
       p_restaurant_id: restaurant.id,
-      p_table_id: table.id,
+      p_public_token: masa,
       p_request_type: "garson",
     });
 
@@ -92,30 +78,11 @@ async function requestBill(formData: FormData) {
     );
   }
 
-  const { data: table, error: tableError } = await supabase
-    .from("restaurant_tables")
-    .select("id")
-    .eq("restaurant_id", restaurant.id)
-    .eq("public_token", masa)
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (tableError || !table) {
-    console.error(
-      "Hesap isteği masa doğrulama hatası:",
-      tableError
-    );
-
-    redirect(
-      `/restoran/${slug}?masa=${encodeURIComponent(masa)}&hesap=hata`
-    );
-  }
-
   const { data: requestId, error: requestError } = await supabase.rpc(
-    "create_public_service_request",
+    "create_table_service_request",
     {
       p_restaurant_id: restaurant.id,
-      p_table_id: table.id,
+      p_public_token: masa,
       p_request_type: "hesap",
     }
   );
@@ -171,7 +138,7 @@ export default async function RestaurantPage({
   const { data: restaurant, error } = await supabase
     .from("restaurants")
     .select(
-      "id, name, slug, description, phone, address, instagram_url, google_review_url, logo_url, cover_image_url, theme"
+      "id, name, slug, description, phone, address, instagram_url, google_review_url, logo_url, cover_image_url, theme, is_open, opening_time, closing_time"
     )
     .eq("slug", slug)
     .single();
@@ -191,15 +158,13 @@ export default async function RestaurantPage({
   } | null = null;
 
   if (tableToken) {
-    const { data: tableData } = await supabase
-      .from("restaurant_tables")
-      .select("id, table_number, public_token")
-      .eq("restaurant_id", restaurant.id)
-      .eq("public_token", tableToken)
-      .eq("is_active", true)
-      .maybeSingle();
+    // Masa tablosu herkese açık değil; kod yalnızca bu fonksiyonla doğrulanır.
+    const { data: tableData } = await supabase.rpc("get_public_table", {
+      p_restaurant_id: restaurant.id,
+      p_public_token: tableToken,
+    });
 
-    table = tableData;
+    table = tableData ?? null;
   }
 
   // QR ve NFC ile gelen masa bilgisi varsa, alt sayfalara da taşı.
@@ -299,31 +264,49 @@ export default async function RestaurantPage({
       />
     );
   }
-  if (restaurant.theme === "aurora") {
-  return (
-    <AuroraRestaurantHome
-      restaurant={{
-        ...restaurant,
-        cover_image_url: restaurant.cover_image_url ?? null,
-      }}
-      table={table}
-      tableQuery={tableQuery}
-      reviews={(reviews ?? []).map((review) => ({
-        id: Number(review.id),
-        customer_name: review.customer_name ?? null,
-        rating: Number(review.rating),
-        comment: review.comment ?? null,
-        created_at: review.created_at,
-      }))}
-      averageRating={averageRating}
-      ratingCounts={ratingCounts}
-      garsonStatus={garsonStatus ?? ""}
-      hesapStatus={hesapStatus ?? ""}
-      callWaiter={callWaiter}
-      requestBill={requestBill}
-    />
-  );
-}
+  // Tüm Aurora renk temaları aynı ana sayfayı kullanır; renkler layout'tan gelir.
+  if (isAuroraTheme(restaurant.theme)) {
+    // WiFi ve slogan sütunları ayrı migration'larla eklenir. Migration henüz
+    // uygulanmamışsa sorgu hata verir; sayfa bozulmasın diye ayrı tutuldu
+    // ve hata durumunda ilgili bilgi gösterilmez.
+    const { data: wifi } = await supabase
+      .from("restaurants")
+      .select("wifi_name, wifi_password")
+      .eq("id", restaurant.id)
+      .maybeSingle();
+
+    const { data: extra } = await supabase
+      .from("restaurants")
+      .select("tagline")
+      .eq("id", restaurant.id)
+      .maybeSingle();
+
+    return (
+      <AuroraRestaurantHome
+        restaurant={{
+          ...restaurant,
+          cover_image_url: restaurant.cover_image_url ?? null,
+          wifi_name: wifi?.wifi_name ?? null,
+          wifi_password: wifi?.wifi_password ?? null,
+          tagline: extra?.tagline ?? null,
+        }}
+        table={table}
+        tableQuery={tableQuery}
+        reviews={(reviews ?? []).map((review) => ({
+          id: Number(review.id),
+          customer_name: review.customer_name ?? null,
+          rating: Number(review.rating),
+          comment: review.comment ?? null,
+          created_at: review.created_at,
+        }))}
+        averageRating={averageRating}
+        garsonStatus={garsonStatus ?? ""}
+        hesapStatus={hesapStatus ?? ""}
+        callWaiter={callWaiter}
+        requestBill={requestBill}
+      />
+    );
+  }
 
   return (
     <>

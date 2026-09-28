@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { supabase } from "../../../lib/supabase";
-import { normalizeRestaurantTheme } from "../../../lib/themes";
+import { getAuroraPalette, normalizeRestaurantTheme } from "../../../lib/themes";
+import { auroraFontVariables } from "./aurora-fonts";
+import palette from "./aurora-palette.module.css";
 import { CartProvider } from "./menu/CartContext";
 import NovaThemeStyles from "./NovaThemeStyles";
+import { RestaurantThemeProvider } from "./RestaurantThemeContext";
 
 export default async function RestaurantLayout({
   children,
@@ -16,7 +19,7 @@ export default async function RestaurantLayout({
 
   const { data: restaurant } = await supabase
     .from("restaurants")
-    .select("theme")
+    .select("id, theme")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -27,15 +30,27 @@ export default async function RestaurantLayout({
 
   const theme = normalizeRestaurantTheme(restaurant.theme);
 
+  // Aurora temalarında renkler ve yazı tipleri kabuk üzerinden tüm
+  // müşteri ekranlarına (ana sayfa, menü, sipariş, takip) aktarılır.
+  const auroraPalette = getAuroraPalette(theme);
+  const shellClass = auroraPalette
+    ? `restaurant-shell ${palette.shell} ${auroraFontVariables}`
+    : "restaurant-shell";
+
   return (
     <CartProvider>
-      <div
-        className="restaurant-shell"
-        data-theme={theme}
+      <RestaurantThemeProvider
+        value={{ restaurantId: Number(restaurant.id), auroraPalette }}
       >
-        <NovaThemeStyles />
-        {children}
-      </div>
+        <div
+          className={shellClass}
+          data-theme={theme}
+          data-palette={auroraPalette ?? undefined}
+        >
+          <NovaThemeStyles />
+          {children}
+        </div>
+      </RestaurantThemeProvider>
     </CartProvider>
   );
 }

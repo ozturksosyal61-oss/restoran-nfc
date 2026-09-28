@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/client";
+import { useRestaurantTheme } from "../RestaurantThemeContext";
+import AuroraBill from "./AuroraBill";
 
 type Restaurant = { id: number; name: string };
 type BillItem = { id: number; product_name: string; price: number; quantity: number };
@@ -21,6 +23,8 @@ export default function PaymentPage() {
   const searchParams = useSearchParams();
   const slug = params.slug as string;
   const [token, setToken] = useState("");
+  const [tokenChecked, setTokenChecked] = useState(false);
+  const themeContext = useRestaurantTheme();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [bill, setBill] = useState<BillResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +40,8 @@ export default function PaymentPage() {
       const { data: restaurantData, error: restaurantError } = await supabase.from("restaurants").select("id, name").eq("slug", slug).single();
       if (restaurantError || !restaurantData) throw new Error("Restoran bilgileri yüklenemedi.");
       setRestaurant(restaurantData);
-      const { data: tableData, error: tableError } = await supabase.from("restaurant_tables").select("id, table_number, public_token, is_active").eq("restaurant_id", restaurantData.id).eq("public_token", token).eq("is_active", true).maybeSingle();
+      // Masa tablosu herkese açık değil; kod yalnızca bu fonksiyonla doğrulanır.
+      const { data: tableData, error: tableError } = await supabase.rpc("get_public_table", { p_restaurant_id: restaurantData.id, p_public_token: token });
       if (tableError || !tableData) throw new Error("Masa doğrulanamadı.");
       const { data: billData, error: billError } = await supabase.rpc("get_public_dining_bill", { p_restaurant_id: restaurantData.id, p_table_id: tableData.id, p_public_token: token });
       if (billError) throw new Error(billError.message || "Masa hesabı alınamadı.");
@@ -51,16 +56,44 @@ export default function PaymentPage() {
     const storedToken =
       window.localStorage.getItem("ozt_table_token")?.trim() || "";
 
+    // localStorage yalnızca tarayıcıda okunabilir; değer açılıştan sonra yazılır.
+    /* eslint-disable react-hooks/set-state-in-effect */
     setToken(urlToken || storedToken);
+    setTokenChecked(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [searchParams]);
 
   useEffect(() => {
     if (!token) return;
 
+    // Hesap masa kodu belli olunca yüklenir; yükleme durumu loadBill içinde yönetilir.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadBill();
     const interval = window.setInterval(() => void loadBill(true), 10000);
     return () => window.clearInterval(interval);
   }, [loadBill, token]);
+
+  // Masa kodu yoksa hesap hiç yüklenmez; sonsuz "hazırlanıyor" yerine uyarı göster.
+  const missingToken = tokenChecked && !token;
+  const viewLoading = missingToken ? false : loading;
+  const viewError = missingToken
+    ? "Masa bağlantısı bulunamadı. Lütfen masanızdaki QR kodu okutun."
+    : error;
+
+  if (themeContext?.auroraPalette) {
+    return (
+      <AuroraBill
+        slug={slug}
+        restaurantId={themeContext.restaurantId}
+        tableToken={token}
+        bill={bill}
+        loading={viewLoading}
+        refreshing={refreshing}
+        error={viewError}
+        onRetry={() => void loadBill()}
+      />
+    );
+  }
 
   return (
     <main className="bill-page">
@@ -76,10 +109,10 @@ export default function PaymentPage() {
           <div className="table-pill"><span>◉</span> Masa {bill?.table_number || "—"} <small>{refreshing ? "Güncelleniyor" : "Canlı hesap"}</small></div>
         </header>
 
-        {loading ? (
+        {viewLoading ? (
           <section className="state-card"><div className="spinner">◌</div><strong>Hesabınız hazırlanıyor…</strong><span>Masa ve siparişler kontrol ediliyor.</span></section>
-        ) : error ? (
-          <section className="state-card error-card"><div className="state-icon">!</div><strong>Hesap görüntülenemedi</strong><span>{error}</span><button type="button" onClick={() => void loadBill()}>Tekrar Dene</button></section>
+        ) : viewError ? (
+          <section className="state-card error-card"><div className="state-icon">!</div><strong>Hesap görüntülenemedi</strong><span>{viewError}</span><button type="button" onClick={() => void loadBill()}>Tekrar Dene</button></section>
         ) : !bill?.open || bill.orders.length === 0 ? (
           <section className="state-card empty-card"><div className="state-icon">✦</div><strong>Henüz açık siparişiniz yok</strong><span>Sipariş verdikçe hesabınız burada otomatik oluşacak.</span><a href={`/restoran/${slug}/menu?masa=${encodeURIComponent(token)}`}>🍽️ Dijital Menüye Dön</a></section>
         ) : (

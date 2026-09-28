@@ -6,7 +6,8 @@ import ArchiveRestaurantButton from "./ArchiveRestaurantButton";
 import DeleteRestaurantButton from "./DeleteRestaurantButton";
 import { revalidatePath } from "next/cache";
 import { updateSubscription, createSubscription } from "./abonelikler/actions";
-import { RESTAURANT_THEMES, normalizeRestaurantTheme, type RestaurantTheme } from "../../lib/themes";
+import { RESTAURANT_THEMES, isAuroraTheme, normalizeRestaurantTheme } from "../../lib/themes";
+import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 
 type Restaurant = {
   id: number;
@@ -39,6 +40,13 @@ type Subscription = {
     monthly_price: number;
     yearly_price: number;
   } | null;
+};
+
+// Supabase ilişkili tabloyu bazen dizi olarak döndürür.
+type RawSubscription = Omit<Subscription, "subscription_plans"> & {
+  subscription_plans?:
+    | Subscription["subscription_plans"]
+    | NonNullable<Subscription["subscription_plans"]>[];
 };
 
 type RestaurantTable = {
@@ -107,6 +115,10 @@ export default async function SystemOwnerPage() {
       "id, restaurant_id, table_number, public_token, is_active"
     )
     .order("table_number", { ascending: true });
+
+  if (tablesError) {
+    console.error("Masalar yüklenemedi:", tablesError);
+  }
 
   /*
    * ============================================================
@@ -177,7 +189,7 @@ export default async function SystemOwnerPage() {
 
   const subscriptionList: Subscription[] =
     (subscriptionsData ?? []).map(
-      (subscription: any) => ({
+      (subscription: RawSubscription) => ({
         ...subscription,
         subscription_plans:
           Array.isArray(
@@ -324,18 +336,21 @@ export default async function SystemOwnerPage() {
       redirect("/admin");
     }
 
+    // Sistem yöneticisi doğrulandı; tema izin listesi lib/themes.ts ve
+    // veritabanındaki restaurants_theme_valid kısıtıyla denetlenir.
+    // (Eski set_system_restaurant_theme_v2 fonksiyonu yeni Aurora renk
+    // temalarını tanımadığı için kullanılmıyor.)
     const { data: updatedTheme, error } =
-      await themeSupabase.rpc(
-        "set_system_restaurant_theme",
-        {
-          p_restaurant_id: restaurantId,
-          p_theme: theme,
-        }
-      );
+      await createSupabaseAdminClient()
+        .from("restaurants")
+        .update({ theme })
+        .eq("id", restaurantId)
+        .select("id, theme")
+        .maybeSingle();
 
     if (error) {
       console.error(
-        "TEMA RPC GÜNCELLEME HATASI:",
+        "TEMA GÜNCELLEME HATASI:",
         error
       );
       return;
@@ -1090,24 +1105,61 @@ export default async function SystemOwnerPage() {
                                     currentTheme
                                   }
                                 >
-                                  {RESTAURANT_THEMES.map(
-                                    (theme) => (
+                                  <optgroup label="Temalar">
+                                    {RESTAURANT_THEMES.filter(
+                                      (theme) =>
+                                        !isAuroraTheme(theme.value)
+                                    ).map((theme) => (
                                       <option
-                                        key={
-                                          theme.value
-                                        }
-                                        value={
-                                          theme.value
-                                        }
+                                        key={theme.value}
+                                        value={theme.value}
                                       >
-                                        {
-                                          theme.label
-                                        }
+                                        {theme.label}
                                       </option>
-                                    )
-                                  )}
+                                    ))}
+                                  </optgroup>
+                                  <optgroup label="Aurora renk temaları">
+                                    {RESTAURANT_THEMES.filter(
+                                      (theme) =>
+                                        isAuroraTheme(theme.value)
+                                    ).map((theme) => (
+                                      <option
+                                        key={theme.value}
+                                        value={theme.value}
+                                      >
+                                        {theme.label}
+                                      </option>
+                                    ))}
+                                  </optgroup>
                                 </select>
                               </label>
+
+                              {/* Aurora renk temalarının küçük önizlemesi; seçili olan çerçeveli. */}
+                              <div
+                                className="aurora-swatches"
+                                aria-hidden="true"
+                              >
+                                {RESTAURANT_THEMES.filter(
+                                  (theme) =>
+                                    isAuroraTheme(theme.value)
+                                ).map((theme) => (
+                                  <span
+                                    key={theme.value}
+                                    title={theme.label}
+                                    className={
+                                      theme.value === currentTheme
+                                        ? "aurora-swatch aurora-swatch-on"
+                                        : "aurora-swatch"
+                                    }
+                                    style={{
+                                      background: theme.surface,
+                                      color: theme.accent,
+                                    }}
+                                  >
+                                    ●
+                                  </span>
+                                ))}
+                              </div>
 
                               <button
                                 type="submit"
@@ -1711,6 +1763,29 @@ export default async function SystemOwnerPage() {
 
         .theme-save-button:hover:not(:disabled) {
           background: #ffe9ae;
+        }
+
+        .aurora-swatches {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin: -2px 0 10px;
+        }
+
+        .aurora-swatch {
+          display: grid;
+          place-items: center;
+          width: 26px;
+          height: 26px;
+          border-radius: 8px;
+          border: 1px solid rgba(0, 0, 0, .12);
+          font-size: 12px;
+          line-height: 1;
+        }
+
+        .aurora-swatch-on {
+          outline: 2px solid #b8943d;
+          outline-offset: 2px;
         }
 
         /* ACTIONS */

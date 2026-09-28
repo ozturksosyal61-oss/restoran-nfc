@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useRestaurantTheme } from "../RestaurantThemeContext";
+import AuroraRating from "./AuroraRating";
 
 type Employee = {
   id: number;
   restaurant_id: number;
   name: string;
   role: string | null;
-  phone: string | null;
   is_active: boolean;
 };
 
@@ -51,6 +52,11 @@ export default function EmployeeRatingPage() {
 
   const [success, setSuccess] =
     useState(false);
+
+  // Aurora renk temalarında yeni değerlendirme ekranı kullanılır.
+  const isAurora = Boolean(
+    useRestaurantTheme()?.auroraPalette
+  );
 
   useEffect(() => {
     async function loadData() {
@@ -119,7 +125,6 @@ export default function EmployeeRatingPage() {
               restaurant_id,
               name,
               role,
-              phone,
               is_active
             `
           )
@@ -249,8 +254,10 @@ export default function EmployeeRatingPage() {
             comment.trim()
           }`.trim(),
 
+        // Siparişe bağlı olmayan yorumlar restoran onaylayana
+        // kadar gizli kalır (veritabanı da bunu zorunlu tutar).
         is_visible:
-          true,
+          false,
       });
 
     if (reviewError) {
@@ -272,6 +279,33 @@ export default function EmployeeRatingPage() {
     setSelectedEmployee("");
     setRating(0);
     setComment("");
+  }
+
+  /*
+   * =====================================================
+   * AURORA
+   * =====================================================
+   */
+
+  if (isAurora) {
+    return (
+      <AuroraRating
+        slug={slug}
+        restaurant={restaurant}
+        employees={employees}
+        loading={loading}
+        error={error}
+        success={success}
+        selectedEmployee={selectedEmployee}
+        onSelectEmployee={setSelectedEmployee}
+        rating={rating}
+        onRatingChange={setRating}
+        comment={comment}
+        onCommentChange={setComment}
+        onSubmit={handleSubmit}
+        onResetSuccess={() => setSuccess(false)}
+      />
+    );
   }
 
   /*

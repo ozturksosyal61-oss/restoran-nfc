@@ -15,6 +15,10 @@ import { useCart } from "../menu/CartContext";
 
 import { createClient } from "../../../../lib/supabase/client";
 
+import { useRestaurantTheme } from "../RestaurantThemeContext";
+
+import AuroraCheckout from "./AuroraCheckout";
+
 type Restaurant = {
   id: number;
   name: string;
@@ -42,6 +46,11 @@ export default function OrderPage() {
     total,
     clearCart,
   } = useCart();
+
+  // Aurora renk temalarında yeni sipariş onayı ekranı kullanılır.
+  const isAurora = Boolean(
+    useRestaurantTheme()?.auroraPalette
+  );
 
   /*
    * =====================================================
@@ -238,33 +247,20 @@ export default function OrderPage() {
             error:
               tableError,
           } =
-            await supabase
-              .from(
-                "restaurant_tables"
-              )
-              .select(
-                "id, table_number, public_token, is_active"
-              )
-              /*
-               * EN ÖNEMLİ KISIM:
-               *
-               * Token mutlaka mevcut
-               * restoran ile birlikte
-               * kontrol ediliyor.
-               */
-              .eq(
-                "restaurant_id",
-                restaurantData.id
-              )
-              .eq(
-                "public_token",
-                tableToken
-              )
-              .eq(
-                "is_active",
-                true
-              )
-              .maybeSingle();
+            /*
+             * Token mutlaka mevcut restoran ile birlikte
+             * veritabanı fonksiyonunda doğrulanıyor. Masa
+             * tablosu herkese açık okunamaz.
+             */
+            await supabase.rpc(
+              "get_public_table",
+              {
+                p_restaurant_id:
+                  restaurantData.id,
+                p_public_token:
+                  tableToken,
+              }
+            );
 
           if (cancelled) {
             return;
@@ -372,7 +368,8 @@ export default function OrderPage() {
            * QR / NFC YOK
            * =================================================
            *
-           * Manuel masa seçimi kullanılabilir.
+           * Sipariş yalnızca masadaki QR/NFC koduyla verilebilir;
+           * uzaktan sahte siparişi önlemek için elle masa seçimi yok.
            */
 
           setTable(
@@ -421,91 +418,6 @@ export default function OrderPage() {
 
   /*
    * =====================================================
-   * MANUEL MASA SEÇİMİ
-   * =====================================================
-   */
-
-  async function handleManualTableChange(
-    value: string
-  ) {
-    setTableNumber(
-      value
-    );
-
-    setTable(
-      null
-    );
-
-    if (!value) {
-      return;
-    }
-
-    if (!restaurant) {
-      return;
-    }
-
-    const supabase =
-      createClient();
-
-    const {
-      data,
-      error: tableError,
-    } =
-      await supabase
-        .from(
-          "restaurant_tables"
-        )
-        .select(
-          "id, table_number, public_token, is_active"
-        )
-        .eq(
-          "restaurant_id",
-          restaurant.id
-        )
-        .eq(
-          "table_number",
-          Number(value)
-        )
-        .eq(
-          "is_active",
-          true
-        )
-        .maybeSingle();
-
-    if (tableError) {
-      console.error(
-        "Manual table error:",
-        tableError
-      );
-
-      setError(
-        "Masa bilgisi alınamadı."
-      );
-
-      return;
-    }
-
-    if (!data) {
-      setError(
-        "Seçilen masa aktif değil veya bulunamadı."
-      );
-
-      setTableNumber(
-        ""
-      );
-
-      return;
-    }
-
-    setError("");
-
-    setTable(
-      data
-    );
-  }
-
-  /*
-   * =====================================================
    * GARSON ÇAĞIR
    * =====================================================
    */
@@ -539,15 +451,15 @@ export default function OrderPage() {
     try {
       const supabase = createClient();
 
-     const { error: requestError } =
-  await supabase.rpc(
-    "create_public_service_request",
-    {
-      p_restaurant_id: restaurant.id,
-      p_table_id: table.id,
-      p_request_type: "garson",
-    }
-  );
+      const { error: requestError } =
+        await supabase.rpc(
+          "create_table_service_request",
+          {
+            p_restaurant_id: restaurant.id,
+            p_public_token: table.public_token,
+            p_request_type: "garson",
+          }
+        );
 
       if (requestError) {
         console.error(
@@ -626,171 +538,22 @@ export default function OrderPage() {
      * =================================================
      */
 
-    if (!tableNumber.trim()) {
+    /*
+     * Sipariş yalnızca QR/NFC ile doğrulanmış masadan verilir.
+     * Masa kodu, fiyatlar ve toplam veritabanı fonksiyonunda
+     * yeniden doğrulanır / hesaplanır.
+     */
+
+    if (!table?.public_token) {
       setError(
-        "Lütfen masa numaranızı seçin."
+        "Sipariş vermek için masanızdaki QR kodu okutun veya NFC etiketine dokunun."
       );
 
       return;
     }
 
-    /*
-     * =================================================
-     * TABLE ID KONTROLÜ
-     * =================================================
-     *
-     * Artık sipariş mutlaka gerçek
-     * restaurant_tables kaydına bağlanıyor.
-     */
-
-    let verifiedTable =
-      table;
-
     const supabase =
       createClient();
-
-    /*
-     * QR/NFC kullanıldıysa token ile
-     * tekrar doğrula.
-     */
-
-    const tableToken =
-      tableTokenFromUrl ||
-      localStorage.getItem(
-        "ozt_table_token"
-      )?.trim() ||
-      "";
-
-    if (tableToken) {
-      const {
-        data: tokenTable,
-        error:
-          tokenTableError,
-      } =
-        await supabase
-          .from(
-            "restaurant_tables"
-          )
-          .select(
-            "id, table_number, public_token, is_active"
-          )
-          .eq(
-            "restaurant_id",
-            restaurant.id
-          )
-          .eq(
-            "public_token",
-            tableToken
-          )
-          .eq(
-            "is_active",
-            true
-          )
-          .maybeSingle();
-
-      if (
-        tokenTableError
-      ) {
-        console.error(
-          "Final table verification error:",
-          tokenTableError
-        );
-
-        setError(
-          "Masa doğrulaması yapılamadı."
-        );
-
-        return;
-      }
-
-      if (!tokenTable) {
-        setError(
-          "QR/NFC masa kodu geçersiz veya pasif."
-        );
-
-        return;
-      }
-
-      /*
-       * URL tokenı ile masa numarası
-       * birbiriyle uyuşuyor mu?
-       */
-
-      if (
-        String(
-          tokenTable.table_number
-        ) !==
-        String(
-          tableNumber
-        )
-      ) {
-        setError(
-          "Masa doğrulaması başarısız."
-        );
-
-        return;
-      }
-
-      verifiedTable =
-        tokenTable;
-    } else {
-      /*
-       * Manuel seçimde gerçek masa kaydı
-       * bulunmak zorunda.
-       */
-
-      if (
-        !verifiedTable ||
-        String(
-          verifiedTable.table_number
-        ) !==
-          String(
-            tableNumber
-          )
-      ) {
-        const {
-          data: manualTable,
-          error:
-            manualTableError,
-        } =
-          await supabase
-            .from(
-              "restaurant_tables"
-            )
-            .select(
-              "id, table_number, public_token, is_active"
-            )
-            .eq(
-              "restaurant_id",
-              restaurant.id
-            )
-            .eq(
-              "table_number",
-              Number(
-                tableNumber
-              )
-            )
-            .eq(
-              "is_active",
-              true
-            )
-            .maybeSingle();
-
-        if (
-          manualTableError ||
-          !manualTable
-        ) {
-          setError(
-            "Seçilen masa aktif değil veya bulunamadı."
-          );
-
-          return;
-        }
-
-        verifiedTable =
-          manualTable;
-      }
-    }
 
     /*
      * =================================================
@@ -808,15 +571,14 @@ export default function OrderPage() {
        * ANA SİPARİŞ + AÇIK MASA OTURUMU
        * =================================================
        *
-       * Siparişi doğrudan orders tablosuna insert etmek yerine
-       * açık dining session oluşturan RPC kullanılır.
-       * Böylece orders.session_id otomatik doldurulur.
+       * create_table_order masa kodunu doğrular, açık masa
+       * oturumunu bağlar. Ürün adı, fiyat ve toplam ürün
+       * tablosundan hesaplanır; buradan yalnızca ürün ve adet
+       * gönderilir.
        */
 
       const orderItems = items.map((item) => ({
         product_id: item.id,
-        product_name: item.name,
-        price: Number(item.price),
         quantity: Number(item.quantity),
       }));
 
@@ -824,14 +586,12 @@ export default function OrderPage() {
         data: orderId,
         error: orderError,
       } = await supabase.rpc(
-        "create_public_order_with_session",
+        "create_table_order",
         {
           p_restaurant_id: restaurant.id,
-          p_table_id: verifiedTable.id,
-          p_table_number: String(verifiedTable.table_number),
+          p_public_token: table.public_token,
           p_customer_name: customerName.trim() || null,
           p_note: note.trim() || null,
-          p_total_amount: total,
           p_payment_method: "cash",
           p_items: orderItems,
         }
@@ -863,11 +623,13 @@ export default function OrderPage() {
        * Sepeti temizle.
        */
 
-      clearCart();
+      /*
+       * Yükleniyor durumu bilerek kapatılmıyor: takip ekranına
+       * geçilene kadar düğme "gönderiliyor" olarak kalır ve
+       * boşalan sepet ekranı görünmez.
+       */
 
-      setLoading(
-        false
-      );
+      clearCart();
 
       /*
        * Sipariş takip ekranı.
@@ -915,6 +677,35 @@ export default function OrderPage() {
 
   /*
    * =====================================================
+   * AURORA
+   * =====================================================
+   */
+
+  if (isAurora) {
+    return (
+      <AuroraCheckout
+        slug={slug}
+        loadingRestaurant={loadingRestaurant}
+        tableNumber={tableLocked ? tableNumber : ""}
+        tableToken={
+          table?.public_token ||
+          tableTokenFromUrl
+        }
+        items={items}
+        total={total}
+        customerName={customerName}
+        onCustomerNameChange={setCustomerName}
+        note={note}
+        onNoteChange={setNote}
+        error={error}
+        submitting={loading}
+        onSubmit={handleSubmit}
+      />
+    );
+  }
+
+  /*
+   * =====================================================
    * YÜKLENİYOR
    * =====================================================
    */
@@ -923,7 +714,7 @@ export default function OrderPage() {
     loadingRestaurant
   ) {
     return (
-      <main className="restaurant-page aurora-order-page">
+      <main className="restaurant-page">
         <section className="hero">
           <h1>
             Sipariş Ver
@@ -940,35 +731,12 @@ export default function OrderPage() {
 
   /*
    * =====================================================
-   * MASA SAYISI
-   * =====================================================
-   */
-
-  const tableCount =
-    restaurant?.table_count ??
-    20;
-
-  const tables =
-    Array.from(
-      {
-        length:
-          Math.max(
-            1,
-            tableCount
-          ),
-      },
-      (_, index) =>
-        index + 1
-    );
-
-  /*
-   * =====================================================
    * EKRAN
    * =====================================================
    */
 
   return (
-    <main className="restaurant-page aurora-order-page">
+    <main className="restaurant-page">
       {/* HEADER */}
 
       <section className="hero">
@@ -1152,44 +920,16 @@ export default function OrderPage() {
               </>
             ) : (
               <>
-                <select
-                  value={
-                    tableNumber
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    handleManualTableChange(
-                      event.target.value
-                    )
-                  }
-                  required
-                >
-                  <option value="">
-                    Masa seçin
-                  </option>
-
-                  {tables.map(
-                    (tableItem) => (
-                      <option
-                        key={
-                          tableItem
-                        }
-                        value={String(
-                          tableItem
-                        )}
-                      >
-                        Masa{" "}
-                        {
-                          tableItem
-                        }
-                      </option>
-                    )
-                  )}
-                </select>
+                <input
+                  type="text"
+                  value="Masa doğrulanmadı"
+                  readOnly
+                  aria-label="Masa doğrulanmadı"
+                />
 
                 <small>
-                  Lütfen bulunduğunuz masayı seçin.
+                  📍 Sipariş vermek için masanızdaki QR kodu okutun
+                  veya NFC etiketine telefonunuzu yaklaştırın.
                 </small>
               </>
             )}
@@ -1262,160 +1002,6 @@ export default function OrderPage() {
         </form>
       </section>
 
-      <style jsx global>{`
-        /* AURORA - ORDER PAGE ONLY */
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page {
-          min-height: 100vh;
-          background: #0b0b0a;
-          color: #f6f1e8;
-          padding-bottom: 40px;
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .hero {
-          position: relative;
-          overflow: hidden;
-          padding: 34px 20px 28px;
-          text-align: center;
-          background: radial-gradient(circle at 15% 120%, rgba(173,135,67,.13), transparent 34%), radial-gradient(circle at 100% 0%, rgba(255,255,255,.05), transparent 28%), #11110f;
-          border-bottom: 1px solid rgba(255,255,255,.08);
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .hero h1 {
-          margin: 0;
-          color: #f8f3ea;
-          font-family: Georgia, serif;
-          font-size: clamp(30px, 5vw, 46px);
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .hero p {
-          margin: 8px 0 0;
-          color: rgba(255,255,255,.58);
-          font-size: 12px;
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-section {
-          width: min(760px, calc(100% - 28px));
-          margin: 24px auto 0;
-          padding: 22px;
-          box-sizing: border-box;
-          background: rgba(21,21,19,.90);
-          border: 1px solid rgba(255,255,255,.08);
-          border-radius: 22px;
-          box-shadow: 0 24px 70px rgba(0,0,0,.32);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-section h2 {
-          margin: 0 0 16px;
-          color: #f7f1e7;
-          font-family: Georgia, serif;
-          font-size: 24px;
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-items {
-          display: grid;
-          gap: 10px;
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-item {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          padding: 15px 16px;
-          background: rgba(255,255,255,.045);
-          border: 1px solid rgba(255,255,255,.08);
-          border-radius: 14px;
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-item strong { color: #f6f0e7; }
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-item span { display: block; margin-top: 5px; color: rgba(255,255,255,.54); font-size: 12px; }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-total {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin: 16px 0 20px;
-          padding: 17px 4px;
-          border-top: 1px solid rgba(255,255,255,.10);
-          border-bottom: 1px solid rgba(255,255,255,.10);
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-total span { color: rgba(255,255,255,.50); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-total strong { color: #e4c681; font-size: 24px; }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .aurora-waiter-card {
-          border: 1px solid rgba(205,171,103,.24) !important;
-          background: linear-gradient(135deg, rgba(190,154,88,.10), rgba(255,255,255,.035)) !important;
-          color: #f4eee5;
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .aurora-waiter-card p { color: rgba(255,255,255,.54) !important; }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .aurora-waiter-button {
-          background: #171715 !important;
-          border: 1px solid rgba(218,184,113,.34) !important;
-          color: #f8f2e8 !important;
-          box-shadow: 0 8px 20px rgba(0,0,0,.22);
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page form { display: grid; gap: 15px; }
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page form > label { display: grid; gap: 8px; color: rgba(255,255,255,.86); font-size: 12px; font-weight: 700; }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page input,
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page textarea,
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page select {
-          width: 100%;
-          box-sizing: border-box;
-          border: 1px solid rgba(255,255,255,.11) !important;
-          background: rgba(255,255,255,.055) !important;
-          color: #f5efe6 !important;
-          border-radius: 13px !important;
-          outline: none;
-          padding: 13px 14px !important;
-          font-size: 14px;
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page input:focus,
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page textarea:focus,
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page select:focus {
-          border-color: rgba(214,179,105,.55) !important;
-          box-shadow: 0 0 0 3px rgba(214,179,105,.09);
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page input::placeholder,
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page textarea::placeholder { color: rgba(255,255,255,.34); }
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page select option { background: #171715; color: #f5efe6; }
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page form > label small { color: rgba(255,255,255,.44) !important; font-size: 10px; line-height: 1.45; }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .submit-button {
-          width: 100%;
-          min-height: 52px;
-          margin-top: 3px;
-          border: 1px solid rgba(218,184,113,.34) !important;
-          border-radius: 14px !important;
-          background: linear-gradient(135deg, #b48b4a, #8f6a35) !important;
-          color: #fff8ed !important;
-          font-weight: 800;
-          box-shadow: 0 14px 26px rgba(0,0,0,.24);
-        }
-
-        .restaurant-shell[data-theme="aurora"] .aurora-order-page .login-error {
-          margin: 0;
-          border: 1px solid rgba(222,115,115,.25);
-          background: rgba(171,49,49,.10);
-          color: #f3b4b4;
-          border-radius: 12px;
-          padding: 12px 13px;
-          font-size: 12px;
-        }
-
-        @media (max-width: 640px) {
-          .restaurant-shell[data-theme="aurora"] .aurora-order-page .order-section { width: calc(100% - 18px); margin-top: 18px; padding: 15px; border-radius: 18px; }
-          .restaurant-shell[data-theme="aurora"] .aurora-order-page .hero { padding: 27px 16px 23px; }
-        }
-      `}</style>
     </main>
   );
 }

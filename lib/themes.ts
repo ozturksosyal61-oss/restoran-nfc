@@ -4,7 +4,13 @@ export type RestaurantTheme =
   | "luxury-gold"
   | "ozt-glass-premium"
   | "ozt-nova-premium"
-  | "aurora";
+  | "aurora"
+  | "aurora-krem"
+  | "aurora-gold"
+  | "aurora-zeytin"
+  | "aurora-bordo"
+  | "aurora-lacivert"
+  | "aurora-mermer";
 
 export type RestaurantThemeMeta = {
   value: RestaurantTheme;
@@ -22,7 +28,6 @@ export const RESTAURANT_THEMES: readonly RestaurantThemeMeta[] = [
     accent: "#b8943d",
     surface: "#faf9f6",
   },
-
   {
     value: "dark-modern",
     label: "Dark Modern",
@@ -31,7 +36,6 @@ export const RESTAURANT_THEMES: readonly RestaurantThemeMeta[] = [
     accent: "#29a9ff",
     surface: "#061019",
   },
-
   {
     value: "luxury-gold",
     label: "Luxury Gold",
@@ -40,7 +44,6 @@ export const RESTAURANT_THEMES: readonly RestaurantThemeMeta[] = [
     accent: "#d5a72c",
     surface: "#090806",
   },
-
   {
     value: "ozt-glass-premium",
     label: "OZT App Premium",
@@ -49,7 +52,6 @@ export const RESTAURANT_THEMES: readonly RestaurantThemeMeta[] = [
     accent: "#e4bd7a",
     surface: "#0b0b0d",
   },
-
   {
     value: "ozt-nova-premium",
     label: "OZT Nova Premium",
@@ -58,37 +60,115 @@ export const RESTAURANT_THEMES: readonly RestaurantThemeMeta[] = [
     accent: "#d8a94f",
     surface: "#f6f2ea",
   },
-
   {
     value: "aurora",
-    label: "Aurora",
+    label: "AURORA - DARK",
     description:
-      "Modern, görsel odaklı ve interaktif yeni nesil restoran deneyimi.",
-    accent: "#14b8a6",
-    surface: "#f5f7f6",
+      "Aurora'nın koyu, sinematik ve premium restoran deneyimi.",
+    accent: "#e0c07c",
+    surface: "#12100d",
+  },
+  {
+    value: "aurora-krem",
+    label: "AURORA - KREM",
+    description:
+      "Aurora tasarımının açık krem, ferah ve premium gündüz versiyonu.",
+    accent: "#8a6424",
+    surface: "#f4efe6",
+  },
+  {
+    value: "aurora-gold",
+    label: "AURORA - GOLD",
+    description:
+      "Aurora tasarımının daha belirgin altın vurgulara sahip premium versiyonu.",
+    accent: "#edc979",
+    surface: "#140e07",
+  },
+  {
+    value: "aurora-zeytin",
+    label: "AURORA - ZEYTİN",
+    description:
+      "Koyu zeytin yeşili zemin ve adaçayı vurgular; bahçe ve Ege mutfağına uygun.",
+    accent: "#c5d29b",
+    surface: "#10140f",
+  },
+  {
+    value: "aurora-bordo",
+    label: "AURORA - BORDO",
+    description:
+      "Şarap kırmızısı zemin ve gül altını vurgular; steakhouse ve şarap barlarına uygun.",
+    accent: "#eab0a2",
+    surface: "#170c0f",
+  },
+  {
+    value: "aurora-lacivert",
+    label: "AURORA - LACİVERT",
+    description:
+      "Gece mavisi zemin ve şampanya vurgular; balık ve deniz restoranlarına uygun.",
+    accent: "#e7cd92",
+    surface: "#0c1221",
+  },
+  {
+    value: "aurora-mermer",
+    label: "AURORA - MERMER",
+    description:
+      "Beyaz mermer zemin, siyah ve pirinç vurgular; kafe ve brunch mekânlarına uygun.",
+    accent: "#7a6230",
+    surface: "#f3f2ef",
   },
 ];
 
 export function normalizeRestaurantTheme(
   value: unknown
 ): RestaurantTheme {
-  if (value === "dark-modern") return "dark-modern";
-  if (value === "luxury-gold") return "luxury-gold";
-  if (value === "ozt-glass-premium") return "ozt-glass-premium";
-  if (value === "ozt-nova-premium") return "ozt-nova-premium";
-  if (value === "aurora") return "aurora";
+  const match = RESTAURANT_THEMES.find(
+    (item) => item.value === value
+  );
 
-  return "classic";
+  return match ? match.value : "classic";
 }
 
 export function getRestaurantThemeMeta(
   value: unknown
 ): RestaurantThemeMeta {
   const theme = normalizeRestaurantTheme(value);
-
   return (
     RESTAURANT_THEMES.find(
       (item) => item.value === theme
     ) ?? RESTAURANT_THEMES[0]
   );
+}
+
+/* ---------------------------------------------------------
+   AURORA RENK TEMALARI
+   Aynı Aurora tasarımı; yalnızca renkler değişir. Renkler
+   app/restoran/[slug]/aurora-palette.module.css içindedir.
+   --------------------------------------------------------- */
+
+export type AuroraPalette =
+  | "dark"
+  | "krem"
+  | "gold"
+  | "zeytin"
+  | "bordo"
+  | "lacivert"
+  | "mermer";
+
+const AURORA_PALETTES: Partial<Record<RestaurantTheme, AuroraPalette>> = {
+  aurora: "dark",
+  "aurora-krem": "krem",
+  "aurora-gold": "gold",
+  "aurora-zeytin": "zeytin",
+  "aurora-bordo": "bordo",
+  "aurora-lacivert": "lacivert",
+  "aurora-mermer": "mermer",
+};
+
+// Aurora temalarından biri değilse null döner.
+export function getAuroraPalette(value: unknown): AuroraPalette | null {
+  return AURORA_PALETTES[normalizeRestaurantTheme(value)] ?? null;
+}
+
+export function isAuroraTheme(value: unknown): boolean {
+  return getAuroraPalette(value) !== null;
 }

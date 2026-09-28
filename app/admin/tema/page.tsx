@@ -7,8 +7,14 @@ import {
 } from "../../../lib/supabase/client";
 import {
   RESTAURANT_THEMES,
+  normalizeRestaurantTheme,
   type RestaurantTheme,
 } from "../../../lib/themes";
+
+// Tema, restorana özel olarak yalnızca sistem panelinden belirlenir.
+// Bu sayfa restoran yöneticisine mevcut temayı gösterir; değiştirmez.
+// (Veritabanında da restaurants.theme yalnızca sistem yöneticisi tarafından
+// güncellenebilir: 20260929_aurora_color_themes.sql.)
 
 export default function ThemeSettingsPage() {
   const supabase = useMemo(
@@ -18,11 +24,7 @@ export default function ThemeSettingsPage() {
 
   const [loading, setLoading] =
     useState(true);
-  const [saving, setSaving] =
-    useState(false);
   const [error, setError] =
-    useState("");
-  const [message, setMessage] =
     useState("");
   const [restaurant, setRestaurant] =
     useState<{
@@ -31,14 +33,9 @@ export default function ThemeSettingsPage() {
       slug: string;
       theme: RestaurantTheme;
     } | null>(null);
-  const [selectedTheme, setSelectedTheme] =
-    useState<RestaurantTheme>("classic");
 
   useEffect(() => {
     async function load() {
-      setLoading(true);
-      setError("");
-
       try {
         const {
           data: { user },
@@ -95,27 +92,12 @@ export default function ThemeSettingsPage() {
           return;
         }
 
-        const rawTheme =
-          data.theme;
-
-        const normalizedTheme =
-          RESTAURANT_THEMES.some(
-            (theme) =>
-              theme.value === rawTheme
-          )
-            ? (rawTheme as RestaurantTheme)
-            : "classic";
-
         setRestaurant({
           id: Number(data.id),
           name: data.name,
           slug: data.slug,
-          theme: normalizedTheme,
+          theme: normalizeRestaurantTheme(data.theme),
         });
-
-        setSelectedTheme(
-          normalizedTheme
-        );
       } catch (loadError) {
         console.error(
           "Tema yükleme hatası:",
@@ -133,75 +115,13 @@ export default function ThemeSettingsPage() {
     load();
   }, [supabase]);
 
-  async function saveTheme() {
-    if (!restaurant) {
-      return;
-    }
-
-    setSaving(true);
-    setError("");
-    setMessage("");
-
-    try {
-      const {
-        error: updateError,
-      } = await supabase
-        .from("restaurants")
-        .update({
-          theme: selectedTheme,
-        })
-        .eq(
-          "id",
-          restaurant.id
-        );
-
-      if (updateError) {
-        console.error(
-          "Tema kaydetme hatası:",
-          updateError
-        );
-
-        setError(
-          "Tema kaydedilemedi: " +
-            updateError.message
-        );
-        return;
-      }
-
-      setRestaurant(
-        (current) =>
-          current
-            ? {
-                ...current,
-                theme: selectedTheme,
-              }
-            : current
-      );
-
-      setMessage(
-        "Tema kaydedildi. Müşteri menüsünü yenilediğinizde uygulanacaktır."
-      );
-    } catch (saveError) {
-      console.error(
-        "Tema kaydetme hatası:",
-        saveError
-      );
-
-      setError(
-        "Tema kaydedilirken beklenmeyen bir hata oluştu."
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
-
   if (loading) {
     return (
       <main className="nova-theme-admin">
         <style>{styles}</style>
         <div className="nova-admin-loading">
           <div className="nova-admin-spinner" />
-          Tema seçenekleri yükleniyor...
+          Tema bilgisi yükleniyor...
         </div>
       </main>
     );
@@ -227,6 +147,12 @@ export default function ThemeSettingsPage() {
     );
   }
 
+  const current =
+    RESTAURANT_THEMES.find(
+      (theme) =>
+        theme.value === restaurant.theme
+    ) ?? RESTAURANT_THEMES[0];
+
   return (
     <main className="nova-theme-admin">
       <style>{styles}</style>
@@ -242,8 +168,8 @@ export default function ThemeSettingsPage() {
             </h1>
             <p>
               {restaurant.name} için
-              müşterilerin göreceği
-              görsel temayı seçin.
+              müşterilerinizin gördüğü
+              görsel tema.
             </p>
           </div>
 
@@ -255,69 +181,50 @@ export default function ThemeSettingsPage() {
           </Link>
         </header>
 
-        {error && (
-          <div className="nova-admin-alert error">
-            {error}
-          </div>
-        )}
-
-        {message && (
-          <div className="nova-admin-alert success">
-            {message}
-          </div>
-        )}
-
         <section className="nova-theme-card">
           <div className="nova-theme-card-head">
             <div>
               <span className="nova-admin-eyebrow">
-                TEMA SEÇİMİ
+                KULLANILAN TEMA
               </span>
               <h2>
-                Bir görünüm seçin
+                {current.label}
               </h2>
             </div>
 
-            <span className="nova-current-badge">
-              Mevcut:{" "}
-              {
-                RESTAURANT_THEMES.find(
-                  (theme) =>
-                    theme.value ===
-                    selectedTheme
-                )?.label
-              }
-            </span>
+            <a
+              href={`/restoran/${restaurant.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nova-current-badge"
+            >
+              Müşteri sayfasını aç ↗
+            </a>
           </div>
 
           <p className="nova-theme-description">
-            Tema değişikliği ürünlerinizi,
-            kategorilerinizi, masalarınızı veya
-            sipariş altyapınızı değiştirmez.
-            Yalnızca müşteri tarafındaki
-            görünümü seçer.
+            Tema ve renkler işletmenize özel
+            olarak OZT Digital tarafından
+            ayarlanır. Farklı bir tema ya da
+            renk isterseniz destek ekibimize
+            yazmanız yeterli; aşağıdaki
+            seçeneklerden birini belirtin.
           </p>
 
           <div className="nova-theme-grid">
             {RESTAURANT_THEMES.map(
               (theme) => {
                 const selected =
-                  selectedTheme ===
+                  restaurant.theme ===
                   theme.value;
 
                 return (
-                  <button
+                  <div
                     key={theme.value}
-                    type="button"
                     className={
                       selected
                         ? "nova-theme-option selected"
-                        : "nova-theme-option"
-                    }
-                    onClick={() =>
-                      setSelectedTheme(
-                        theme.value
-                      )
+                        : "nova-theme-option readonly"
                     }
                   >
                     <div
@@ -410,77 +317,16 @@ export default function ThemeSettingsPage() {
                         </small>
                       </div>
 
-                      <span
-                        className="nova-select-mark"
-                        style={
-                          selected
-                            ? {
-                                background:
-                                  theme.accent,
-                                color:
-                                  theme.value ===
-                                  "dark-modern" ||
-                                  theme.value ===
-                                  "luxury-gold" ||
-                                  theme.value ===
-                                  "ozt-glass-premium"
-                                    ? "#fff"
-                                    : "#17130d",
-                              }
-                            : undefined
-                        }
-                      >
-                        {selected
-                          ? "✓"
-                          : "Seç"}
-                      </span>
+                      {selected && (
+                        <span className="nova-select-mark nova-select-mark-on">
+                          Kullanılıyor
+                        </span>
+                      )}
                     </div>
-                  </button>
+                  </div>
                 );
               }
             )}
-          </div>
-
-          <div className="nova-theme-highlight">
-            <div>
-              <span className="nova-admin-eyebrow">
-                YENİ
-              </span>
-              <strong>
-                OZT Nova Premium
-              </strong>
-              <p>
-                Mobil uygulama hissi veren;
-                arama, kategori keşfi,
-                ürün kartları, sepet ve masa
-                hizmetlerini tek bir akışta
-                birleştiren yeni müşteri
-                arayüzü.
-              </p>
-            </div>
-
-            <div className="nova-theme-highlight-tag">
-              Yeni nesil
-            </div>
-          </div>
-
-          <div className="nova-save-row">
-            <span>
-              Seçtiğiniz tema, kaydetme
-              işleminden sonra müşteri
-              tarafında kullanılabilir.
-            </span>
-
-            <button
-              type="button"
-              className="nova-save-button"
-              onClick={saveTheme}
-              disabled={saving}
-            >
-              {saving
-                ? "Kaydediliyor..."
-                : "✓ Temayı Kaydet"}
-            </button>
           </div>
         </section>
       </div>
@@ -890,4 +736,8 @@ const styles = `
       align-self: flex-start;
     }
   }
+  .nova-theme-option.readonly { cursor: default; }
+  .nova-theme-option.readonly:hover { transform: none; }
+  .nova-select-mark-on { width: auto !important; padding: 0 10px; }
+  a.nova-current-badge { text-decoration: none; }
 `;
