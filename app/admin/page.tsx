@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
-import LogoutButton from "./LogoutButton";
+import AdminIcon from "./AdminIcon";
 import DashboardCharts from "./DashboardCharts";
 import ServiceRequests from "./ServiceRequests";
 import { hasPlanFeature, normalizePlan } from "../../lib/plan";
@@ -34,11 +34,12 @@ export default async function AdminPage() {
 
   if (!user) {
     return (
-      <main className="admin-page">
-        <section className="admin-header">
-          <h1>Oturum bulunamadı</h1>
+      <main className="adm-page">
+        <div className="adm-empty">
+          <span className="adm-empty-icon"><AdminIcon name="alert" /></span>
+          <strong>Oturum bulunamadı</strong>
           <p>Lütfen tekrar giriş yapın.</p>
-        </section>
+        </div>
       </main>
     );
   }
@@ -59,13 +60,12 @@ export default async function AdminPage() {
     !membership?.restaurant_id
   ) {
     return (
-      <main className="admin-page">
-        <section className="admin-header">
-          <h1>İşletme bağlantısı bulunamadı</h1>
-          <p>
-            Bu kullanıcıya bağlı bir restoran bulunamadı.
-          </p>
-        </section>
+      <main className="adm-page">
+        <div className="adm-empty">
+          <span className="adm-empty-icon"><AdminIcon name="alert" /></span>
+          <strong>İşletme bağlantısı bulunamadı</strong>
+          <p>Bu kullanıcıya bağlı bir restoran bulunamadı.</p>
+        </div>
       </main>
     );
   }
@@ -85,13 +85,12 @@ export default async function AdminPage() {
 
   if (restaurantError || !restaurant) {
     return (
-      <main className="admin-page">
-        <section className="admin-header">
-          <h1>İşletme bulunamadı</h1>
-          <p>
-            Hesabınıza bağlı restoran bulunamadı.
-          </p>
-        </section>
+      <main className="adm-page">
+        <div className="adm-empty">
+          <span className="adm-empty-icon"><AdminIcon name="alert" /></span>
+          <strong>İşletme bulunamadı</strong>
+          <p>Hesabınıza bağlı restoran bulunamadı.</p>
+        </div>
       </main>
     );
   }
@@ -101,13 +100,6 @@ export default async function AdminPage() {
   // =====================================================
 
   const plan = normalizePlan(restaurant.plan);
-  const planLabel =
-    plan === "premium"
-      ? "PREMIUM"
-      : plan === "pro"
-      ? "PRO"
-      : "STARTER";
-
   const canUseOrders = hasPlanFeature(
     plan,
     "orders"
@@ -419,1519 +411,288 @@ export default async function AdminPage() {
     visibleReviews.slice(0, 4);
 
   // =====================================================
-  // DURUM METİNLERİ
+  // GÖRÜNÜM
   // =====================================================
 
-  const statusLabels: Record<
-    string,
-    string
-  > = {
-    pending: "Yeni Sipariş",
-    accepted: "Kabul Edildi",
+  const statusLabels: Record<string, string> = {
+    pending: "Yeni",
+    accepted: "Kabul edildi",
     preparing: "Hazırlanıyor",
     ready: "Hazır",
-    delivered: "Teslim Edildi",
+    delivered: "Teslim edildi",
     completed: "Tamamlandı",
   };
 
-  const statusIcons: Record<
-    string,
-    string
-  > = {
-    pending: "🔔",
-    accepted: "👍",
-    preparing: "👨‍🍳",
-    ready: "✅",
-    delivered: "🎉",
-    completed: "✓",
-  };
+  const todayText = new Intl.DateTimeFormat("tr-TR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date());
 
-  // =====================================================
-  // TARİH
-  // =====================================================
-
-  const todayText =
-    new Intl.DateTimeFormat("tr-TR", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    }).format(new Date());
-
-  // =====================================================
-  // RENDER
-  // =====================================================
+  const money = (value: number) =>
+    `${value.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ₺`;
 
   return (
-    <main className="admin-page">
-
-      {/* =================================================
-          ÜST BAR
-      ================================================= */}
-
-      <div className="admin-topbar">
-
-        <div>
-          <span className="admin-panel-label">
-            OZT DIGITAL MENU
-          </span>
-
-          <span className="admin-panel-dot">
-            ●
-          </span>
-
-          <span className="admin-panel-status">
-            İşletme Paneli
-          </span>
+    <main className="adm-page">
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">{todayText}</span>
+          <h1>Hoş geldiniz</h1>
+          <p>{restaurant.name} için bugünün özeti ve son hareketler.</p>
         </div>
-
-        <LogoutButton />
-
-      </div>
-
-      {/* =================================================
-          HERO
-      ================================================= */}
-
-      <section
-        className="admin-dashboard-header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "24px",
-          flexWrap: "wrap",
-        }}
-      >
-
-        <div>
-
-          <span className="dashboard-eyebrow">
-            YÖNETİM PANELİ
-          </span>
-
-          <h1>
-            Hoş geldiniz 👋
-          </h1>
-
-          <h2>
-            {restaurant.name}
-          </h2>
-
-          <p>
-            İşletmenizin günlük durumunu ve
-            yönetim işlemlerini buradan takip
-            edebilirsiniz.
-          </p>
-
-        </div>
-
-        <div
-          className="dashboard-date"
-          style={{
-            minWidth: "180px",
-          }}
-        >
-          <span>
-            BUGÜN
-          </span>
-
-          <strong>
-            {todayText}
-          </strong>
-        </div>
-
-      </section>
-
-      {/* =================================================
-          İŞLETME DURUMU
-      ================================================= */}
-
-      <section
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "14px",
-          flexWrap: "wrap",
-          marginBottom: "20px",
-          padding: "15px 18px",
-          borderRadius: "16px",
-          background: "#fff",
-          border: "1px solid #e8e2d8",
-          boxShadow:
-            "0 8px 24px rgba(0,0,0,.035)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "11px",
-          }}
-        >
-          <span
-            style={{
-              width: "10px",
-              height: "10px",
-              borderRadius: "50%",
-              background: "#2e9d52",
-              boxShadow:
-                "0 0 0 5px rgba(46,157,82,.10)",
-              flexShrink: 0,
-            }}
-          />
-
-          <div>
-            <strong
-              style={{
-                display: "block",
-                fontSize: "13px",
-                color: "#222",
-              }}
-            >
-              {restaurant.name}
-            </strong>
-
-            <span
-              style={{
-                display: "block",
-                marginTop: "3px",
-                fontSize: "11px",
-                color: "#777",
-              }}
-            >
-              Yönetim paneliniz aktif
-            </span>
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "18px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            <span
-              style={{
-                display: "block",
-                fontSize: "10px",
-                color: "#999",
-                fontWeight: 800,
-                letterSpacing: ".5px",
-              }}
-            >
-              PAKET
-            </span>
-
-            <strong
-              style={{
-                display: "block",
-                marginTop: "3px",
-                fontSize: "13px",
-                color: plan === "premium"
-                  ? "#9a6b00"
-                  : plan === "pro"
-                  ? "#8a6500"
-                  : "#555",
-              }}
-            >
-              {planLabel}
-            </strong>
-          </div>
-
-          <div>
-            <span
-              style={{
-                display: "block",
-                fontSize: "10px",
-                color: "#999",
-                fontWeight: 800,
-                letterSpacing: ".5px",
-              }}
-            >
-              SİPARİŞ ORTALAMASI
-            </span>
-
-            <strong
-              style={{
-                display: "block",
-                marginTop: "3px",
-                fontSize: "13px",
-              }}
-            >
-              {averageOrderValue.toLocaleString(
-                "tr-TR",
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }
-              )}{" "}
-              TL
-            </strong>
-          </div>
-
-          <Link
+        <div className="adm-head-actions">
+          <a
+            className="adm-btn"
             href={`/restoran/${restaurant.slug}/menu`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: "38px",
-              padding: "8px 13px",
-              borderRadius: "9px",
-              border: "1px solid #ded7ca",
-              background: "#faf8f3",
-              color: "#333",
-              textDecoration: "none",
-              fontSize: "11px",
-              fontWeight: 800,
-            }}
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            👁️ Müşteri Menüsünü Gör
+            <AdminIcon name="external" size={16} />
+            Müşteri menüsü
+          </a>
+          <Link className="adm-btn adm-btn-primary" href="/admin/menu/yeni">
+            <AdminIcon name="plus" size={16} />
+            Yeni ürün
           </Link>
         </div>
+      </header>
+
+      {/* ============ BUGÜN ============ */}
+      <section className="adm-stats" aria-label="Bugünün özeti">
+        <div className="adm-stat is-highlight">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Bugünkü ciro</span>
+            <span className="adm-stat-icon"><AdminIcon name="lira" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{money(totalRevenue)}</span>
+          <span className="adm-stat-hint">
+            Ortalama sepet {money(averageOrderValue)}
+          </span>
+        </div>
+
+        <div className="adm-stat">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Bugünkü sipariş</span>
+            <span className="adm-stat-icon"><AdminIcon name="orders" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{totalOrders}</span>
+          <span className="adm-stat-hint">{deliveredOrders} teslim edildi</span>
+        </div>
+
+        <div className="adm-stat tone-new">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Bekleyen</span>
+            <span className="adm-stat-icon"><AdminIcon name="bell" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{pendingOrders}</span>
+          <span className="adm-stat-hint">Onay bekliyor</span>
+        </div>
+
+        <div className="adm-stat tone-preparing">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Mutfakta</span>
+            <span className="adm-stat-icon"><AdminIcon name="chef" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{preparingOrders}</span>
+          <span className="adm-stat-hint">Hazırlanıyor</span>
+        </div>
+
+        <div className="adm-stat tone-ready">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Hazır</span>
+            <span className="adm-stat-icon"><AdminIcon name="check" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{readyOrders}</span>
+          <span className="adm-stat-hint">Servis bekliyor</span>
+        </div>
+
+        <div className="adm-stat tone-accent">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Ortalama puan</span>
+            <span className="adm-stat-icon"><AdminIcon name="star" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">
+            {visibleReviews.length > 0 ? averageRating.toFixed(1) : "—"}
+          </span>
+          <span className="adm-stat-hint">{visibleReviews.length} yayında yorum</span>
+        </div>
       </section>
 
-      {/* =================================================
-          ANA İSTATİSTİKLER
-      ================================================= */}
-
-      <section className="dashboard-stats">
-
-        {/* Sipariş */}
-
-        <div className="dashboard-stat-card">
-
-          <div className="stat-icon">
-            📦
-          </div>
-
-          <div className="stat-content">
-
-            <span>
-              Bugünkü Sipariş
-            </span>
-
-            <strong>
-              {totalOrders}
-            </strong>
-
-            <small>
-              Toplam sipariş
-            </small>
-
-          </div>
-
+      {/* ============ CİRO ============ */}
+      {canUseAnalytics ? (
+        <DashboardCharts weeklyRevenue={weeklyRevenue} monthlyRevenue={monthlyRevenue} />
+      ) : (
+        <div className="adm-lock">
+          <span className="adm-badge s-accent">
+            <AdminIcon name="lock" size={12} /> PRO
+          </span>
+          <h2>Ciro grafikleri</h2>
+          <p>
+            Haftalık ve aylık ciro grafikleri ile satış analizleri PRO ve PREMIUM
+            paketlerde açılır.
+          </p>
         </div>
+      )}
 
-        {/* Ciro */}
-
-        <div className="dashboard-stat-card">
-
-          <div className="stat-icon">
-            ₺
-          </div>
-
-          <div className="stat-content">
-
-            <span>
-              Bugünkü Ciro
-            </span>
-
-            <strong>
-              {totalRevenue.toLocaleString(
-                "tr-TR"
-              )} TL
-            </strong>
-
-            <small>
-              Günlük toplam
-            </small>
-
-          </div>
-
+      {/* ============ GARSON ÇAĞRILARI ============ */}
+      {hasPlanFeature(plan, "waiter_call") ? (
+        <ServiceRequests restaurantId={restaurant.id} />
+      ) : (
+        <div className="adm-lock">
+          <span className="adm-badge s-accent">
+            <AdminIcon name="lock" size={12} /> PRO
+          </span>
+          <h2>Garson çağrıları</h2>
+          <p>
+            Masalardan gelen garson ve hesap isteklerini buradan anlık görmek için
+            PRO veya PREMIUM paket gerekir.
+          </p>
         </div>
+      )}
 
-        {/* Bekleyen */}
-
-        <div className="dashboard-stat-card">
-
-          <div className="stat-icon">
-            🔔
-          </div>
-
-          <div className="stat-content">
-
-            <span>
-              Bekleyen
-            </span>
-
-            <strong>
-              {pendingOrders}
-            </strong>
-
-            <small>
-              Yeni sipariş
-            </small>
-
-          </div>
-
-        </div>
-
-        {/* Hazırlanan */}
-
-        <div className="dashboard-stat-card">
-
-          <div className="stat-icon">
-            👨‍🍳
-          </div>
-
-          <div className="stat-content">
-
-            <span>
-              Hazırlanan
-            </span>
-
-            <strong>
-              {preparingOrders}
-            </strong>
-
-            <small>
-              Mutfakta işlemde
-            </small>
-
-          </div>
-
-        </div>
-
-        {/* Hazır */}
-
-        <div className="dashboard-stat-card">
-
-          <div className="stat-icon">
-            ✅
-          </div>
-
-          <div className="stat-content">
-
-            <span>
-              Hazır
-            </span>
-
-            <strong>
-              {readyOrders}
-            </strong>
-
-            <small>
-              Teslim bekliyor
-            </small>
-
-          </div>
-
-        </div>
-
-        {/* Teslim */}
-
-        <div className="dashboard-stat-card">
-
-          <div className="stat-icon">
-            🎉
-          </div>
-
-          <div className="stat-content">
-
-            <span>
-              Teslim Edilen
-            </span>
-
-            <strong>
-              {deliveredOrders}
-            </strong>
-
-            <small>
-              Bugün tamamlandı
-            </small>
-
-          </div>
-
-        </div>
-
-        {/* Puan */}
-
-        <div className="dashboard-stat-card">
-
-          <div className="stat-icon">
-            ⭐
-          </div>
-
-          <div className="stat-content">
-
-            <span>
-              Ortalama Puan
-            </span>
-
-            <strong>
-              {averageRating.toFixed(1)}
-            </strong>
-
-            <small>
-              {visibleReviews.length} yayınlanmış yorum
-            </small>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* =================================================
-          CİRO ANALİZİ
-      ================================================= */}
-
-      <section
-        className="dashboard-section"
-        style={{
-          marginBottom: "20px",
-        }}
-      >
-        {canUseAnalytics ? (
-          <DashboardCharts
-            weeklyRevenue={weeklyRevenue}
-            monthlyRevenue={monthlyRevenue}
-          />
-        ) : (
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: "18px",
-              padding: "26px 22px",
-              boxShadow:
-                "0 10px 30px rgba(0,0,0,0.05)",
-              border: "1px solid #eee6d8",
-            }}
-          >
-            <span
-              style={{
-                display: "block",
-                fontSize: "10px",
-                fontWeight: 800,
-                letterSpacing: ".8px",
-                color: "#999",
-              }}
-            >
-              CİRO ANALİZİ
-            </span>
-
-            <h2
-              style={{
-                margin: "6px 0 8px",
-                fontSize: "20px",
-              }}
-            >
-              Analitik PRO özelliğidir
-            </h2>
-
-            <p
-              style={{
-                margin: 0,
-                color: "#777",
-                fontSize: "13px",
-                lineHeight: 1.5,
-              }}
-            >
-              Ciro grafikleri ve gelişmiş satış
-              analizlerini kullanmak için PRO veya
-              PREMIUM pakete geçmeniz gerekiyor.
-            </p>
-          </div>
-        )}
-      </section>
-
-      {/* =================================================
-          GARSON ÇAĞRILARI
-      ================================================= */}
-
-      <section
-        className="dashboard-section"
-        style={{
-          marginBottom: "20px",
-        }}
-      >
-        {hasPlanFeature(plan, "waiter_call") ? (
-          <ServiceRequests
-            restaurantId={restaurant.id}
-          />
-        ) : (
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: "18px",
-              padding: "22px",
-              boxShadow:
-                "0 10px 30px rgba(0,0,0,0.05)",
-              border: "1px solid #eee6d8",
-            }}
-          >
-            <span
-              style={{
-                display: "block",
-                fontSize: "10px",
-                fontWeight: 800,
-                letterSpacing: ".8px",
-                color: "#999",
-              }}
-            >
-              GARSON ÇAĞRILARI
-            </span>
-
-            <h2
-              style={{
-                margin: "6px 0 8px",
-                fontSize: "20px",
-              }}
-            >
-              Garson çağırma PRO özelliğidir
-            </h2>
-
-            <p
-              style={{
-                margin: 0,
-                color: "#777",
-                fontSize: "13px",
-                lineHeight: 1.5,
-              }}
-            >
-              Müşterilerden gelen garson çağrılarını
-              yönetmek için PRO veya PREMIUM paket
-              gereklidir.
-            </p>
-          </div>
-        )}
-      </section>
-
-      {/* =================================================
-          SON SİPARİŞLER + YORUMLAR
-      ================================================= */}
-
-      <section
-        className="dashboard-section"
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
-          gap: "20px",
-          alignItems: "start",
-        }}
-      >
-
-        {/* =================================================
-            SON SİPARİŞLER
-        ================================================= */}
-
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "18px",
-            padding: "22px",
-            boxShadow:
-              "0 10px 30px rgba(0,0,0,0.05)",
-          }}
-        >
-
-          <div
-            className="dashboard-section-heading"
-            style={{
-              marginBottom: "15px",
-            }}
-          >
-
+      {/* ============ SON SİPARİŞLER + YORUMLAR ============ */}
+      <div className="adm-grid-2">
+        <section className="adm-card" aria-labelledby="son-siparisler">
+          <div className="adm-card-head">
             <div>
-
-              <span>
-                SON SİPARİŞLER
-              </span>
-
-              <h2>
-                Bugünkü siparişler
-              </h2>
-
+              <h2 id="son-siparisler">Bugünkü siparişler</h2>
+              <p>En son gelen 5 sipariş</p>
             </div>
-
-            <Link
-              href="/admin/orders"
-              style={{
-                color: "#c8941d",
-                textDecoration: "none",
-                fontWeight: 800,
-                fontSize: "13px",
-              }}
-            >
-              Tümünü Gör →
-            </Link>
-
+            {canUseOrders && (
+              <Link className="adm-card-link" href="/admin/orders">
+                Tümü
+              </Link>
+            )}
           </div>
 
           {!canUseOrders ? (
-            <div
-              style={{
-                padding: "30px 10px",
-                textAlign: "center",
-                color: "#888",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "34px",
-                  marginBottom: "8px",
-                }}
-              >
-                🔒
-              </div>
-
-              <strong>
-                Sipariş yönetimi PRO özelliğidir.
-              </strong>
-
-              <p
-                style={{
-                  margin:
-                    "6px 0 0",
-                  fontSize: "13px",
-                }}
-              >
-                Siparişleri görüntülemek ve
-                yönetmek için PRO veya PREMIUM
-                pakete geçmeniz gerekiyor.
-              </p>
+            <div className="adm-empty">
+              <span className="adm-empty-icon"><AdminIcon name="lock" /></span>
+              <strong>Sipariş yönetimi PRO özelliğidir</strong>
+              <p>QR menüden sipariş almak için PRO veya PREMIUM pakete geçin.</p>
             </div>
           ) : latestOrders.length === 0 ? (
-
-            <div
-              style={{
-                padding: "30px 10px",
-                textAlign: "center",
-                color: "#888",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "34px",
-                  marginBottom: "8px",
-                }}
-              >
-                📦
-              </div>
-
-              <strong>
-                Bugün henüz sipariş yok.
-              </strong>
-
-              <p
-                style={{
-                  margin:
-                    "6px 0 0",
-                  fontSize: "13px",
-                }}
-              >
-                Yeni siparişler burada
-                görünecek.
-              </p>
+            <div className="adm-empty">
+              <span className="adm-empty-icon"><AdminIcon name="orders" /></span>
+              <strong>Bugün henüz sipariş yok</strong>
+              <p>Masalardan gelen siparişler burada görünecek.</p>
             </div>
-
           ) : (
-
-            <div
-              style={{
-                display: "grid",
-                gap: "0",
-              }}
-            >
-
-              {latestOrders.map(
-                (order) => (
-
-                  <div
-                    key={order.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent:
-                        "space-between",
-                      gap: "15px",
-                      padding:
-                        "15px 0",
-                      borderBottom:
-                        "1px solid #eee",
-                    }}
-                  >
-
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems:
-                          "center",
-                        gap: "12px",
-                      }}
-                    >
-
-                      <div
-                        style={{
-                          width: "42px",
-                          height: "42px",
-                          borderRadius:
-                            "12px",
-                          background:
-                            "#f8f3e8",
-                          display: "flex",
-                          alignItems:
-                            "center",
-                          justifyContent:
-                            "center",
-                          fontSize: "18px",
-                        }}
-                      >
-                        {statusIcons[
-                          order.status
-                        ] || "📦"}
-                      </div>
-
-                      <div>
-
-                        <strong>
-                          Sipariş #
-                          {order.id}
-                        </strong>
-
-                        <div
-                          style={{
-                            marginTop:
-                              "4px",
-                            color: "#888",
-                            fontSize:
-                              "12px",
-                          }}
-                        >
-                          {new Date(
-                            order.created_at
-                          ).toLocaleTimeString(
-                            "tr-TR",
-                            {
-                              hour: "2-digit",
-                              minute:
-                                "2-digit",
-                            }
-                          )}
-
-                          {" • "}
-
-                          {
-                            statusLabels[
-                              order.status
-                            ] ||
-                            order.status
-                          }
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                    <strong>
-                      {Number(
-                        order.total_amount ||
-                          0
-                      ).toLocaleString(
-                        "tr-TR"
-                      )}{" "}
-                      TL
-                    </strong>
-
-                  </div>
-
-                )
-              )}
-
+            <div className="adm-list">
+              {latestOrders.map((order) => (
+                <Link key={order.id} className="adm-row" href="/admin/orders">
+                  <span className="adm-row-icon"><AdminIcon name="orders" size={17} /></span>
+                  <span className="adm-row-main">
+                    <strong>Sipariş #{order.id}</strong>
+                    <small>
+                      {new Date(order.created_at).toLocaleTimeString("tr-TR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </small>
+                  </span>
+                  <span className="adm-row-end">
+                    <span className="adm-num">{money(Number(order.total_amount || 0))}</span>
+                    <span className={`adm-badge s-${order.status}`}>
+                      {statusLabels[order.status] || order.status}
+                    </span>
+                  </span>
+                </Link>
+              ))}
             </div>
-
           )}
+        </section>
 
-        </div>
-
-        {/* =================================================
-            SON YORUMLAR
-        ================================================= */}
-
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "18px",
-            padding: "22px",
-            boxShadow:
-              "0 10px 30px rgba(0,0,0,0.05)",
-          }}
-        >
-
-          <div
-            className="dashboard-section-heading"
-            style={{
-              marginBottom: "15px",
-            }}
-          >
-
+        <section className="adm-card" aria-labelledby="son-yorumlar">
+          <div className="adm-card-head">
             <div>
-
-              <span>
-                SON DEĞERLENDİRMELER
-              </span>
-
-              <h2>
-                Müşteri yorumları
-              </h2>
-
+              <h2 id="son-yorumlar">Müşteri yorumları</h2>
+              <p>Yayındaki son değerlendirmeler</p>
             </div>
-
-            <Link
-              href="/admin/degerlendirmeler"
-              style={{
-                color: "#c8941d",
-                textDecoration: "none",
-                fontWeight: 800,
-                fontSize: "13px",
-              }}
-            >
-              Tümünü Gör →
+            <Link className="adm-card-link" href="/admin/degerlendirmeler">
+              Tümü
             </Link>
-
           </div>
 
           {latestReviews.length === 0 ? (
-
-            <div
-              style={{
-                padding: "30px 10px",
-                textAlign: "center",
-                color: "#888",
-              }}
-            >
-
-              <div
-                style={{
-                  fontSize: "34px",
-                  marginBottom: "8px",
-                }}
-              >
-                ⭐
-              </div>
-
-              <strong>
-                Henüz değerlendirme yok.
-              </strong>
-
-              <p
-                style={{
-                  margin:
-                    "6px 0 0",
-                  fontSize: "13px",
-                }}
-              >
-                Müşteri yorumları
-                burada görünecek.
-              </p>
-
+            <div className="adm-empty">
+              <span className="adm-empty-icon"><AdminIcon name="star" /></span>
+              <strong>Henüz yorum yok</strong>
+              <p>Müşteriler sipariş sonrası değerlendirme yaptığında burada görünür.</p>
             </div>
-
           ) : (
-
-            <div
-              style={{
-                display: "grid",
-                gap: "14px",
-              }}
-            >
-
-              {latestReviews.map(
-                (review) => (
-
-                  <div
-                    key={review.id}
-                    style={{
-                      paddingBottom:
-                        "14px",
-                      borderBottom:
-                        "1px solid #eee",
-                    }}
-                  >
-
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent:
-                          "space-between",
-                        gap: "10px",
-                      }}
-                    >
-
-                      <strong>
-                        {review.customer_name ||
-                          "Anonim Müşteri"}
-                      </strong>
-
-                      <span
-                        style={{
-                          color: "#c8941d",
-                          letterSpacing:
-                            "1px",
-                        }}
-                      >
-                        {"★".repeat(
-                          Math.max(
-                            0,
-                            Math.min(
-                              5,
-                              Number(
-                                review.rating
-                              )
-                            )
-                          )
-                        )}
-                      </span>
-
-                    </div>
-
-                    {review.comment && (
-
-                      <p
-                        style={{
-                          margin:
-                            "7px 0 0",
-                          color: "#666",
-                          fontSize:
-                            "13px",
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {review.comment.length >
-                        100
-                          ? `${review.comment.slice(
-                              0,
-                              100
-                            )}...`
-                          : review.comment}
-                      </p>
-
-                    )}
-
+            <div className="adm-list">
+              {latestReviews.map((review) => {
+                const stars = Math.max(0, Math.min(5, Number(review.rating)));
+                return (
+                  <div key={review.id} className="adm-row" style={{ alignItems: "flex-start" }}>
+                    <span className="adm-row-icon"><AdminIcon name="user" size={17} /></span>
+                    <span className="adm-row-main">
+                      <strong>{review.customer_name || "Misafir"}</strong>
+                      {review.comment && (
+                        <small style={{ whiteSpace: "normal" }}>
+                          {review.comment.length > 110
+                            ? `${review.comment.slice(0, 110)}…`
+                            : review.comment}
+                        </small>
+                      )}
+                    </span>
+                    <span className="adm-badge s-accent" aria-label={`${stars} yıldız`}>
+                      <AdminIcon name="star" size={12} /> {stars}
+                    </span>
                   </div>
-
-                )
-              )}
-
-            </div>
-
-          )}
-
-        </div>
-
-      </section>
-
-      {/* =================================================
-          HIZLI İŞLEMLER
-      ================================================= */}
-
-      <section className="dashboard-section">
-
-        <div
-          className="dashboard-section-heading"
-          style={{
-            marginBottom: "16px",
-          }}
-        >
-
-          <div>
-
-            <span>
-              HIZLI İŞLEMLER
-            </span>
-
-            <h2>
-              Sık kullanılan işlemler
-            </h2>
-
-          </div>
-
-        </div>
-
-        <div
-          className="quick-actions"
-          style={{
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
-          }}
-        >
-
-          <Link
-            href="/admin/menu/yeni"
-            className="quick-action quick-action-gold"
-          >
-
-            <div className="quick-action-icon">
-              ＋
-            </div>
-
-            <div>
-
-              <strong>
-                Yeni Ürün
-              </strong>
-
-              <span>
-                Menüye ürün ekle
-              </span>
-
-            </div>
-
-            <b>
-              →
-            </b>
-
-          </Link>
-
-          <Link
-            href="/admin/menu/kategori/yeni"
-            className="quick-action"
-          >
-
-            <div className="quick-action-icon">
-              ☰
-            </div>
-
-            <div>
-
-              <strong>
-                Yeni Kategori
-              </strong>
-
-              <span>
-                Menü kategorisi oluştur
-              </span>
-
-            </div>
-
-            <b>
-              →
-            </b>
-
-          </Link>
-
-          {hasPlanFeature(plan, "orders") ? (
-            <Link
-              href="/admin/orders"
-              className="quick-action"
-            >
-
-              <div className="quick-action-icon">
-                🛒
-              </div>
-
-              <div>
-
-                <strong>
-                  Siparişleri Gör
-                </strong>
-
-                <span>
-                  Gelen siparişleri yönet
-                </span>
-
-              </div>
-
-              <b>
-                →
-              </b>
-
-            </Link>
-          ) : (
-            <div
-              className="quick-action"
-              style={{
-                opacity: 0.65,
-                cursor: "not-allowed",
-              }}
-            >
-              <div className="quick-action-icon">
-                🔒
-              </div>
-
-              <div>
-                <strong>
-                  Siparişler
-                </strong>
-
-                <span>
-                  PRO paketi gerektirir
-                </span>
-              </div>
-
-              <b>
-                🔒
-              </b>
+                );
+              })}
             </div>
           )}
-
-          <Link
-            href={`/restoran/${restaurant.slug}/menu`}
-            className="quick-action"
-          >
-
-            <div className="quick-action-icon">
-              ↗
-            </div>
-
-            <div>
-
-              <strong>
-                Menüyü Gör
-              </strong>
-
-              <span>
-                Müşteri görünümünü aç
-              </span>
-
-            </div>
-
-            <b>
-              →
-            </b>
-
-          </Link>
-
-        </div>
-
-      </section>
-
-      {/* =================================================
-          YÖNETİM ALANLARI
-      ================================================= */}
-
-      <section className="dashboard-section">
-
-        <div
-          className="dashboard-section-heading"
-          style={{
-            marginBottom: "16px",
-          }}
-        >
-
-          <div>
-
-            <span>
-              YÖNETİM
-            </span>
-
-            <h2>
-              İşletmenizi yönetin
-            </h2>
-
-          </div>
-
-        </div>
-
-        <section
-          className="admin-grid"
-          style={{
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
-          }}
-        >
-
-          <Link
-            href="/admin/menu"
-            className="admin-card"
-          >
-
-            <span className="admin-card-icon">
-              📋
-            </span>
-
-            <h2>
-              Menü Yönetimi
-            </h2>
-
-            <p>
-              Ürünleri, fiyatları ve
-              kategorileri yönetin.
-            </p>
-
-            <span className="admin-card-arrow">
-              →
-            </span>
-
-          </Link>
-          <Link
-  href="/admin/menu/promosyon"
-  className="admin-card"
->
-  <span className="admin-card-icon">
-    🏷️
-  </span>
-
-  <h2>
-    Kampanyalar
-  </h2>
-
-  <p>
-    İndirim, kampanya ve popüler
-    ürünleri yönetin.
-  </p>
-
-  <span className="admin-card-arrow">
-    →
-  </span>
-</Link>
-
-          {hasPlanFeature(plan, "orders") ? (
-            <Link
-              href="/admin/orders"
-              className="admin-card"
-            >
-
-              <span className="admin-card-icon">
-                🛒
-              </span>
-
-              <h2>
-                Siparişler
-              </h2>
-
-              <p>
-                Gelen siparişleri
-                görüntüleyin ve yönetin.
-              </p>
-
-              <span className="admin-card-arrow">
-                →
-              </span>
-
-            </Link>
-          ) : (
-            <div
-              className="admin-card"
-              style={{
-                opacity: 0.65,
-                cursor: "not-allowed",
-              }}
-            >
-              <span className="admin-card-icon">
-                🔒
-              </span>
-
-              <h2>
-                Siparişler
-              </h2>
-
-              <p>
-                PRO paketi gerektirir.
-              </p>
-
-              <span className="admin-card-arrow">
-                🔒
-              </span>
-            </div>
-          )}
-
-          {canUseMultiUser ? (
-            <Link
-              href="/admin/calisanlar"
-              className="admin-card"
-            >
-
-              <span className="admin-card-icon">
-                👨‍🍳
-              </span>
-
-              <h2>
-                Çalışanlar
-              </h2>
-
-              <p>
-                Çalışanlarınızı ve
-                yetkilerini yönetin.
-              </p>
-
-              <span className="admin-card-arrow">
-                →
-              </span>
-
-            </Link>
-          ) : (
-            <div
-              className="admin-card"
-              style={{
-                opacity: 0.65,
-                cursor: "not-allowed",
-              }}
-            >
-              <span className="admin-card-icon">
-                🔒
-              </span>
-
-              <h2>
-                Çalışanlar
-              </h2>
-
-              <p>
-                PRO paketi gerektirir.
-              </p>
-
-              <span className="admin-card-arrow">
-                🔒
-              </span>
-            </div>
-          )}
-
-          <Link
-            href="/admin/degerlendirmeler"
-            className="admin-card"
-          >
-
-            <span className="admin-card-icon">
-              ⭐
-            </span>
-
-            <h2>
-              Değerlendirmeler
-            </h2>
-
-            <p>
-              Müşteri yorumlarını ve
-              puanlarını görüntüleyin.
-            </p>
-
-            <span className="admin-card-arrow">
-              →
-            </span>
-
-          </Link>
-
-          <Link
-            href="/admin/odemeler"
-            className="admin-card"
-          >
-
-            <span className="admin-card-icon">
-              💳
-            </span>
-
-            <h2>
-              Ödemeler
-            </h2>
-
-            <p>
-              Ödeme hareketlerini ve
-              finansal işlemleri görün.
-            </p>
-
-            <span className="admin-card-arrow">
-              →
-            </span>
-
-          </Link>
-
-          <Link
-            href="/admin/ayarlar"
-            className="admin-card"
-          >
-
-            <span className="admin-card-icon">
-              ⚙️
-            </span>
-
-            <h2>
-              İşletme Ayarları
-            </h2>
-
-            <p>
-              Restoran bilgilerinizi ve
-              ayarlarınızı düzenleyin.
-            </p>
-
-            <span className="admin-card-arrow">
-              →
-            </span>
-
-          </Link>
-
-          <Link
-            href="/admin/tables"
-            className="admin-card"
-          >
-
-            <span className="admin-card-icon">
-              🪑
-            </span>
-
-            <h2>
-              Masalar
-            </h2>
-
-            <p>
-              Masalarınızı ve masa QR kodlarını
-              yönetin.
-            </p>
-
-            <span className="admin-card-arrow">
-              →
-            </span>
-
-          </Link>
-
-          <Link
-            href="/admin/qr"
-            className="admin-card"
-          >
-
-            <span className="admin-card-icon">
-              📱
-            </span>
-
-            <h2>
-              QR / NFC
-            </h2>
-
-            <p>
-              Masalarınızın QR kodlarını
-              ve NFC bağlantılarını yönetin.
-            </p>
-
-            <span className="admin-card-arrow">
-              →
-            </span>
-
-          </Link>
-
         </section>
+      </div>
 
+      {/* ============ HIZLI İŞLEMLER ============ */}
+      <section className="adm-section" aria-labelledby="hizli-islemler">
+        <div className="adm-section-head">
+          <h2 id="hizli-islemler">Hızlı işlemler</h2>
+        </div>
+        <div className="adm-tiles">
+          <Link className="adm-tile" href="/admin/menu/yeni">
+            <span className="adm-tile-icon"><AdminIcon name="plus" /></span>
+            <span className="adm-tile-text">
+              <strong>Yeni ürün</strong>
+              <small>Menüye ürün ekleyin</small>
+            </span>
+          </Link>
+          <Link className="adm-tile" href="/admin/menu/kategori/yeni">
+            <span className="adm-tile-icon"><AdminIcon name="category" /></span>
+            <span className="adm-tile-text">
+              <strong>Yeni kategori</strong>
+              <small>Menüyü bölümlere ayırın</small>
+            </span>
+          </Link>
+          <Link className="adm-tile" href="/admin/tables">
+            <span className="adm-tile-icon"><AdminIcon name="table" /></span>
+            <span className="adm-tile-text">
+              <strong>Masalar ve QR</strong>
+              <small>Masa ekleyin, kod yazdırın</small>
+            </span>
+          </Link>
+          <Link className="adm-tile" href="/admin/ayarlar">
+            <span className="adm-tile-icon"><AdminIcon name="settings" /></span>
+            <span className="adm-tile-text">
+              <strong>İşletme ayarları</strong>
+              <small>Saatler, iletişim, WiFi</small>
+            </span>
+          </Link>
+          {canUseMultiUser && (
+            <Link className="adm-tile" href="/admin/calisanlar">
+              <span className="adm-tile-icon"><AdminIcon name="staff" /></span>
+              <span className="adm-tile-text">
+                <strong>Çalışanlar</strong>
+                <small>Ekibinizi yönetin</small>
+              </span>
+            </Link>
+          )}
+        </div>
       </section>
-
-      {/* =================================================
-          FOOTER
-      ================================================= */}
-
-      <footer className="admin-footer">
-
-        <span>
-          OZT Digital Menu
-        </span>
-
-        <span>
-          Dijital restoran yönetim sistemi
-        </span>
-
-      </footer>
-
     </main>
   );
 }

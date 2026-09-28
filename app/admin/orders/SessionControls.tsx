@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../lib/supabase/client";
+import AdminIcon from "../AdminIcon";
 
 export default function SessionControls({
   sessionId,
@@ -63,51 +64,20 @@ export default function SessionControls({
   }
 
   return (
-    <div
-      style={{
-        minWidth: "180px",
-        textAlign: "right",
-      }}
-    >
+    <div className="adm-session-actions">
       <button
         type="button"
+        className="adm-btn adm-btn-primary adm-btn-block"
         onClick={closeSession}
         disabled={loading}
-        style={{
-          width: "100%",
-          border: "none",
-          borderRadius: "11px",
-          padding: "11px 14px",
-          background:
-            loading ? "#aaa" : "#171717",
-          color: "#fff",
-          fontSize: "11px",
-          fontWeight: 900,
-          cursor:
-            loading
-              ? "not-allowed"
-              : "pointer",
-        }}
       >
-        {loading
-          ? "Hesap Kapatılıyor..."
-          : "💳 Hesabı Kapat / Ödendi"}
+        <AdminIcon name="wallet" size={16} />
+        {loading ? "Hesap kapatılıyor…" : "Hesabı kapat, ödendi say"}
       </button>
-
       {message && (
-        <div
-          style={{
-            marginTop: "7px",
-            color:
-              message.startsWith("✓")
-                ? "#15803d"
-                : "#b42318",
-            fontSize: "10px",
-            fontWeight: 700,
-          }}
-        >
-          {message}
-        </div>
+        <p className={`adm-alert ${message.startsWith("✓") ? "adm-alert-ok" : "adm-alert-error"}`} role="status" style={{ margin: 0 }}>
+          {message.replace(/^✓s*/, "")}
+        </p>
       )}
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../../../../lib/supabase/client";
+import AdminIcon from "../../AdminIcon";
 
 type Product = {
   id: number;
@@ -724,1150 +725,300 @@ export default function PromotionsPage() {
       )
     : null;
 
+  const activeCount = promotions.filter((promotion) => promotion.is_active).length;
+
+  function update<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((current) => ({ ...current, [key]: value }));
+  }
+
   return (
-    <main className="promotion-page">
-      <div className="promotion-container">
-        <header className="promotion-header">
-          <div>
-            <a
-              href="/admin/menu"
-              className="back-link"
-            >
-              ← Menü Yönetimi
-            </a>
+    <main className="adm-page">
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">Menü</span>
+          <h1>Kampanyalar</h1>
+          <p>{restaurantName} için indirimleri ve öne çıkan ürünleri yönetin.</p>
+        </div>
+        <span className="adm-badge s-ok is-dot">{activeCount} aktif kampanya</span>
+      </header>
 
-            <span className="kicker">
-              KAMPANYA & PROMOSYON
-            </span>
+      {message && (
+        <p className="adm-alert adm-alert-ok" role="status">
+          <AdminIcon name="check" size={16} />
+          {message.replace(/^[✓✅]\s*/, "")}
+        </p>
+      )}
 
-            <h1>
-              Kampanyalar
-            </h1>
+      {error && (
+        <p className="adm-alert adm-alert-error" role="alert">
+          <AdminIcon name="alert" size={16} />
+          {error}
+        </p>
+      )}
 
-            <p>
-              {restaurantName} için indirim,
-              popüler ürün ve promosyonları
-              yönetin.
-            </p>
-          </div>
-
-          <div className="header-count">
-            <span>AKTİF KAMPANYA</span>
-            <strong>
-              {
-                promotions.filter(
-                  (promotion) =>
-                    promotion.is_active
-                ).length
-              }
-            </strong>
-          </div>
-        </header>
-
-        {message && (
-          <div className="success-message">
-            ✓ {message}
-          </div>
-        )}
-
-        {error && (
-          <div className="error-message">
-            ❌ {error}
-          </div>
-        )}
-
-        <section className="promotion-form-card">
-          <div className="section-title">
+      <div className="adm-split">
+        {/* ============ LİSTE ============ */}
+        <section className="adm-section" aria-labelledby="kampanya-listesi">
+          <div className="adm-section-head">
             <div>
-              <span>
-                {editingId
-                  ? "KAMPANYA DÜZENLE"
-                  : "YENİ KAMPANYA"}
-              </span>
-
-              <h2>
-                {editingId
-                  ? "Kampanyayı güncelle"
-                  : "Kampanya oluştur"}
-              </h2>
+              <h2 id="kampanya-listesi">Tanımlı kampanyalar</h2>
+              <p>{promotions.length} kayıt</p>
             </div>
+          </div>
 
+          {loading ? (
+            <p className="adm-hint">Kampanyalar yükleniyor…</p>
+          ) : promotions.length === 0 ? (
+            <div className="adm-empty">
+              <span className="adm-empty-icon"><AdminIcon name="promo" /></span>
+              <strong>Henüz kampanya yok</strong>
+              <p>Sağdaki formdan ilk kampanyanızı oluşturun; ürün ya da kategori bazında indirim tanımlayabilirsiniz.</p>
+            </div>
+          ) : (
+            <div className="adm-reviews">
+              {promotions.map((promotion) => (
+                <article
+                  key={promotion.id}
+                  className={`adm-card adm-promo ${promotion.is_active ? "" : "is-off"} ${editingId === promotion.id ? "is-editing" : ""}`}
+                >
+                  <div className="adm-promo-top">
+                    <span className="adm-promo-value">{getDiscountText(promotion)}</span>
+                    <span className="adm-row-main">
+                      <strong>
+                        {promotion.title}
+                        {promotion.is_popular && (
+                          <span className="adm-badge s-accent">
+                            <AdminIcon name="star" size={11} /> Popüler
+                          </span>
+                        )}
+                      </strong>
+                      <small>{getTargetName(promotion)}</small>
+                    </span>
+                    <span className={`adm-badge is-dot ${promotion.is_active ? "s-ok" : "s-delivered"}`}>
+                      {promotion.is_active ? "Aktif" : "Pasif"}
+                    </span>
+                  </div>
+
+                  {promotion.description && <p className="adm-review-text">{promotion.description}</p>}
+
+                  <div className="adm-review-foot">
+                    <span className="adm-muted" style={{ fontSize: 12.5 }}>
+                      <AdminIcon name="calendar" size={14} />{" "}
+                      {formatDate(promotion.start_at)} → {formatDate(promotion.end_at)}
+                    </span>
+                    <span className="adm-review-actions">
+                      <button type="button" className="adm-btn adm-btn-sm" onClick={() => togglePromotion(promotion)}>
+                        <AdminIcon name={promotion.is_active ? "eyeOff" : "eye"} size={15} />
+                        {promotion.is_active ? "Durdur" : "Başlat"}
+                      </button>
+                      <button type="button" className="adm-btn adm-btn-sm" onClick={() => startEdit(promotion)}>
+                        <AdminIcon name="edit" size={15} />
+                        Düzenle
+                      </button>
+                      <button
+                        type="button"
+                        className="adm-btn adm-btn-sm adm-btn-icon adm-btn-ghost adm-text-danger"
+                        disabled={deletingId === promotion.id}
+                        onClick={() => deletePromotion(promotion)}
+                        aria-label="Kampanyayı sil"
+                        title="Sil"
+                      >
+                        <AdminIcon name="trash" size={15} />
+                      </button>
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ============ FORM ============ */}
+        <section className="adm-card adm-sticky-card adm-split-side" aria-labelledby="kampanya-form">
+          <div className="adm-card-head">
+            <div>
+              <h2 id="kampanya-form">{editingId ? "Kampanyayı düzenle" : "Yeni kampanya"}</h2>
+              <p>{editingId ? "Değişiklikler kaydedince uygulanır." : "Ürün ya da kategori için indirim tanımlayın."}</p>
+            </div>
             {editingId && (
-              <button
-                type="button"
-                className="cancel-button"
-                onClick={resetForm}
-              >
+              <button type="button" className="adm-btn adm-btn-sm adm-btn-ghost" onClick={resetForm}>
                 Vazgeç
               </button>
             )}
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="promotion-form"
-          >
-            <div className="form-grid">
-              <label>
-                Kampanya başlığı
-                <input
-                  value={form.title}
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      title:
-                        event.target.value,
-                    })
-                  }
-                  placeholder="Örn. Hafta Sonu %20 İndirim"
+          <form onSubmit={handleSubmit} className="adm-form">
+            <div className="adm-field">
+              <label className="adm-label" htmlFor="kampanya-baslik">Başlık</label>
+              <input
+                id="kampanya-baslik"
+                className="adm-input"
+                value={form.title}
+                onChange={(event) => update("title", event.target.value)}
+                placeholder="Örn. Hafta sonu %20 indirim"
+                required
+              />
+            </div>
+
+            <div className="adm-field">
+              <label className="adm-label" htmlFor="kampanya-aciklama">
+                Açıklama <em>· isteğe bağlı</em>
+              </label>
+              <input
+                id="kampanya-aciklama"
+                className="adm-input"
+                value={form.description}
+                onChange={(event) => update("description", event.target.value)}
+                placeholder="Kısa açıklama"
+              />
+            </div>
+
+            <div className="adm-field">
+              <span className="adm-label">Hedef</span>
+              <div className="adm-seg" role="radiogroup" aria-label="Kampanya hedefi" style={{ width: "100%" }}>
+                {(["product", "category"] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    role="radio"
+                    aria-checked={form.targetType === type}
+                    className={form.targetType === type ? "is-active" : ""}
+                    style={{ flex: 1 }}
+                    onClick={() => setForm((current) => ({ ...current, targetType: type, productId: "", categoryId: "" }))}
+                  >
+                    {type === "product" ? "Tek ürün" : "Kategori"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {form.targetType === "product" ? (
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="kampanya-urun">Ürün</label>
+                <select
+                  id="kampanya-urun"
+                  className="adm-select"
+                  value={form.productId}
+                  onChange={(event) => update("productId", event.target.value)}
                   required
-                />
-              </label>
-
-              <label>
-                Açıklama
-                <input
-                  value={form.description}
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      description:
-                        event.target.value,
-                    })
-                  }
-                  placeholder="Kampanya kısa açıklaması"
-                />
-              </label>
-
-              <label>
-                Kampanya hedefi
-                <select
-                  value={form.targetType}
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      targetType:
-                        event.target
-                          .value as
-                          | "product"
-                          | "category",
-                      productId: "",
-                      categoryId: "",
-                    })
-                  }
                 >
-                  <option value="product">
-                    Tek ürün
-                  </option>
-
-                  <option value="category">
-                    Kategori
-                  </option>
+                  <option value="">Ürün seçin</option>
+                  {products.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name} — {formatPrice(Number(product.price))} ₺
+                    </option>
+                  ))}
                 </select>
-              </label>
-
-              {form.targetType ===
-              "product" ? (
-                <label>
-                  Ürün
-                  <select
-                    value={
-                      form.productId
-                    }
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        productId:
-                          event.target
-                            .value,
-                      })
-                    }
-                    required
-                  >
-                    <option value="">
-                      Ürün seçin
-                    </option>
-
-                    {products.map(
-                      (product) => (
-                        <option
-                          key={
-                            product.id
-                          }
-                          value={
-                            product.id
-                          }
-                        >
-                          {product.name} —{" "}
-                          {formatPrice(
-                            Number(
-                              product.price
-                            )
-                          )}{" "}
-                          TL
-                        </option>
-                      )
-                    )}
-                  </select>
-                </label>
-              ) : (
-                <label>
-                  Kategori
-                  <select
-                    value={
-                      form.categoryId
-                    }
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        categoryId:
-                          event.target
-                            .value,
-                      })
-                    }
-                    required
-                  >
-                    <option value="">
-                      Kategori seçin
-                    </option>
-
-                    {categories.map(
-                      (category) => (
-                        <option
-                          key={
-                            category.id
-                          }
-                          value={
-                            category.id
-                          }
-                        >
-                          {category.name}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </label>
-              )}
-
-              <label>
-                İndirim tipi
+              </div>
+            ) : (
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="kampanya-kategori">Kategori</label>
                 <select
-                  value={
-                    form.discountType
-                  }
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      discountType:
-                        event.target
-                          .value as
-                          | "percentage"
-                          | "fixed",
-                    })
-                  }
+                  id="kampanya-kategori"
+                  className="adm-select"
+                  value={form.categoryId}
+                  onChange={(event) => update("categoryId", event.target.value)}
+                  required
                 >
-                  <option value="percentage">
-                    Yüzde indirim
-                  </option>
-
-                  <option value="fixed">
-                    Sabit TL indirim
-                  </option>
+                  <option value="">Kategori seçin</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
-              </label>
+              </div>
+            )}
 
-              <label>
-                İndirim değeri
-                <div className="input-with-suffix">
+            <div className="adm-form-grid">
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="kampanya-tip">İndirim tipi</label>
+                <select
+                  id="kampanya-tip"
+                  className="adm-select"
+                  value={form.discountType}
+                  onChange={(event) => update("discountType", event.target.value as "percentage" | "fixed")}
+                >
+                  <option value="percentage">Yüzde</option>
+                  <option value="fixed">Sabit tutar</option>
+                </select>
+              </div>
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="kampanya-deger">İndirim</label>
+                <div className="adm-input-group">
                   <input
+                    id="kampanya-deger"
                     type="number"
                     min="0.01"
-                    max={
-                      form.discountType ===
-                      "percentage"
-                        ? "100"
-                        : undefined
-                    }
+                    max={form.discountType === "percentage" ? "100" : undefined}
                     step="0.01"
-                    value={
-                      form.discountValue
-                    }
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        discountValue:
-                          event.target
-                            .value,
-                      })
-                    }
-                    placeholder={
-                      form.discountType ===
-                      "percentage"
-                        ? "20"
-                        : "50"
-                    }
+                    inputMode="decimal"
+                    value={form.discountValue}
+                    onChange={(event) => update("discountValue", event.target.value)}
+                    placeholder={form.discountType === "percentage" ? "20" : "50"}
                     required
                   />
-
-                  <span>
-                    {form.discountType ===
-                    "percentage"
-                      ? "%"
-                      : "TL"}
-                  </span>
+                  <span>{form.discountType === "percentage" ? "%" : "₺"}</span>
                 </div>
-              </label>
-
-              <label>
-                Başlangıç
+              </div>
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="kampanya-bas">Başlangıç <em>· boşsa hemen</em></label>
                 <input
+                  id="kampanya-bas"
+                  className="adm-input"
                   type="datetime-local"
-                  value={
-                    form.startAt
-                  }
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      startAt:
-                        event.target
-                          .value,
-                    })
-                  }
+                  value={form.startAt}
+                  onChange={(event) => update("startAt", event.target.value)}
                 />
-              </label>
-
-              <label>
-                Bitiş
+              </div>
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="kampanya-bit">Bitiş <em>· boşsa süresiz</em></label>
                 <input
+                  id="kampanya-bit"
+                  className="adm-input"
                   type="datetime-local"
-                  value={
-                    form.endAt
-                  }
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      endAt:
-                        event.target
-                          .value,
-                    })
-                  }
+                  value={form.endAt}
+                  onChange={(event) => update("endAt", event.target.value)}
                 />
-              </label>
+              </div>
             </div>
 
-            <div className="form-options">
-              <label className="check-option">
-                <input
-                  type="checkbox"
-                  checked={
-                    form.isActive
-                  }
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      isActive:
-                        event.target
-                          .checked,
-                    })
-                  }
-                />
+            <label className="adm-check">
+              <input type="checkbox" checked={form.isActive} onChange={(event) => update("isActive", event.target.checked)} />
+              <span>
+                <strong>Kampanya aktif</strong>
+                <span>Kapalıyken menüde uygulanmaz.</span>
+              </span>
+            </label>
 
+            <label className="adm-check">
+              <input type="checkbox" checked={form.isPopular} onChange={(event) => update("isPopular", event.target.checked)} />
+              <span>
+                <strong>Popüler olarak işaretle</strong>
+                <span>Ürün menüde öne çıkarılır.</span>
+              </span>
+            </label>
+
+            {selectedProduct && previewPrice !== null && (
+              <div className="adm-price-preview">
                 <span>
-                  Kampanya aktif
+                  <small>Fiyat önizlemesi</small>
+                  <strong>{selectedProduct.name}</strong>
                 </span>
-              </label>
-
-              <label className="check-option">
-                <input
-                  type="checkbox"
-                  checked={
-                    form.isPopular
-                  }
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      isPopular:
-                        event.target
-                          .checked,
-                    })
-                  }
-                />
-
-                <span>
-                  ⭐ Popüler ürün olarak göster
+                <span className="adm-price-preview-values">
+                  <del>{formatPrice(Number(selectedProduct.price))} ₺</del>
+                  <strong>{formatPrice(previewPrice)} ₺</strong>
                 </span>
-              </label>
-            </div>
+              </div>
+            )}
 
-            {selectedProduct &&
-              previewPrice !== null && (
-                <div className="price-preview">
-                  <div>
-                    <span>
-                      FİYAT ÖNİZLEMESİ
-                    </span>
-
-                    <strong>
-                      {selectedProduct.name}
-                    </strong>
-                  </div>
-
-                  <div className="preview-prices">
-                    <del>
-                      {formatPrice(
-                        Number(
-                          selectedProduct.price
-                        )
-                      )}{" "}
-                      TL
-                    </del>
-
-                    <strong>
-                      {formatPrice(
-                        previewPrice
-                      )}{" "}
-                      TL
-                    </strong>
-                  </div>
-                </div>
-              )}
-
-            <button
-              type="submit"
-              className="save-button"
-              disabled={saving}
-            >
-              {saving
-                ? "Kaydediliyor..."
-                : editingId
-                ? "Değişiklikleri Kaydet"
-                : "🏷️ Kampanyayı Oluştur"}
+            <button type="submit" className="adm-btn adm-btn-primary adm-btn-lg adm-btn-block" disabled={saving}>
+              <AdminIcon name={editingId ? "save" : "plus"} size={17} />
+              {saving ? "Kaydediliyor…" : editingId ? "Değişiklikleri kaydet" : "Kampanyayı oluştur"}
             </button>
           </form>
         </section>
-
-        <section className="promotion-list-card">
-          <div className="section-title">
-            <div>
-              <span>
-                KAMPANYALAR
-              </span>
-
-              <h2>
-                Tanımlı kampanyalar
-              </h2>
-            </div>
-
-            <strong className="record-count">
-              {promotions.length} kayıt
-            </strong>
-          </div>
-
-          {loading ? (
-            <div className="empty-state">
-              ⏳ Kampanyalar yükleniyor...
-            </div>
-          ) : promotions.length ===
-            0 ? (
-            <div className="empty-state">
-              <div>
-                🏷️
-              </div>
-
-              <strong>
-                Henüz kampanya yok.
-              </strong>
-
-              <span>
-                Yukarıdaki formdan ilk
-                kampanyanızı oluşturabilirsiniz.
-              </span>
-            </div>
-          ) : (
-            <div className="promotion-list">
-              {promotions.map(
-                (promotion) => (
-                  <article
-                    key={promotion.id}
-                    className="promotion-row"
-                  >
-                    <div className="promotion-main">
-                      <div className="promotion-icon">
-                        {promotion.is_popular
-                          ? "⭐"
-                          : "🏷️"}
-                      </div>
-
-                      <div>
-                        <div className="promotion-title-line">
-                          <strong>
-                            {promotion.title}
-                          </strong>
-
-                          <span
-                            className={
-                              promotion.is_active
-                                ? "active-badge"
-                                : "passive-badge"
-                            }
-                          >
-                            {promotion.is_active
-                              ? "Aktif"
-                              : "Pasif"}
-                          </span>
-                        </div>
-
-                        <span className="promotion-target">
-                          {getTargetName(
-                            promotion
-                          )}
-                        </span>
-
-                        {promotion
-                          .description && (
-                          <p>
-                            {
-                              promotion.description
-                            }
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="promotion-discount">
-                      <small>
-                        İNDİRİM
-                      </small>
-
-                      <strong>
-                        {getDiscountText(
-                          promotion
-                        )}
-                      </strong>
-                    </div>
-
-                    <div className="promotion-dates">
-                      <small>
-                        GEÇERLİLİK
-                      </small>
-
-                      <span>
-                        {formatDate(
-                          promotion.start_at
-                        )}
-                      </span>
-
-                      <span>
-                        →{" "}
-                        {formatDate(
-                          promotion.end_at
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="promotion-actions">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          togglePromotion(
-                            promotion
-                          )
-                        }
-                      >
-                        {promotion.is_active
-                          ? "⏸ Pasifleştir"
-                          : "▶ Aktifleştir"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          startEdit(
-                            promotion
-                          )
-                        }
-                      >
-                        ✏️ Düzenle
-                      </button>
-
-                      <button
-                        type="button"
-                        className="danger-button"
-                        disabled={
-                          deletingId ===
-                          promotion.id
-                        }
-                        onClick={() =>
-                          deletePromotion(
-                            promotion
-                          )
-                        }
-                      >
-                        {deletingId ===
-                        promotion.id
-                          ? "Siliniyor..."
-                          : "🗑️ Sil"}
-                      </button>
-                    </div>
-                  </article>
-                )
-              )}
-            </div>
-          )}
-        </section>
-
-        <div className="footer-note">
-          Kampanyalar yalnızca bağlı olduğunuz
-          işletmenin verileri üzerinde çalışır.
-        </div>
       </div>
-
-      <style jsx>{`
-        * {
-          box-sizing: border-box;
-        }
-
-        .promotion-page {
-          min-height: 100vh;
-          padding: 30px 20px 70px;
-          background: #f3f1ed;
-          color: #171717;
-          font-family:
-            Arial,
-            Helvetica,
-            sans-serif;
-        }
-
-        .promotion-container {
-          width: min(1180px, 100%);
-          margin: 0 auto;
-        }
-
-        .promotion-header {
-          position: relative;
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-between;
-          gap: 25px;
-          margin-bottom: 18px;
-          padding: 36px;
-          overflow: hidden;
-          border-radius: 24px;
-          color: white;
-          background:
-            radial-gradient(
-              circle at 90% 0%,
-              rgba(212, 161, 42, 0.22),
-              transparent 31%
-            ),
-            linear-gradient(
-              135deg,
-              #11110f,
-              #272219
-            );
-          box-shadow:
-            0 20px 50px
-              rgba(0, 0, 0, 0.12);
-        }
-
-        .promotion-header::after {
-          content: "";
-          position: absolute;
-          width: 260px;
-          height: 260px;
-          right: -135px;
-          top: -175px;
-          border: 1px solid
-            rgba(220, 165, 43, 0.32);
-          border-radius: 50%;
-        }
-
-        .back-link {
-          display: inline-block;
-          margin-bottom: 18px;
-          color: #dca52b;
-          text-decoration: none;
-          font-size: 12px;
-          font-weight: 800;
-        }
-
-        .kicker,
-        .section-title > div > span {
-          display: block;
-          color: #c8941d;
-          font-size: 9px;
-          font-weight: 900;
-          letter-spacing: 0.16em;
-        }
-
-        .promotion-header h1 {
-          margin: 7px 0 0;
-          font-size: clamp(30px, 4vw, 44px);
-          letter-spacing: -0.04em;
-        }
-
-        .promotion-header p {
-          margin: 10px 0 0;
-          max-width: 620px;
-          color: rgba(255, 255, 255, 0.65);
-          font-size: 13px;
-        }
-
-        .header-count {
-          position: relative;
-          z-index: 2;
-          min-width: 145px;
-          padding: 17px;
-          border: 1px solid
-            rgba(255, 255, 255, 0.13);
-          border-radius: 14px;
-          background: rgba(
-            255,
-            255,
-            255,
-            0.05
-          );
-          text-align: center;
-        }
-
-        .header-count span {
-          display: block;
-          margin-bottom: 5px;
-          color: #aaa;
-          font-size: 8px;
-          font-weight: 900;
-        }
-
-        .header-count strong {
-          font-size: 26px;
-        }
-
-        .success-message,
-        .error-message {
-          margin-bottom: 14px;
-          padding: 13px 16px;
-          border-radius: 11px;
-          font-size: 12px;
-          font-weight: 700;
-        }
-
-        .success-message {
-          border: 1px solid #bde3c6;
-          background: #eefaf1;
-          color: #26733e;
-        }
-
-        .error-message {
-          border: 1px solid #edc6c6;
-          background: #fff2f2;
-          color: #a62c2c;
-        }
-
-        .promotion-form-card,
-        .promotion-list-card {
-          margin-bottom: 18px;
-          padding: 24px;
-          border: 1px solid #e5dfd5;
-          border-radius: 20px;
-          background: white;
-          box-shadow:
-            0 10px 30px
-              rgba(60, 50, 30, 0.05);
-        }
-
-        .section-title {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 15px;
-          margin-bottom: 20px;
-        }
-
-        .section-title h2 {
-          margin: 5px 0 0;
-          font-size: 21px;
-        }
-
-        .cancel-button {
-          border: 0;
-          border-radius: 9px;
-          padding: 9px 12px;
-          background: #f1efeb;
-          color: #555;
-          font-size: 11px;
-          font-weight: 800;
-          cursor: pointer;
-        }
-
-        .promotion-form {
-          display: grid;
-          gap: 16px;
-        }
-
-        .form-grid {
-          display: grid;
-          grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-          gap: 14px;
-        }
-
-        label {
-          display: grid;
-          gap: 7px;
-          color: #555;
-          font-size: 11px;
-          font-weight: 800;
-        }
-
-        input,
-        select {
-          width: 100%;
-          min-height: 42px;
-          padding: 10px 12px;
-          border: 1px solid #ddd6ca;
-          border-radius: 9px;
-          outline: none;
-          background: #faf9f6;
-          color: #171717;
-          font: inherit;
-          font-weight: 500;
-        }
-
-        input:focus,
-        select:focus {
-          border-color: #c8941d;
-          background: white;
-        }
-
-        .input-with-suffix {
-          position: relative;
-        }
-
-        .input-with-suffix input {
-          padding-right: 42px;
-        }
-
-        .input-with-suffix span {
-          position: absolute;
-          top: 50%;
-          right: 13px;
-          transform: translateY(-50%);
-          color: #888;
-          font-size: 11px;
-          font-weight: 900;
-        }
-
-        .form-options {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-
-        .check-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          width: fit-content;
-          padding: 10px 12px;
-          border: 1px solid #e7dfd1;
-          border-radius: 10px;
-          background: #fbf8f1;
-          cursor: pointer;
-        }
-
-        .check-option input {
-          width: 17px;
-          min-height: 17px;
-          accent-color: #c8941d;
-        }
-
-        .price-preview {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 15px;
-          padding: 14px 16px;
-          border: 1px solid #ead8ac;
-          border-radius: 12px;
-          background: #fffaf0;
-        }
-
-        .price-preview span,
-        .price-preview strong {
-          display: block;
-        }
-
-        .price-preview span {
-          margin-bottom: 4px;
-          color: #b07d0e;
-          font-size: 8px;
-          font-weight: 900;
-          letter-spacing: 0.12em;
-        }
-
-        .price-preview > div:first-child strong {
-          font-size: 12px;
-        }
-
-        .preview-prices {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .preview-prices del {
-          color: #999;
-          font-size: 11px;
-        }
-
-        .preview-prices strong {
-          color: #a66f00;
-          font-size: 17px;
-        }
-
-        .save-button {
-          min-height: 44px;
-          border: 0;
-          border-radius: 10px;
-          background: #171717;
-          color: white;
-          font-size: 12px;
-          font-weight: 900;
-          cursor: pointer;
-        }
-
-        .save-button:disabled {
-          opacity: 0.55;
-          cursor: not-allowed;
-        }
-
-        .record-count {
-          color: #999;
-          font-size: 11px;
-        }
-
-        .empty-state {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-direction: column;
-          gap: 7px;
-          min-height: 220px;
-          text-align: center;
-          color: #999;
-          font-size: 11px;
-        }
-
-        .empty-state div {
-          font-size: 34px;
-        }
-
-        .empty-state strong {
-          color: #333;
-          font-size: 13px;
-        }
-
-        .promotion-list {
-          display: grid;
-        }
-
-        .promotion-row {
-          display: grid;
-          grid-template-columns:
-            minmax(260px, 1.7fr)
-            minmax(100px, 0.65fr)
-            minmax(150px, 1fr)
-            minmax(190px, 1.15fr);
-          gap: 18px;
-          align-items: center;
-          padding: 17px 0;
-          border-bottom: 1px solid #eee9e1;
-        }
-
-        .promotion-row:last-child {
-          border-bottom: 0;
-        }
-
-        .promotion-main {
-          display: flex;
-          align-items: center;
-          gap: 11px;
-          min-width: 0;
-        }
-
-        .promotion-icon {
-          display: grid;
-          place-items: center;
-          flex: 0 0 39px;
-          width: 39px;
-          height: 39px;
-          border-radius: 10px;
-          background: #faf4e6;
-          font-size: 17px;
-        }
-
-        .promotion-title-line {
-          display: flex;
-          align-items: center;
-          gap: 7px;
-          flex-wrap: wrap;
-        }
-
-        .promotion-title-line strong {
-          font-size: 12px;
-        }
-
-        .active-badge,
-        .passive-badge {
-          padding: 4px 7px;
-          border-radius: 6px;
-          font-size: 8px;
-          font-weight: 900;
-        }
-
-        .active-badge {
-          background: #eaf8ee;
-          color: #237943;
-        }
-
-        .passive-badge {
-          background: #f1efeb;
-          color: #888;
-        }
-
-        .promotion-target {
-          display: block;
-          margin-top: 4px;
-          color: #777;
-          font-size: 10px;
-        }
-
-        .promotion-main p {
-          margin: 4px 0 0;
-          color: #999;
-          font-size: 9px;
-        }
-
-        .promotion-discount small,
-        .promotion-dates small {
-          display: block;
-          margin-bottom: 5px;
-          color: #aaa;
-          font-size: 8px;
-          font-weight: 900;
-          letter-spacing: 0.08em;
-        }
-
-        .promotion-discount strong {
-          color: #a66f00;
-          font-size: 17px;
-        }
-
-        .promotion-dates span {
-          display: block;
-          color: #777;
-          font-size: 9px;
-          line-height: 1.6;
-        }
-
-        .promotion-actions {
-          display: flex;
-          justify-content: flex-end;
-          gap: 6px;
-          flex-wrap: wrap;
-        }
-
-        .promotion-actions button {
-          border: 0;
-          border-radius: 8px;
-          padding: 7px 9px;
-          background: #f1efeb;
-          color: #555;
-          font-size: 9px;
-          font-weight: 800;
-          cursor: pointer;
-        }
-
-        .promotion-actions button:hover {
-          background: #e8e3da;
-        }
-
-        .promotion-actions .danger-button {
-          background: #fff0ef;
-          color: #b42318;
-        }
-
-        .promotion-actions button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .footer-note {
-          padding: 12px;
-          color: #999;
-          text-align: center;
-          font-size: 10px;
-        }
-
-        @media (max-width: 950px) {
-          .promotion-row {
-            grid-template-columns:
-              1fr 0.5fr;
-          }
-
-          .promotion-actions {
-            justify-content: flex-start;
-          }
-
-          .promotion-dates {
-            display: none;
-          }
-        }
-
-        @media (max-width: 650px) {
-          .promotion-page {
-            padding: 16px 11px 50px;
-          }
-
-          .promotion-header {
-            align-items: flex-start;
-            flex-direction: column;
-            padding: 25px 20px;
-          }
-
-          .header-count {
-            width: 100%;
-          }
-
-          .promotion-form-card,
-          .promotion-list-card {
-            padding: 18px;
-            border-radius: 16px;
-          }
-
-          .form-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .price-preview {
-            align-items: flex-start;
-            flex-direction: column;
-          }
-
-          .promotion-row {
-            grid-template-columns: 1fr;
-            gap: 11px;
-          }
-
-          .promotion-discount {
-            padding-left: 50px;
-          }
-
-          .promotion-actions {
-            padding-left: 50px;
-          }
-        }
-      `}</style>
     </main>
   );
 }

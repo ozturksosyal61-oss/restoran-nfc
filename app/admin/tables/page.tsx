@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { createClient } from "../../../lib/supabase/client";
 import NfcWriter from "./NfcWriter";
+import AdminIcon from "../AdminIcon";
 
 type Restaurant = {
   id: number;
@@ -1071,1300 +1072,323 @@ export default function TablesPage() {
 
   if (!canManageTables) {
     return (
-      <main
-        style={{
-          minHeight: "100vh",
-          background: "#f5f3ef",
-          padding: "30px 16px 60px",
-          color: "#171717",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "700px",
-            margin: "0 auto",
-          }}
-        >
-          <div
-            style={{
-              background: "#171717",
-              color: "#fff",
-              borderRadius: "18px",
-              padding: "28px 24px",
-              marginBottom: "18px",
-            }}
-          >
-            <div
-              style={{
-                color: "#d99b08",
-                fontSize: "10px",
-                fontWeight: 800,
-                letterSpacing: "1.5px",
-                marginBottom: "6px",
-              }}
-            >
-              MASA YÖNETİMİ
-            </div>
-
-            <h1
-              style={{
-                margin: 0,
-                fontSize: "25px",
-              }}
-            >
-              QR / NFC Masa Yönetimi
-            </h1>
+      <main className="adm-page">
+        <header className="adm-head">
+          <div className="adm-head-text">
+            <span className="adm-eyebrow">İşletme</span>
+            <h1>Masalar</h1>
           </div>
-
-          <div
-            style={{
-              background: "#fff",
-              border: "1px solid #e7e2da",
-              borderRadius: "18px",
-              padding: "30px 24px",
-              textAlign: "center",
-            }}
-          >
-            <div
-              style={{
-                width: "56px",
-                height: "56px",
-                margin: "0 auto 15px",
-                borderRadius: "50%",
-                background: "#fff4e5",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "26px",
-              }}
-            >
-              🔒
-            </div>
-
-            <h2
-              style={{
-                margin: "0 0 8px",
-                fontSize: "21px",
-              }}
-            >
-              Erişim Yetkiniz Yok
-            </h2>
-
-            <p
-              style={{
-                margin: 0,
-                color: "#777",
-                fontSize: "13px",
-                lineHeight: 1.6,
-              }}
-            >
-              Bu hesabın Masa Yönetimi yetkisi bulunmuyor.
-              <br />
-              İşletme yöneticisinden <strong>Masalar</strong> yetkisini istemelisiniz.
-            </p>
-          </div>
+        </header>
+        <div className="adm-lock">
+          <span className="adm-badge s-accent">
+            <AdminIcon name="lock" size={12} /> Yetki gerekli
+          </span>
+          <h2>Masa yönetimi yetkiniz yok</h2>
+          <p>
+            Bu hesap masaları yönetemiyor. İşletme yöneticisinden
+            <strong> Masalar </strong>
+            yetkisini isteyin.
+          </p>
         </div>
       </main>
     );
   }
 
+  const activeCount = tables.filter((table) => table.is_active).length;
+
   return (
-    <main
-      style={{
-        minHeight:
-          "100vh",
-        background:
-          "#f5f3ef",
-        padding:
-          "30px 16px 60px",
-        color:
-          "#171717",
-      }}
-    >
-      <div
-        style={{
-          maxWidth:
-            "1000px",
-          margin:
-            "0 auto",
-        }}
-      >
-
-        {/* HEADER */}
-
-        <header
-          style={{
-            background:
-              "#171717",
-            color:
-              "#fff",
-            borderRadius:
-              "18px",
-            padding:
-              "28px 24px",
-            marginBottom:
-              "18px",
-          }}
-        >
-          <div
-            style={{
-              color:
-                "#d99b08",
-              fontSize:
-                "10px",
-              fontWeight:
-                800,
-              letterSpacing:
-                "1.5px",
-              marginBottom:
-                "6px",
-            }}
-          >
-            MASA YÖNETİMİ
-          </div>
-
-          <h1
-            style={{
-              margin:
-                0,
-              fontSize:
-                "25px",
-            }}
-          >
-            QR / NFC Masa Yönetimi
-          </h1>
-
-          <p
-            style={{
-              margin:
-                "8px 0 0",
-              color:
-                "#cfcfcf",
-              fontSize:
-                "12px",
-            }}
-          >
-            Her masa için benzersiz QR
-            bağlantısı oluştur.
+    <main className="adm-page">
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">İşletme</span>
+          <h1>Masalar</h1>
+          <p>
+            Her masanın kendine ait QR ve NFC bağlantısı vardır. Müşteri bu
+            bağlantıyla sipariş verir, garson çağırır.
           </p>
-
-          <a
-            href="/admin"
-            style={{
-              display: "inline-block",
-              marginTop: "14px",
-              color: "#fff",
-              textDecoration: "none",
-              fontSize: "11px",
-              fontWeight: 800,
-              opacity: 0.78,
-            }}
+        </div>
+        <div className="adm-head-actions">
+          <button
+            type="button"
+            className="adm-btn"
+            onClick={printAllQrs}
+            disabled={filteredTables.length === 0}
           >
-            ← Yönetim Paneline Dön
-          </a>
-        </header>
+            <AdminIcon name="download" size={16} />
+            Tüm QR&apos;ları yazdır
+          </button>
+        </div>
+      </header>
 
-        {/* HATA */}
+      {error && (
+        <p className="adm-alert adm-alert-error" role="alert">
+          <AdminIcon name="alert" size={16} />
+          {error.replace(/^⚠️\s*/, "")}
+        </p>
+      )}
 
-        {error && (
-          <div
-            style={{
-              background:
-                "#fff0f0",
-              border:
-                "1px solid #efb1b1",
-              color:
-                "#b42318",
-              borderRadius:
-                "12px",
-              padding:
-                "12px 15px",
-              marginBottom:
-                "15px",
-              fontSize:
-                "13px",
-              fontWeight:
-                700,
-            }}
-          >
-            ⚠️ {error}
+      {message && (
+        <p className="adm-alert adm-alert-ok" role="status">
+          <AdminIcon name="check" size={16} />
+          {message.replace(/^[✓✅]\s*/, "")}
+        </p>
+      )}
+
+      <section className="adm-stats" aria-label="Masa özeti">
+        <div className="adm-stat">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Toplam masa</span>
+            <span className="adm-stat-icon"><AdminIcon name="table" size={16} /></span>
           </div>
-        )}
-
-        {/* BAÅARI */}
-
-        {message && (
-          <div
-            style={{
-              background:
-                "#effaf2",
-              border:
-                "1px solid #b7e1c1",
-              color:
-                "#16733a",
-              borderRadius:
-                "12px",
-              padding:
-                "12px 15px",
-              marginBottom:
-                "15px",
-              fontSize:
-                "13px",
-              fontWeight:
-                700,
-            }}
-          >
-            {message}
+          <span className="adm-stat-value">{tables.length}</span>
+          <span className="adm-stat-hint">{selectedRestaurant?.name || "İşletme yükleniyor…"}</span>
+        </div>
+        <div className="adm-stat tone-ok">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Aktif</span>
+            <span className="adm-stat-icon"><AdminIcon name="check" size={16} /></span>
           </div>
-        )}
-
-        {/* RESTORAN */}
-
-        <section
-          style={{
-            background:
-              "#fff",
-            borderRadius:
-              "18px",
-            padding:
-              "20px",
-            marginBottom:
-              "15px",
-            border:
-              "1px solid #e7e2da",
-          }}
-        >
-          <h3
-            style={{
-              margin:
-                "0 0 10px",
-              fontSize:
-                "14px",
-            }}
-          >
-            🏢 Restoran
-          </h3>
-
-          <div
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "12px",
-              border: "1px solid #ddd",
-              borderRadius: "10px",
-              background: "#f8f8f8",
-              fontSize: "14px",
-              fontWeight: 700,
-            }}
-          >
-            {selectedRestaurant?.name ||
-              "İşletme yükleniyor..."}
+          <span className="adm-stat-value">{activeCount}</span>
+          <span className="adm-stat-hint">Sipariş alabilir</span>
+        </div>
+        <div className="adm-stat tone-done">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Pasif</span>
+            <span className="adm-stat-icon"><AdminIcon name="eyeOff" size={16} /></span>
           </div>
+          <span className="adm-stat-value">{tables.length - activeCount}</span>
+          <span className="adm-stat-hint">QR kodu çalışmaz</span>
+        </div>
+      </section>
 
-          <small
-            style={{
-              display: "block",
-              marginTop: "8px",
-              color: "#888",
-            }}
-          >
-            Bu hesap yalnızca kendi işletmesinin
-            masalarını yönetebilir.
-          </small>
-        </section>
-
-        {/* YENİ MASA */}
-
-        <section
-          style={{
-            background:
-              "#fff",
-            borderRadius:
-              "18px",
-            padding:
-              "20px",
-            marginBottom:
-              "25px",
-            border:
-              "1px solid #e7e2da",
-          }}
-        >
-          <h3
-            style={{
-              margin:
-                "0 0 12px",
-              fontSize:
-                "15px",
-            }}
-          >
-            ＋ Yeni Masa Oluştur
-          </h3>
-
-          <div
-            style={{
-              display:
-                "flex",
-              gap:
-                "8px",
-              flexWrap:
-                "wrap",
-            }}
-          >
-            <input
-              type="number"
-              min="1"
-              value={
-                tableNumber
-              }
-              onChange={(
-                event
-              ) =>
-                setTableNumber(
-                  event.target.value
-                )
-              }
-              placeholder="Masa no"
-              style={{
-                width:
-                  "150px",
-                padding:
-                  "11px",
-                border:
-                  "1px solid #ddd",
-                borderRadius:
-                  "10px",
-              }}
-            />
-
-            <button
-              type="button"
-              onClick={
-                createTable
-              }
-              disabled={
-                loading
-              }
-              style={{
-                padding:
-                  "11px 18px",
-                border:
-                  "none",
-                borderRadius:
-                  "10px",
-                background:
-                  "#d99b08",
-                color:
-                  "#fff",
-                fontWeight:
-                  800,
-                cursor:
-                  loading
-                    ? "not-allowed"
-                    : "pointer",
-                opacity:
-                  loading
-                    ? 0.7
-                    : 1,
-              }}
-            >
-              {loading
-                ? "Oluşturuluyor..."
-                : "Masa Oluştur"}
-            </button>
-          </div>
-
-          <small
-            style={{
-              display:
-                "block",
-              marginTop:
-                "8px",
-              color:
-                "#888",
-            }}
-          >
-            Örneğin: 1, 2, 3, 4...
-          </small>
-        </section>
-
-        {/* TOPLU MASA OLUŞTUR */}
-
-        <section
-          style={{
-            background: "#fff",
-            borderRadius: "18px",
-            padding: "20px",
-            marginBottom: "25px",
-            border: "1px solid #e7e2da",
-          }}
-        >
-          <h3
-            style={{
-              margin: "0 0 8px",
-              fontSize: "15px",
-            }}
-          >
-            ⚡ Toplu Masa Oluştur
-          </h3>
-
-          <p
-            style={{
-              margin: "0 0 14px",
-              color: "#888",
-              fontSize: "11px",
-            }}
-          >
-            Örneğin 1 - 20 girerek eksik olan masaları tek seferde oluşturabilirsiniz.
-          </p>
-
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              flexWrap: "wrap",
-            }}
-          >
-            <input
-              type="number"
-              min="1"
-              value={bulkStart}
-              onChange={(event) =>
-                setBulkStart(event.target.value)
-              }
-              placeholder="Başlangıç"
-              style={{ ...smallInputStyle }}
-            />
-
-            <input
-              type="number"
-              min="1"
-              value={bulkEnd}
-              onChange={(event) =>
-                setBulkEnd(event.target.value)
-              }
-              placeholder="Bitiş"
-              style={{ ...smallInputStyle }}
-            />
-
-            <button
-              type="button"
-              onClick={createBulkTables}
-              disabled={loading}
-              style={{
-                border: "none",
-                borderRadius: "10px",
-                padding: "11px 16px",
-                background: "#171717",
-                color: "#fff",
-                fontWeight: 800,
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-              }}
-            >
-              {loading ? "Oluşturuluyor..." : "Toplu Oluştur"}
-            </button>
-          </div>
-        </section>
-
-        {/* MASA ÖZETİ */}
-
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(150px, 1fr))",
-            gap: "10px",
-            marginBottom: "15px",
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              border: "1px solid #e7e2da",
-              borderRadius: "14px",
-              padding: "14px 15px",
-            }}
-          >
-            <span
-              style={{
-                display: "block",
-                color: "#888",
-                fontSize: "10px",
-                fontWeight: 800,
-                letterSpacing: ".5px",
-              }}
-            >
-              TOPLAM MASA
-            </span>
-            <strong
-              style={{
-                display: "block",
-                marginTop: "5px",
-                fontSize: "22px",
-              }}
-            >
-              {tables.length}
-            </strong>
-          </div>
-
-          <div
-            style={{
-              background: "#effaf2",
-              border: "1px solid #c9e8d1",
-              borderRadius: "14px",
-              padding: "14px 15px",
-            }}
-          >
-            <span
-              style={{
-                display: "block",
-                color: "#16733a",
-                fontSize: "10px",
-                fontWeight: 800,
-                letterSpacing: ".5px",
-              }}
-            >
-              AKTİF
-            </span>
-            <strong
-              style={{
-                display: "block",
-                marginTop: "5px",
-                fontSize: "22px",
-                color: "#16733a",
-              }}
-            >
-              {tables.filter((table) => table.is_active).length}
-            </strong>
-          </div>
-
-          <div
-            style={{
-              background: "#f7f7f7",
-              border: "1px solid #e2e2e2",
-              borderRadius: "14px",
-              padding: "14px 15px",
-            }}
-          >
-            <span
-              style={{
-                display: "block",
-                color: "#777",
-                fontSize: "10px",
-                fontWeight: 800,
-                letterSpacing: ".5px",
-              }}
-            >
-              PASİF
-            </span>
-            <strong
-              style={{
-                display: "block",
-                marginTop: "5px",
-                fontSize: "22px",
-                color: "#777",
-              }}
-            >
-              {tables.filter((table) => !table.is_active).length}
-            </strong>
-          </div>
-        </section>
-
-        {/* MASALAR BAŞLIK */}
-
-        <div
-          style={{
-            display:
-              "flex",
-            justifyContent:
-              "space-between",
-            alignItems:
-              "center",
-            marginBottom:
-              "12px",
-          }}
-        >
+      {/* ============ MASA EKLE ============ */}
+      <section className="adm-card" aria-labelledby="masa-ekle">
+        <div className="adm-card-head">
           <div>
-            <h2
-              style={{
-                margin:
-                  0,
-                fontSize:
-                  "20px",
-              }}
-            >
-              Masalar
-            </h2>
-
-            <small
-              style={{
-                color:
-                  "#888",
-              }}
-            >
-              {
-                selectedRestaurant?.name ||
-                "Restoran"
-              }
-            </small>
+            <h2 id="masa-ekle">Masa ekle</h2>
+            <p>Tek bir masa ya da bir aralıktaki eksik masaların hepsini ekleyin.</p>
           </div>
+        </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              flexWrap: "wrap",
-              justifyContent: "flex-end",
+        <div className="adm-add-grid">
+          <form
+            className="adm-add"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void createTable();
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                flexWrap: "wrap",
-              }}
-            >
-              <strong>{tables.length} masa</strong>
-
-              <span
-                style={{
-                  padding: "5px 9px",
-                  borderRadius: "999px",
-                  background: "#effaf2",
-                  color: "#16733a",
-                  fontSize: "10px",
-                  fontWeight: 800,
-                }}
-              >
-                🟢 {tables.filter((table) => table.is_active).length} aktif
-              </span>
-
-              <span
-                style={{
-                  padding: "5px 9px",
-                  borderRadius: "999px",
-                  background: "#f3f3f3",
-                  color: "#777",
-                  fontSize: "10px",
-                  fontWeight: 800,
-                }}
-              >
-                ⚪ {tables.filter((table) => !table.is_active).length} pasif
-              </span>
+            <label className="adm-label" htmlFor="masa-no">Tek masa</label>
+            <div className="adm-add-row">
+              <input
+                id="masa-no"
+                className="adm-input"
+                type="number"
+                min="1"
+                inputMode="numeric"
+                value={tableNumber}
+                onChange={(event) => setTableNumber(event.target.value)}
+                placeholder="Masa no, örn. 12"
+              />
+              <button type="submit" className="adm-btn adm-btn-primary" disabled={loading}>
+                <AdminIcon name="plus" size={16} />
+                {loading ? "Ekleniyor…" : "Ekle"}
+              </button>
             </div>
+          </form>
 
-            <button
-              type="button"
-              onClick={printAllQrs}
-              disabled={filteredTables.length === 0}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: "9px",
-                background: "#fff",
-                padding: "8px 10px",
-                fontSize: "10px",
-                fontWeight: 800,
-                cursor: filteredTables.length ? "pointer" : "not-allowed",
-                opacity: filteredTables.length ? 1 : 0.5,
-              }}
-            >
-              🖨️ Tümünü Yazdır
-            </button>
-          </div>
-        </div>
-
-        {/* ARAMA */}
-
-        <div
-          style={{
-            marginBottom: "15px",
-          }}
-        >
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="🔎 Masa ara..."
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "12px 14px",
-              border: "1px solid #ddd",
-              borderRadius: "11px",
-              background: "#fff",
-              outline: "none",
-              fontSize: "13px",
-            }}
-          />
-        </div>
-
-        {/* MASA YOK */}
-
-        {filteredTables.length ===
-        0 ? (
-          <div
-            style={{
-              background:
-                "#fff",
-              border:
-                "1px solid #e7e2da",
-              borderRadius:
-                "18px",
-              padding:
-                "35px",
-              textAlign:
-                "center",
-              color:
-                "#888",
+          <form
+            className="adm-add"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void createBulkTables();
             }}
           >
-            Henüz masa oluşturulmamış.
+            <label className="adm-label" htmlFor="masa-bas">Toplu ekle</label>
+            <div className="adm-add-row">
+              <input
+                id="masa-bas"
+                className="adm-input"
+                type="number"
+                min="1"
+                inputMode="numeric"
+                value={bulkStart}
+                onChange={(event) => setBulkStart(event.target.value)}
+                placeholder="1"
+                aria-label="Başlangıç masa numarası"
+              />
+              <span className="adm-muted">–</span>
+              <input
+                className="adm-input"
+                type="number"
+                min="1"
+                inputMode="numeric"
+                value={bulkEnd}
+                onChange={(event) => setBulkEnd(event.target.value)}
+                placeholder="20"
+                aria-label="Bitiş masa numarası"
+              />
+              <button type="submit" className="adm-btn" disabled={loading}>
+                {loading ? "Ekleniyor…" : "Aralığı ekle"}
+              </button>
+            </div>
+            <span className="adm-hint">Var olan masalar atlanır, yalnızca eksikler eklenir.</span>
+          </form>
+        </div>
+      </section>
+
+      {/* ============ MASALAR ============ */}
+      <section className="adm-section" aria-labelledby="masa-listesi">
+        <div className="adm-section-head">
+          <div>
+            <h2 id="masa-listesi">Masa kodları</h2>
+            <p>QR&apos;ı indirip basabilir ya da NFC etikete yazabilirsiniz.</p>
+          </div>
+          <label className="adm-input-group" style={{ width: "min(280px, 100%)" }}>
+            <AdminIcon name="search" size={16} />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Masa ara"
+              aria-label="Masa ara"
+            />
+          </label>
+        </div>
+
+        {filteredTables.length === 0 ? (
+          <div className="adm-empty">
+            <span className="adm-empty-icon"><AdminIcon name="table" /></span>
+            <strong>{tables.length === 0 ? "Henüz masa yok" : "Eşleşen masa yok"}</strong>
+            <p>
+              {tables.length === 0
+                ? "Yukarıdan ilk masanızı ekleyin; QR kodu hemen oluşur."
+                : "Farklı bir masa numarası deneyin."}
+            </p>
           </div>
         ) : (
+          <div className="adm-table-grid">
+            {filteredTables.map((table) => {
+              const qrUrl = getQrUrl(table);
+              const deleting = deletingTableId === table.id;
 
-          /* MASALAR */
+              return (
+                <article key={table.id} className={`adm-qr-card ${table.is_active ? "" : "is-off"}`}>
+                  <div className="adm-qr-head">
+                    <strong>Masa {table.table_number}</strong>
+                    <span className={`adm-badge is-dot ${table.is_active ? "s-ok" : "s-delivered"}`}>
+                      {table.is_active ? "Aktif" : "Pasif"}
+                    </span>
+                  </div>
 
-          <div
-            style={{
-              display:
-                "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(240px, 1fr))",
-              gap:
-                "15px",
-            }}
-          >
-            {filteredTables.map(
-              (
-                table
-              ) => {
-                const qrUrl =
-                  getQrUrl(
-                    table
-                  );
+                  <div className="adm-qr-code">
+                    {qrUrl ? (
+                      <QRCodeCanvas
+                        id={`qr-${table.id}`}
+                        value={qrUrl}
+                        size={164}
+                        level="H"
+                        includeMargin
+                      />
+                    ) : (
+                      <span className="adm-hint">Restoran adresi bulunamadı.</span>
+                    )}
+                  </div>
 
-                return (
-                  <div
-                    key={
-                      table.id
-                    }
-                    style={{
-                      background:
-                        "#fff",
-                      border:
-                        "1px solid #e7e2da",
-                      borderRadius:
-                        "18px",
-                      padding:
-                        "15px",
-                      boxShadow:
-                        "0 5px 18px rgba(0,0,0,0.04)",
-                    }}
+                  <button
+                    type="button"
+                    className="adm-qr-url"
+                    onClick={() => copyUrl(table)}
+                    disabled={!qrUrl}
+                    title="Bağlantıyı kopyala"
                   >
+                    <span>{qrUrl || "QR bağlantısı oluşturulamadı"}</span>
+                    <AdminIcon name="copy" size={14} />
+                  </button>
 
-                    {/* MASA BAÅLIK */}
+                  <div className="adm-qr-actions">
+                    <button type="button" className="adm-btn adm-btn-sm" onClick={() => downloadQr(table)} disabled={!qrUrl}>
+                      <AdminIcon name="download" size={15} />
+                      İndir
+                    </button>
+                    <button type="button" className="adm-btn adm-btn-sm" onClick={() => printTableQr(table)} disabled={!qrUrl}>
+                      <AdminIcon name="orders" size={15} />
+                      Yazdır
+                    </button>
+                    <button type="button" className="adm-btn adm-btn-sm" onClick={() => openQrUrl(table)} disabled={!qrUrl}>
+                      <AdminIcon name="external" size={15} />
+                      Aç
+                    </button>
+                  </div>
 
-                    <div
-                      style={{
-                        display:
-                          "flex",
-                        justifyContent:
-                          "space-between",
-                        alignItems:
-                          "center",
-                        marginBottom:
-                          "10px",
-                      }}
-                    >
-                      <div>
-                        <strong
-                          style={{
-                            display: "block",
-                            fontSize: "17px",
-                          }}
-                        >
-                          🚪 Masa {table.table_number}
-                        </strong>
+                  <NfcWriter url={qrUrl} tableNumber={table.table_number} />
 
-                        <span
-                          style={{
-                            display: "block",
-                            marginTop: "3px",
-                            color: "#999",
-                            fontSize: "9px",
-                            fontWeight: 700,
-                            letterSpacing: "0.5px",
-                          }}
-                        >
-                          QR / NFC MASA BAĞLANTISI
-                        </span>
-                      </div>
-
-                      <span
-                        style={{
-                          fontSize:
-                            "10px",
-                          fontWeight:
-                            800,
-                          color:
-                            table.is_active
-                              ? "#16803c"
-                              : "#b42318",
-                        }}
-                      >
-                        ●{" "}
-                        {
-                          table.is_active
-                            ? "AKTİF"
-                            : "PASİF"
-                        }
-                      </span>
-                    </div>
-
-                    {/* QR */}
-
-                    <div
-                      style={{
-                        background:
-                          "#fafafa",
-                        borderRadius:
-                          "12px",
-                        padding:
-                          "15px",
-                        display:
-                          "flex",
-                        justifyContent:
-                          "center",
-                        marginBottom:
-                          "10px",
-                      }}
-                    >
-                      {qrUrl ? (
-                        <QRCodeCanvas
-                          id={`qr-${table.id}`}
-                          value={
-                            qrUrl
-                          }
-                          size={
-                            170
-                          }
-                          level="H"
-                          includeMargin
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width:
-                              "170px",
-                            height:
-                              "170px",
-                            display:
-                              "flex",
-                            alignItems:
-                              "center",
-                            justifyContent:
-                              "center",
-                            textAlign:
-                              "center",
-                            fontSize:
-                              "11px",
-                            color:
-                              "#b42318",
-                          }}
-                        >
-                          Restoran slug
-                          bulunamadı.
-                        </div>
-                      )}
-                    </div>
-
-                    {/* URL */}
-
-                    <div
-                      style={{
-                        background:
-                          "#f7f7f7",
-                        borderRadius:
-                          "8px",
-                        padding:
-                          "8px",
-                        fontSize:
-                          "8px",
-                        color:
-                          "#777",
-                        wordBreak:
-                          "break-all",
-                        marginBottom:
-                          "9px",
-                      }}
-                    >
-                      {qrUrl ||
-                        "QR bağlantısı oluşturulamadı."}
-                    </div>
-
-                    {/* QR BUTONLARI */}
-
-                    <div
-                      style={{
-                        display:
-                          "grid",
-                        gridTemplateColumns:
-                          "repeat(3, 1fr)",
-                        gap:
-                          "7px",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          downloadQr(
-                            table
-                          )
-                        }
-                        disabled={
-                          !qrUrl
-                        }
-                        style={{
-                          border:
-                            "none",
-                          borderRadius:
-                            "9px",
-                          background:
-                            "#171717",
-                          color:
-                            "#fff",
-                          padding:
-                            "10px",
-                          fontSize:
-                            "11px",
-                          fontWeight:
-                            800,
-                          cursor:
-                            qrUrl
-                              ? "pointer"
-                              : "not-allowed",
-                          opacity:
-                            qrUrl
-                              ? 1
-                              : 0.5,
-                        }}
-                      >
-                        ⬇ QR İndir
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          copyUrl(
-                            table
-                          )
-                        }
-                        disabled={
-                          !qrUrl
-                        }
-                        style={{
-                          border:
-                            "1px solid #ddd",
-                          borderRadius:
-                            "9px",
-                          background:
-                            "#fff",
-                          padding:
-                            "10px",
-                          fontSize:
-                            "11px",
-                          fontWeight:
-                            800,
-                          cursor:
-                            qrUrl
-                              ? "pointer"
-                              : "not-allowed",
-                          opacity:
-                            qrUrl
-                              ? 1
-                              : 0.5,
-                        }}
-                      >
-                        🔗 Kopyala
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => openQrUrl(table)}
-                        disabled={!qrUrl}
-                        style={{
-                          border: "1px solid #ddd",
-                          borderRadius: "9px",
-                          background: "#fff",
-                          padding: "10px 5px",
-                          fontSize: "10px",
-                          fontWeight: 800,
-                          cursor: qrUrl ? "pointer" : "not-allowed",
-                          opacity: qrUrl ? 1 : 0.5,
-                        }}
-                      >
-                        ↗ QR Aç
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => printTableQr(table)}
-                        disabled={!qrUrl}
-                        style={{
-                          border: "1px solid #ddd",
-                          borderRadius: "9px",
-                          background: "#fff",
-                          padding: "10px 5px",
-                          fontSize: "10px",
-                          fontWeight: 800,
-                          cursor: qrUrl ? "pointer" : "not-allowed",
-                          opacity: qrUrl ? 1 : 0.5,
-                        }}
-                      >
-                        🖨️ Yazdır
-                      </button>
-                    </div>
-                                        <NfcWriter
-                      url={qrUrl}
-                      tableNumber={table.table_number}
-                    />
-
-                    {/* DÜZENLE / SİL */}
-
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: "7px",
-                        marginTop: "7px",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => startEditTable(table)}
-                        style={{
-                          border: "1px solid #ddd",
-                          borderRadius: "9px",
-                          background: "#fff",
-                          color: "#333",
-                          padding: "10px",
-                          fontSize: "11px",
-                          fontWeight: 800,
-                          cursor: "pointer",
-                        }}
-                      >
-                        ✏️ Düzenle
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => deleteTable(table)}
-                        disabled={deletingTableId === table.id}
-                        style={{
-                          border: "none",
-                          borderRadius: "9px",
-                          background: "#fff0f0",
-                          color: "#b42318",
-                          padding: "10px",
-                          fontSize: "11px",
-                          fontWeight: 800,
-                          cursor: deletingTableId === table.id ? "not-allowed" : "pointer",
-                          opacity: deletingTableId === table.id ? 0.6 : 1,
-                        }}
-                      >
-                        {deletingTableId === table.id ? "Siliniyor..." : "🗑️ Sil"}
-                      </button>
-                    </div>
-
-                    {/* AKTİF / PASİF */}
-
+                  <div className="adm-qr-foot">
+                    <button type="button" className="adm-btn adm-btn-sm adm-btn-ghost" onClick={() => startEditTable(table)}>
+                      <AdminIcon name="edit" size={15} />
+                      Numara
+                    </button>
+                    <button type="button" className="adm-btn adm-btn-sm adm-btn-ghost" onClick={() => toggleTable(table)}>
+                      <AdminIcon name={table.is_active ? "eyeOff" : "eye"} size={15} />
+                      {table.is_active ? "Pasif yap" : "Aktif yap"}
+                    </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        toggleTable(
-                          table
-                        )
-                      }
-                      style={{
-                        width:
-                          "100%",
-                        marginTop:
-                          "7px",
-                        border:
-                          "none",
-                        borderRadius:
-                          "9px",
-                        background:
-                          table.is_active
-                            ? "#fff0f0"
-                            : "#effaf2",
-                        color:
-                          table.is_active
-                            ? "#c62828"
-                            : "#16733a",
-                        padding:
-                          "10px",
-                        fontSize:
-                          "11px",
-                        fontWeight:
-                          800,
-                        cursor:
-                          "pointer",
-                      }}
+                      className="adm-btn adm-btn-sm adm-btn-ghost adm-text-danger"
+                      onClick={() => deleteTable(table)}
+                      disabled={deleting}
+                      aria-label={`Masa ${table.table_number} sil`}
                     >
-                      {table.is_active
-                        ? "Masa Pasif Yap"
-                        : "Masa Aktif Yap"}
+                      <AdminIcon name="trash" size={15} />
+                      {deleting ? "Siliniyor…" : "Sil"}
                     </button>
-
-                    {/* TOKEN */}
-
-                    <div
-                      style={{
-                        marginTop:
-                          "8px",
-                        color:
-                          "#aaa",
-                        fontSize:
-                          "8px",
-                        textAlign:
-                          "center",
-                        wordBreak:
-                          "break-all",
-                      }}
-                    >
-                      Token:{" "}
-                      {
-                        table.public_token
-                      }
-                    </div>
-
                   </div>
-                );
-              }
-            )}
+                </article>
+              );
+            })}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* DÜZENLEME PENCERESİ */}
-
+      {/* ============ NUMARA DÜZENLE ============ */}
       {editingTable && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.45)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-            zIndex: 99999,
-          }}
-          onClick={cancelEditTable}
-        >
-          <div
-            style={{
-              width: "min(420px, 100%)",
-              background: "#fff",
-              borderRadius: "18px",
-              padding: "22px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+        <div className="adm-modal-root" role="dialog" aria-modal="true" aria-labelledby="masa-duzenle">
+          <button type="button" className="adm-modal-backdrop" aria-label="Kapat" onClick={cancelEditTable} />
+          <form
+            className="adm-modal"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveEditTable();
             }}
-            onClick={(event) => event.stopPropagation()}
           >
-            <h2
-              style={{
-                margin: "0 0 6px",
-                fontSize: "20px",
-              }}
-            >
-              ✏️ Masa Düzenle
-            </h2>
-
-            <p
-              style={{
-                margin: "0 0 16px",
-                color: "#777",
-                fontSize: "12px",
-              }}
-            >
-              Masa {editingTable.table_number} numarasını değiştirebilirsiniz.
-            </p>
-
-            <input
-              type="number"
-              min="1"
-              value={editNumber}
-              onChange={(event) => setEditNumber(event.target.value)}
-              autoFocus
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                padding: "13px",
-                border: "1px solid #ddd",
-                borderRadius: "10px",
-                fontSize: "15px",
-                outline: "none",
-              }}
-            />
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "8px",
-                marginTop: "14px",
-              }}
-            >
-              <button
-                type="button"
-                onClick={cancelEditTable}
-                style={{
-                  border: "1px solid #ddd",
-                  background: "#fff",
-                  borderRadius: "10px",
-                  padding: "12px",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-              >
-                Vazgeç
-              </button>
-
-              <button
-                type="button"
-                onClick={saveEditTable}
-                disabled={loading}
-                style={{
-                  border: "none",
-                  background: "#171717",
-                  color: "#fff",
-                  borderRadius: "10px",
-                  padding: "12px",
-                  fontWeight: 800,
-                  cursor: loading ? "not-allowed" : "pointer",
-                  opacity: loading ? 0.6 : 1,
-                }}
-              >
-                {loading ? "Kaydediliyor..." : "Kaydet"}
+            <div>
+              <h2 id="masa-duzenle">Masa numarasını değiştir</h2>
+              <p className="adm-muted" style={{ margin: "4px 0 0" }}>
+                Masa {editingTable.table_number} için yeni numara girin. QR bağlantısı aynı kalır.
+              </p>
+            </div>
+            <div className="adm-field">
+              <label className="adm-label" htmlFor="masa-yeni-no">Yeni numara</label>
+              <input
+                id="masa-yeni-no"
+                className="adm-input"
+                type="number"
+                min="1"
+                inputMode="numeric"
+                value={editNumber}
+                onChange={(event) => setEditNumber(event.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="adm-form-actions">
+              <button type="button" className="adm-btn" onClick={cancelEditTable}>Vazgeç</button>
+              <button type="submit" className="adm-btn adm-btn-primary" disabled={loading}>
+                {loading ? "Kaydediliyor…" : "Kaydet"}
               </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
     </main>
   );
 }
-
-const smallInputStyle = {
-  width: "120px",
-  boxSizing: "border-box" as const,
-  padding: "11px 12px",
-  border: "1px solid #ddd",
-  borderRadius: "10px",
-  background: "#fff",
-  fontSize: "13px",
-  outline: "none",
-};

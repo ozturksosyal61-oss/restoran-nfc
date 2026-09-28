@@ -152,6 +152,7 @@ export async function deleteCategory(categoryId: number) {
   // =====================================================
 
   revalidatePath("/admin/menu");
+  revalidatePath("/admin/menu/kategori");
 
   return {
     success: true,

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties, ChangeEvent } from "react";
+import type { CSSProperties, ChangeEvent, ReactNode } from "react";
 import { createClient } from "../../../lib/supabase/client";
+import AdminIcon from "../AdminIcon";
 
 type Restaurant = {
   id: number;
@@ -590,10 +591,8 @@ export default function RestaurantSettingsPage() {
 
   if (loading) {
     return (
-      <main style={pageStyle}>
-        <div style={loadingCardStyle}>
-          İşletme bilgileri yükleniyor...
-        </div>
+      <main className="adm-page">
+        <p className="adm-hint">İşletme bilgileri yükleniyor…</p>
       </main>
     );
   }
@@ -604,693 +603,364 @@ export default function RestaurantSettingsPage() {
    * =====================================================
    */
 
+  const busy = saving || uploadingLogo || uploadingCover;
+
   return (
-    <main style={pageStyle}>
-      <div style={containerStyle}>
-
-        {/* HEADER */}
-
-        <header style={headerStyle}>
-          <div style={eyebrowStyle}>
-            İŞLETME YÖNETİMİ
-          </div>
-
-          <h1 style={headerTitleStyle}>
-            Restoran Ayarları
-          </h1>
-
-          <p style={headerDescriptionStyle}>
-            Müşterilerinizin göreceği işletme
-            bilgilerini buradan yönetin.
-          </p>
-
-          {restaurant && (
-            <div style={headerButtonsStyle}>
-
-              <a
-                href={`/restoran/${restaurant.slug}/menu`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={primaryHeaderButtonStyle}
-              >
-                ↗ Müşteri Menüsünü Aç
-              </a>
-
-              <a
-                href="/admin/tables"
-                style={secondaryHeaderButtonStyle}
-              >
-                🪑 Masaları Yönet
-              </a>
-
-            </div>
-          )}
-        </header>
-
-        {/* HATA */}
-
-        {error && (
-          <div style={errorStyle}>
-            ❌ {error}
+    <main className="adm-page">
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">Ayarlar</span>
+          <h1>İşletme ayarları</h1>
+          <p>Burada girdiğiniz bilgiler yalnızca sizin restoran sayfanızda ve menünüzde görünür.</p>
+        </div>
+        {restaurant && (
+          <div className="adm-head-actions">
+            <a
+              className="adm-btn"
+              href={`/restoran/${restaurant.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <AdminIcon name="external" size={16} />
+              Restoran sayfası
+            </a>
           </div>
         )}
+      </header>
 
-        {/* BAŞARILI */}
+      {error && (
+        <p className="adm-alert adm-alert-error" role="alert">
+          <AdminIcon name="alert" size={16} />
+          {error}
+        </p>
+      )}
 
-        {message && (
-          <div style={successStyle}>
-            {message}
-          </div>
-        )}
+      {message && (
+        <p className="adm-alert adm-alert-ok" role="status">
+          <AdminIcon name="check" size={16} />
+          {message.replace(/^[✓✅]\s*/, "")}
+        </p>
+      )}
 
-        {!restaurant ? (
-          <section style={sectionStyle}>
-            <h2 style={{ marginTop: 0 }}>
-              İşletme bulunamadı
-            </h2>
+      {!restaurant ? (
+        <div className="adm-empty">
+          <span className="adm-empty-icon"><AdminIcon name="store" /></span>
+          <strong>İşletme bulunamadı</strong>
+          <p>Bu kullanıcıya bağlı bir işletme bulunamadı.</p>
+        </div>
+      ) : (
+        <>
+          {/* ============ İŞLETME BİLGİLERİ ============ */}
+          <SettingsSection
+            title="İşletme bilgileri"
+            description="Restoran sayfanızın üst kısmında ve bilgi penceresinde görünür."
+          >
+            <div className="adm-form-grid">
+              <Field label="Restoran adı" value={name} onChange={setName} placeholder="Mira Kitchen" />
 
-            <p style={{ color: "#666" }}>
-              Bu kullanıcıya bağlı bir işletme
-              bulunamadı.
-            </p>
-          </section>
-        ) : (
-          <>
-            {/* =========================================
-                İŞLETME BİLGİLERİ
-            ========================================= */}
-
-            <section style={sectionStyle}>
-              <SectionTitle
-                eyebrow="İŞLETME"
-                title="Restoran Bilgileri"
-              />
-
-              <div style={restaurantInfoStyle}>
-                İşletme:{" "}
-                <strong>
-                  {restaurant.name}
-                </strong>
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="ayar-slug">Sayfa adresi</label>
+                <input id="ayar-slug" className="adm-input" value={`/restoran/${restaurant.slug}`} readOnly />
+                <span className="adm-hint">QR kodları bozulmasın diye değiştirilemez.</span>
               </div>
 
-              <div style={gridStyle}>
+              <Field label="Telefon" value={phone} onChange={setPhone} placeholder="0555 555 55 55" type="tel" />
 
+              {taglineAvailable && (
                 <Field
-                  label="Restoran Adı"
-                  value={name}
-                  onChange={setName}
-                  placeholder="OZT KAFE"
+                  label="Kısa slogan"
+                  value={tagline}
+                  onChange={setTagline}
+                  placeholder="Restaurant & Cafe"
+                  hint="Adınızın altında görünür. Boş bırakırsanız gösterilmez."
                 />
+              )}
 
-                <div>
-                  <label style={labelStyle}>
-                    Slug
-                  </label>
-
-                  <input
-                    value={restaurant.slug}
-                    readOnly
-                    style={{
-                      ...inputStyle,
-                      background: "#f1efeb",
-                      color: "#888",
-                    }}
-                  />
-
-                  <small style={hintStyle}>
-                    QR bağlantılarının bozulmaması
-                    için değiştirilemez.
-                  </small>
-                </div>
-
-                <Field
-                  label="Telefon"
-                  value={phone}
-                  onChange={setPhone}
-                  placeholder="0555 555 55 55"
-                />
-
-                <Field
-                  label="Adres"
-                  value={address}
-                  onChange={setAddress}
-                  placeholder="İşletme adresi"
-                />
-
-                {taglineAvailable && (
-                  <div>
-                    <Field
-                      label="Kısa Slogan"
-                      value={tagline}
-                      onChange={setTagline}
-                      placeholder="Restaurant & Cafe"
-                    />
-
-                    <small style={hintStyle}>
-                      Restoran sayfanızda adınızın altında görünür.
-                      Boş bırakırsanız gösterilmez.
-                    </small>
-                  </div>
-                )}
-
+              <div className="adm-field adm-field-full">
+                <Field label="Adres" value={address} onChange={setAddress} placeholder="Mahalle, sokak, no, ilçe/il" />
               </div>
 
-              <div style={{ marginTop: "16px" }}>
-                <label style={labelStyle}>
-                  İşletme Açıklaması
+              <div className="adm-field adm-field-full">
+                <label className="adm-label" htmlFor="ayar-aciklama">
+                  Açıklama <em>· isteğe bağlı</em>
                 </label>
-
                 <textarea
+                  id="ayar-aciklama"
+                  className="adm-textarea"
                   value={description}
-                  onChange={(event) =>
-                    setDescription(
-                      event.target.value
-                    )
-                  }
+                  onChange={(event) => setDescription(event.target.value)}
                   rows={4}
-                  placeholder="Müşterilerinizin göreceği kısa işletme açıklaması..."
-                  style={{
-                    ...inputStyle,
-                    resize: "vertical",
-                    minHeight: "110px",
-                  }}
+                  placeholder="Müşterilerinizin göreceği kısa işletme açıklaması"
                 />
               </div>
-            </section>
+            </div>
+          </SettingsSection>
 
-            {/* =========================================
-                LOGO / KAPAK
-            ========================================= */}
-
-            <section style={sectionStyle}>
-              <SectionTitle
-                eyebrow="GÖRSEL KİMLİK"
-                title="Logo & Kapak"
+          {/* ============ ÇALIŞMA DURUMU ============ */}
+          <SettingsSection
+            title="Çalışma durumu"
+            description="Kapalıyken müşteriler menüyü görür ama sipariş veremez."
+          >
+            <label className="adm-switch-row">
+              <span>
+                <strong>Sipariş alıyoruz</strong>
+                <small className={isOpen ? "is-open" : "is-closed"}>
+                  {isOpen ? "Şu an sipariş almaya açık" : "Şu an sipariş almaya kapalı"}
+                </small>
+              </span>
+              <input
+                type="checkbox"
+                className="adm-switch"
+                checked={isOpen}
+                onChange={(event) => setIsOpen(event.target.checked)}
+                aria-label="Sipariş alma durumu"
               />
+            </label>
 
-              <div style={imageGridStyle}>
+            <div className="adm-form-grid">
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="ayar-acilis">Açılış saati</label>
+                <input
+                  id="ayar-acilis"
+                  type="time"
+                  className="adm-input"
+                  value={openingTime}
+                  onChange={(event) => setOpeningTime(event.target.value)}
+                />
+              </div>
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="ayar-kapanis">Kapanış saati</label>
+                <input
+                  id="ayar-kapanis"
+                  type="time"
+                  className="adm-input"
+                  value={closingTime}
+                  onChange={(event) => setClosingTime(event.target.value)}
+                />
+              </div>
+            </div>
+          </SettingsSection>
 
-                {/* LOGO */}
-
-                <div style={uploadCardStyle}>
-                  <div style={uploadTitleStyle}>
-                    LOGO
-                  </div>
-
+          {/* ============ GÖRSELLER ============ */}
+          <SettingsSection
+            title="Logo ve kapak"
+            description="Kapak görseli restoran sayfasının üstünde, logo adınızın yanında görünür. En fazla 5 MB."
+          >
+            <div className="adm-upload-grid">
+              <div className="adm-upload">
+                <div className="adm-upload-preview is-logo">
                   {logoUrl ? (
-                    <img
-                      src={logoUrl}
-                      alt="Restoran logosu"
-                      style={logoPreviewStyle}
-                    />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={logoUrl} alt="Restoran logosu" />
                   ) : (
-                    <div style={emptyImageStyle}>
-                      LOGO
-                    </div>
+                    <AdminIcon name="image" size={26} />
                   )}
-
+                </div>
+                <div className="adm-upload-body">
+                  <strong>Logo</strong>
+                  <span className="adm-hint">Kare, en az 400×400 px önerilir.</span>
                   <input
                     ref={logoInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handleLogoChange}
-                    style={{
-                      display: "none",
-                    }}
+                    hidden
                   />
-
                   <button
                     type="button"
-                    onClick={() =>
-                      logoInputRef.current?.click()
-                    }
+                    className="adm-btn adm-btn-sm"
+                    onClick={() => logoInputRef.current?.click()}
                     disabled={uploadingLogo}
-                    style={secondaryButtonStyle}
                   >
-                    {uploadingLogo
-                      ? "Yükleniyor..."
-                      : "📷 Logo Yükle"}
+                    <AdminIcon name="download" size={15} />
+                    {uploadingLogo ? "Yükleniyor…" : logoUrl ? "Değiştir" : "Logo yükle"}
                   </button>
                 </div>
+              </div>
 
-                {/* KAPAK */}
-
-                <div style={uploadCardStyle}>
-                  <div style={uploadTitleStyle}>
-                    KAPAK GÖRSELİ
-                  </div>
-
+              <div className="adm-upload">
+                <div className="adm-upload-preview is-cover">
                   {coverImageUrl ? (
-                    <img
-                      src={coverImageUrl}
-                      alt="Kapak görseli"
-                      style={coverPreviewStyle}
-                    />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={coverImageUrl} alt="Kapak görseli" />
                   ) : (
-                    <div
-                      style={{
-                        ...emptyImageStyle,
-                        width: "100%",
-                        height: "150px",
-                      }}
-                    >
-                      KAPAK
-                    </div>
+                    <AdminIcon name="image" size={26} />
                   )}
-
+                </div>
+                <div className="adm-upload-body">
+                  <strong>Kapak görseli</strong>
+                  <span className="adm-hint">Yatay ya da dikey; en az 1200 px genişlik.</span>
                   <input
                     ref={coverInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handleCoverChange}
-                    style={{
-                      display: "none",
-                    }}
+                    hidden
                   />
-
                   <button
                     type="button"
-                    onClick={() =>
-                      coverInputRef.current?.click()
-                    }
+                    className="adm-btn adm-btn-sm"
+                    onClick={() => coverInputRef.current?.click()}
                     disabled={uploadingCover}
-                    style={secondaryButtonStyle}
                   >
-                    {uploadingCover
-                      ? "Yükleniyor..."
-                      : "🖼️ Kapak Yükle"}
+                    <AdminIcon name="download" size={15} />
+                    {uploadingCover ? "Yükleniyor…" : coverImageUrl ? "Değiştir" : "Kapak yükle"}
                   </button>
                 </div>
-
               </div>
-
-              <div style={{ marginTop: "18px" }}>
-
-                <Field
-                  label="Logo URL — İsteğe bağlı"
-                  value={logoUrl}
-                  onChange={setLogoUrl}
-                  placeholder="https://..."
-                />
-
-                <div style={{ height: "14px" }} />
-
-                <Field
-                  label="Kapak URL — İsteğe bağlı"
-                  value={coverImageUrl}
-                  onChange={setCoverImageUrl}
-                  placeholder="https://..."
-                />
-
-              </div>
-
-              <p style={hintStyle}>
-                Maksimum görsel boyutu: 5 MB.
-              </p>
-            </section>
-
-            {/* =========================================
-                SOSYAL MEDYA
-            ========================================= */}
-
-            <section style={sectionStyle}>
-              <SectionTitle
-                eyebrow="BAĞLANTILAR"
-                title="Sosyal Medya & Yorum"
-              />
-
-              <div style={gridStyle}>
-
-                <Field
-                  label="Instagram URL"
-                  value={instagramUrl}
-                  onChange={setInstagramUrl}
-                  placeholder="https://instagram.com/..."
-                />
-
-                <Field
-                  label="Google Yorum URL"
-                  value={googleReviewUrl}
-                  onChange={setGoogleReviewUrl}
-                  placeholder="https://g.page/..."
-                />
-
-              </div>
-            </section>
-
-            {/* =========================================
-                WIFI
-            ========================================= */}
-
-            <section style={sectionStyle}>
-              <SectionTitle
-                eyebrow="MÜŞTERİ BİLGİSİ"
-                title="WiFi"
-              />
-
-              {wifiAvailable ? (
-                <>
-                  <div style={gridStyle}>
-
-                    <Field
-                      label="Ağ Adı"
-                      value={wifiName}
-                      onChange={setWifiName}
-                      placeholder="Restoran_WiFi"
-                    />
-
-                    <Field
-                      label="Şifre"
-                      value={wifiPassword}
-                      onChange={setWifiPassword}
-                      placeholder="WiFi şifresi"
-                    />
-
-                  </div>
-
-                  <p style={hintStyle}>
-                    Restoran sayfasındaki &quot;Bilgi&quot; penceresinde
-                    müşterilere gösterilir. Boş bırakırsanız WiFi
-                    bölümü görünmez.
-                  </p>
-                </>
-              ) : (
-                <div style={infoBoxStyle}>
-                  ℹ️ WiFi alanları henüz veritabanında
-                  tanımlı değil. Sistem yöneticisinin
-                  veritabanı güncellemesini yapması gerekiyor.
-                </div>
-              )}
-            </section>
-
-            {/* =========================================
-                ÇALIŞMA DURUMU
-            ========================================= */}
-
-            <section style={sectionStyle}>
-              <SectionTitle
-                eyebrow="ÇALIŞMA DURUMU"
-                title="Açık / Kapalı"
-              />
-
-              <div style={statusBoxStyle}>
-
-                <div>
-                  <strong
-                    style={{
-                      display: "block",
-                      fontSize: "16px",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    İşletme Durumu
-                  </strong>
-
-                  <span
-                    style={{
-                      color: isOpen
-                        ? "#16803b"
-                        : "#c62828",
-                      fontWeight: 800,
-                      fontSize: "12px",
-                    }}
-                  >
-                    {isOpen
-                      ? "● Sipariş almaya açık"
-                      : "● Sipariş almaya kapalı"}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setIsOpen((current) => !current)
-                  }
-                  style={{
-                    border: "none",
-                    background: isOpen
-                      ? "#eaf8ef"
-                      : "#fff0f0",
-                    color: isOpen
-                      ? "#16743a"
-                      : "#b42318",
-                    padding: "13px 20px",
-                    borderRadius: "11px",
-                    fontWeight: 900,
-                    cursor: "pointer",
-                  }}
-                >
-                  {isOpen
-                    ? "🟢 AÇIK"
-                    : "🔴 KAPALI"}
-                </button>
-
-              </div>
-
-              <div style={timeGridStyle}>
-
-                <div>
-                  <label style={labelStyle}>
-                    Açılış Saati
-                  </label>
-
-                  <input
-                    type="time"
-                    value={openingTime}
-                    onChange={(event) =>
-                      setOpeningTime(
-                        event.target.value
-                      )
-                    }
-                    style={inputStyle}
-                  />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>
-                    Kapanış Saati
-                  </label>
-
-                  <input
-                    type="time"
-                    value={closingTime}
-                    onChange={(event) =>
-                      setClosingTime(
-                        event.target.value
-                      )
-                    }
-                    style={inputStyle}
-                  />
-                </div>
-
-              </div>
-
-              <div style={infoBoxStyle}>
-                ℹ️ İşletme kapatıldığında
-                müşteriler menüyü görebilir ancak
-                yeni sipariş oluşturamaz. Telefon,
-                adres ve çalışma saatleri restoran
-                sayfanızda gösterilir; boş bıraktığınız
-                bilgi müşteriye hiç gösterilmez.
-              </div>
-            </section>
-
-            {/* =========================================
-                MENÜ TASARIMI
-            ========================================= */}
-
-            <section style={sectionStyle}>
-              <SectionTitle
-                eyebrow="MÜŞTERİ DENEYİMİ"
-                title="Menü Tasarımı"
-              />
-
-              <p style={menuLayoutDescriptionStyle}>
-                Müşterilerinizin göreceği dijital menü tasarımını
-                seçin. Ürün ve kategori verileriniz aynı kalır;
-                yalnızca menünün görsel yerleşimi değişir.
-              </p>
-
-              <div style={menuLayoutGridStyle}>
-                {menuLayoutOptions.map((option) => {
-                  const selected = menuLayout === option.id;
-
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => setMenuLayout(option.id)}
-                      style={{
-                        ...menuLayoutCardStyle,
-                        border: selected
-                          ? "2px solid #d4a017"
-                          : "1px solid #e5e0d8",
-                        boxShadow: selected
-                          ? "0 8px 25px rgba(212,160,23,.16)"
-                          : "none",
-                      }}
-                    >
-                      <div
-                        style={{
-                          ...menuLayoutPreviewStyle,
-                          ...option.preview,
-                        }}
-                      >
-                        <div style={menuLayoutPreviewHeaderStyle}>
-                          <span />
-                          <span />
-                          <span />
-                        </div>
-
-                        <div style={menuLayoutPreviewContentStyle}>
-                          <div style={menuLayoutPreviewImageStyle} />
-                          <div style={menuLayoutPreviewLinesStyle}>
-                            <span />
-                            <span />
-                            <span />
-                          </div>
-                        </div>
-
-                        <div style={menuLayoutPreviewCardsStyle}>
-                          <span />
-                          <span />
-                          <span />
-                        </div>
-                      </div>
-
-                      <div style={menuLayoutCardContentStyle}>
-                        <div>
-                          <strong style={menuLayoutNameStyle}>
-                            {option.name}
-                          </strong>
-
-                          <span style={menuLayoutDescriptionSmallStyle}>
-                            {option.description}
-                          </span>
-                        </div>
-
-                        <span
-                          style={{
-                            ...menuLayoutSelectBadgeStyle,
-                            background: selected ? "#d4a017" : "#f4f1eb",
-                            color: selected ? "#fff" : "#555",
-                          }}
-                        >
-                          {selected ? "✓ Seçili" : "Seç"}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div style={menuLayoutHintStyle}>
-                💡 Seçim, <strong>Ayarları Kaydet</strong> butonuna
-                bastığınızda müşterilerin menüsüne uygulanır.
-              </div>
-            </section>
-
-            {/* =========================================
-                KAYDET
-            ========================================= */}
-
-            <div style={saveContainerStyle}>
-              <button
-                type="button"
-                onClick={saveSettings}
-                disabled={
-                  saving ||
-                  uploadingLogo ||
-                  uploadingCover
-                }
-                style={{
-                  ...saveButtonStyle,
-                  background: saving
-                    ? "#777"
-                    : "#d4a017",
-                  cursor: saving
-                    ? "not-allowed"
-                    : "pointer",
-                }}
-              >
-                {saving
-                  ? "Kaydediliyor..."
-                  : "✓ Ayarları Kaydet"}
-              </button>
             </div>
-          </>
-        )}
-      </div>
+
+            <details className="adm-details">
+              <summary>Görsel bağlantısını elle girin</summary>
+              <div className="adm-form-grid">
+                <Field label="Logo bağlantısı" value={logoUrl} onChange={setLogoUrl} placeholder="https://..." type="url" />
+                <Field label="Kapak bağlantısı" value={coverImageUrl} onChange={setCoverImageUrl} placeholder="https://..." type="url" />
+              </div>
+            </details>
+          </SettingsSection>
+
+          {/* ============ WIFI ============ */}
+          <SettingsSection
+            title="WiFi"
+            description="Restoran sayfasındaki Bilgi penceresinde gösterilir. Boş bırakırsanız bölüm görünmez."
+          >
+            {wifiAvailable ? (
+              <div className="adm-form-grid">
+                <Field label="Ağ adı" value={wifiName} onChange={setWifiName} placeholder="Restoran_WiFi" />
+                <Field label="Şifre" value={wifiPassword} onChange={setWifiPassword} placeholder="WiFi şifresi" />
+              </div>
+            ) : (
+              <p className="adm-alert adm-alert-info" style={{ margin: 0 }}>
+                <AdminIcon name="info" size={16} />
+                WiFi alanları henüz veritabanında yok. Sistem yöneticisinin güncellemeyi yapması gerekiyor.
+              </p>
+            )}
+          </SettingsSection>
+
+          {/* ============ BAĞLANTILAR ============ */}
+          <SettingsSection
+            title="Sosyal medya ve yorum"
+            description="Google yorum bağlantısı girerseniz &quot;Bizi değerlendir&quot; düğmesi oraya yönlenir."
+          >
+            <div className="adm-form-grid">
+              <Field label="Instagram" value={instagramUrl} onChange={setInstagramUrl} placeholder="https://instagram.com/..." type="url" />
+              <Field label="Google yorum bağlantısı" value={googleReviewUrl} onChange={setGoogleReviewUrl} placeholder="https://g.page/..." type="url" />
+            </div>
+          </SettingsSection>
+
+          {/* ============ MENÜ DÜZENİ ============ */}
+          <SettingsSection
+            title="Menü düzeni"
+            description="Klasik temalardaki müşteri menüsünün yerleşimi. Aurora temaları kendi düzenini kullanır."
+          >
+            <div className="adm-layout-grid" role="radiogroup" aria-label="Menü düzeni">
+              {menuLayoutOptions.map((option) => {
+                const selected = menuLayout === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    className={`adm-layout ${selected ? "is-active" : ""}`}
+                    onClick={() => setMenuLayout(option.id)}
+                  >
+                    <span className="adm-layout-preview" style={option.preview}>
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                    <span className="adm-layout-text">
+                      <strong>{option.name}</strong>
+                      <small>{option.description}</small>
+                    </span>
+                    {selected && (
+                      <span className="adm-layout-check">
+                        <AdminIcon name="check" size={13} strokeWidth={2.6} />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </SettingsSection>
+
+          {/* ============ KAYDET ============ */}
+          <div className="adm-sticky-actions">
+            <span>Değişiklikler kaydettiğinizde restoran sayfanıza yansır.</span>
+            <button
+              type="button"
+              className="adm-btn adm-btn-primary adm-btn-lg"
+              onClick={saveSettings}
+              disabled={busy}
+            >
+              <AdminIcon name="save" size={17} />
+              {saving ? "Kaydediliyor…" : "Ayarları kaydet"}
+            </button>
+          </div>
+        </>
+      )}
     </main>
   );
 }
 
 /*
  * =====================================================
- * FIELD
+ * PARÇALAR
  * =====================================================
  */
+
+function SettingsSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="adm-settings">
+      <div className="adm-settings-intro">
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <div className="adm-card adm-settings-body">{children}</div>
+    </section>
+  );
+}
 
 function Field({
   label,
   value,
   onChange,
   placeholder,
+  hint,
+  type = "text",
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  hint?: string;
+  type?: string;
 }) {
+  const id = `ayar-${label.toLocaleLowerCase("tr-TR").replace(/[^a-z0-9ğüşöçı]+/g, "-")}`;
   return (
-    <div>
-      <label style={labelStyle}>
-        {label}
-      </label>
-
+    <div className="adm-field">
+      <label className="adm-label" htmlFor={id}>{label}</label>
       <input
+        id={id}
+        type={type}
+        className="adm-input"
         value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        style={inputStyle}
       />
+      {hint && <span className="adm-hint">{hint}</span>}
     </div>
   );
 }
-
-/*
- * =====================================================
- * SECTION TITLE
- * =====================================================
- */
-
-function SectionTitle({
-  eyebrow,
-  title,
-}: {
-  eyebrow: string;
-  title: string;
-}) {
-  return (
-    <div style={sectionTitleContainerStyle}>
-      <div style={sectionEyebrowStyle}>
-        {eyebrow}
-      </div>
-
-      <h2 style={sectionTitleStyle}>
-        {title}
-      </h2>
-    </div>
-  );
-}
-
-/*
- * =====================================================
- * STYLES
- * =====================================================
- */
 
 const menuLayoutOptions: Array<{
   id: MenuLayout;
@@ -1302,441 +972,30 @@ const menuLayoutOptions: Array<{
     id: "classic",
     name: "Classic",
     description: "Sade, temiz ve zamansız menü.",
-    preview: {
-      background: "#f8f6f1",
-      color: "#171717",
-    },
+    preview: { background: "#f8f6f1", color: "#171717" },
   },
   {
     id: "editorial",
     name: "Editorial",
-    description: "Premium dergi tarzı yerleşim.",
-    preview: {
-      background: "#efe8dc",
-      color: "#171717",
-    },
+    description: "Dergi tarzı yerleşim.",
+    preview: { background: "#efe8dc", color: "#171717" },
   },
   {
     id: "grid",
     name: "Grid",
-    description: "Modern iki kolonlu ürün kartları.",
-    preview: {
-      background: "#071018",
-      color: "#fff",
-    },
+    description: "İki sütunlu ürün kartları.",
+    preview: { background: "#071018", color: "#ffffff" },
   },
   {
     id: "luxury",
     name: "Luxury",
-    description: "Koyu ve sofistike restoran görünümü.",
-    preview: {
-      background: "linear-gradient(135deg,#15110b,#332712)",
-      color: "#fff",
-    },
+    description: "Koyu ve sofistike görünüm.",
+    preview: { background: "linear-gradient(135deg,#15110b,#332712)", color: "#ffffff" },
   },
   {
     id: "minimal",
     name: "Minimal",
-    description: "Beyaz alanlı, sade fine-dining görünümü.",
-    preview: {
-      background: "#fff",
-      color: "#171717",
-    },
+    description: "Bol boşluklu, sade görünüm.",
+    preview: { background: "#ffffff", color: "#171717" },
   },
 ];
-
-const menuLayoutDescriptionStyle: CSSProperties = {
-  margin: "-8px 0 18px",
-  color: "#777",
-  fontSize: "12px",
-  lineHeight: 1.6,
-};
-
-const menuLayoutGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))",
-  gap: "14px",
-};
-
-const menuLayoutCardStyle: CSSProperties = {
-  appearance: "none",
-  width: "100%",
-  padding: 0,
-  borderRadius: "17px",
-  background: "#fff",
-  overflow: "hidden",
-  textAlign: "left",
-  cursor: "pointer",
-};
-
-const menuLayoutPreviewStyle: CSSProperties = {
-  height: "130px",
-  padding: "13px",
-  transition: "all .2s ease",
-};
-
-const menuLayoutPreviewHeaderStyle: CSSProperties = {
-  display: "flex",
-  gap: "5px",
-  marginBottom: "14px",
-};
-
-const menuLayoutPreviewContentStyle: CSSProperties = {
-  display: "flex",
-  gap: "9px",
-  alignItems: "center",
-};
-
-const menuLayoutPreviewImageStyle: CSSProperties = {
-  width: "65px",
-  height: "65px",
-  borderRadius: "10px",
-  background: "linear-gradient(135deg,#ddd,#999)",
-  flexShrink: 0,
-};
-
-const menuLayoutPreviewLinesStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "7px",
-  flex: 1,
-};
-
-const menuLayoutPreviewCardsStyle: CSSProperties = {
-  display: "flex",
-  gap: "7px",
-  marginTop: "12px",
-};
-
-const menuLayoutCardContentStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "12px",
-  padding: "13px 14px",
-};
-
-const menuLayoutNameStyle: CSSProperties = {
-  display: "block",
-  fontSize: "14px",
-  fontWeight: 900,
-  color: "#171717",
-  marginBottom: "3px",
-};
-
-const menuLayoutDescriptionSmallStyle: CSSProperties = {
-  display: "block",
-  color: "#888",
-  fontSize: "10px",
-  lineHeight: 1.4,
-};
-
-const menuLayoutSelectBadgeStyle: CSSProperties = {
-  flexShrink: 0,
-  padding: "7px 9px",
-  borderRadius: "9px",
-  fontSize: "10px",
-  fontWeight: 900,
-};
-
-const menuLayoutHintStyle: CSSProperties = {
-  marginTop: "15px",
-  padding: "12px 14px",
-  borderRadius: "11px",
-  background: "#faf8f3",
-  color: "#777",
-  fontSize: "11px",
-  lineHeight: 1.5,
-};
-
-const pageStyle: CSSProperties = {
-  minHeight: "100vh",
-  background: "#f5f3ef",
-  padding: "30px 16px 70px",
-  color: "#171717",
-};
-
-const containerStyle: CSSProperties = {
-  maxWidth: "1000px",
-  margin: "0 auto",
-};
-
-const loadingCardStyle: CSSProperties = {
-  maxWidth: "1000px",
-  margin: "0 auto",
-  background: "#fff",
-  borderRadius: "20px",
-  padding: "40px",
-  textAlign: "center",
-};
-
-const headerStyle: CSSProperties = {
-  background:
-    "linear-gradient(135deg,#171717,#29251b)",
-  color: "#fff",
-  borderRadius: "22px",
-  padding: "32px 26px",
-  marginBottom: "18px",
-};
-
-const eyebrowStyle: CSSProperties = {
-  color: "#d4a017",
-  fontSize: "10px",
-  fontWeight: 900,
-  letterSpacing: "2px",
-  marginBottom: "7px",
-};
-
-const headerTitleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: "30px",
-  fontWeight: 950,
-};
-
-const headerDescriptionStyle: CSSProperties = {
-  margin: "9px 0 0",
-  color: "rgba(255,255,255,.68)",
-  fontSize: "13px",
-  lineHeight: 1.5,
-};
-
-const headerButtonsStyle: CSSProperties = {
-  display: "flex",
-  gap: "10px",
-  flexWrap: "wrap",
-  marginTop: "18px",
-};
-
-const primaryHeaderButtonStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "11px 16px",
-  borderRadius: "10px",
-  background: "#d4a017",
-  color: "#fff",
-  textDecoration: "none",
-  fontSize: "12px",
-  fontWeight: 900,
-};
-
-const secondaryHeaderButtonStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "11px 16px",
-  borderRadius: "10px",
-  background: "rgba(255,255,255,.10)",
-  border: "1px solid rgba(255,255,255,.20)",
-  color: "#fff",
-  textDecoration: "none",
-  fontSize: "12px",
-  fontWeight: 900,
-};
-
-const errorStyle: CSSProperties = {
-  background: "#fff0f0",
-  border: "1px solid #efb1b1",
-  color: "#b42318",
-  borderRadius: "12px",
-  padding: "13px 15px",
-  marginBottom: "15px",
-  fontSize: "13px",
-  fontWeight: 700,
-};
-
-const successStyle: CSSProperties = {
-  background: "#eefbf2",
-  border: "1px solid #b7e3c2",
-  color: "#16743a",
-  borderRadius: "12px",
-  padding: "13px 15px",
-  marginBottom: "15px",
-  fontSize: "13px",
-  fontWeight: 700,
-};
-
-const sectionStyle: CSSProperties = {
-  background: "#fff",
-  border: "1px solid #e5e0d8",
-  borderRadius: "19px",
-  padding: "22px",
-  marginBottom: "16px",
-};
-
-const sectionTitleContainerStyle: CSSProperties = {
-  marginBottom: "18px",
-};
-
-const sectionEyebrowStyle: CSSProperties = {
-  color: "#c58d08",
-  fontSize: "10px",
-  fontWeight: 900,
-  letterSpacing: "1.6px",
-  marginBottom: "5px",
-};
-
-const sectionTitleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: "21px",
-  fontWeight: 900,
-};
-
-const restaurantInfoStyle: CSSProperties = {
-  background: "#f8f6f1",
-  border: "1px solid #e5e0d8",
-  borderRadius: "12px",
-  padding: "13px 15px",
-  marginBottom: "18px",
-  color: "#555",
-  fontSize: "13px",
-  fontWeight: 700,
-};
-
-const gridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit,minmax(280px,1fr))",
-  gap: "16px",
-};
-
-const timeGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit,minmax(200px,1fr))",
-  gap: "16px",
-};
-
-const imageGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit,minmax(280px,1fr))",
-  gap: "18px",
-};
-
-const labelStyle: CSSProperties = {
-  display: "block",
-  fontSize: "12px",
-  fontWeight: 800,
-  marginBottom: "7px",
-  color: "#292929",
-};
-
-const inputStyle: CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "12px 13px",
-  border: "1px solid #d9d4cc",
-  borderRadius: "10px",
-  background: "#fff",
-  color: "#171717",
-  fontSize: "14px",
-  outline: "none",
-};
-
-const hintStyle: CSSProperties = {
-  display: "block",
-  marginTop: "6px",
-  color: "#888",
-  fontSize: "11px",
-  lineHeight: 1.5,
-};
-
-const uploadCardStyle: CSSProperties = {
-  border: "1px solid #e5e0d8",
-  borderRadius: "16px",
-  padding: "18px",
-  background: "#faf9f7",
-  textAlign: "center",
-};
-
-const uploadTitleStyle: CSSProperties = {
-  fontSize: "10px",
-  fontWeight: 900,
-  letterSpacing: "1.5px",
-  color: "#8b877f",
-  marginBottom: "15px",
-};
-
-const logoPreviewStyle: CSSProperties = {
-  width: "130px",
-  height: "130px",
-  objectFit: "contain",
-  borderRadius: "24px",
-  background: "#fff",
-  border: "1px solid #e5e0d8",
-  display: "block",
-  margin: "0 auto 16px",
-};
-
-const coverPreviewStyle: CSSProperties = {
-  width: "100%",
-  height: "150px",
-  objectFit: "cover",
-  borderRadius: "16px",
-  background: "#eee",
-  display: "block",
-  marginBottom: "16px",
-};
-
-const emptyImageStyle: CSSProperties = {
-  width: "130px",
-  height: "130px",
-  borderRadius: "24px",
-  background: "#ece9e3",
-  color: "#aaa",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "12px",
-  fontWeight: 900,
-  margin: "0 auto 16px",
-};
-
-const secondaryButtonStyle: CSSProperties = {
-  border: "1px solid #d9d4cc",
-  background: "#fff",
-  color: "#171717",
-  padding: "11px 16px",
-  borderRadius: "10px",
-  fontWeight: 800,
-  cursor: "pointer",
-};
-
-const statusBoxStyle: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: "20px",
-  flexWrap: "wrap",
-  padding: "18px",
-  border: "1px solid #e5e0d8",
-  borderRadius: "15px",
-  marginBottom: "18px",
-};
-
-const infoBoxStyle: CSSProperties = {
-  marginTop: "15px",
-  padding: "13px 15px",
-  background: "#faf8f4",
-  borderRadius: "11px",
-  fontSize: "11px",
-  color: "#777",
-  lineHeight: 1.6,
-};
-
-const saveContainerStyle: CSSProperties = {
-  display: "flex",
-  justifyContent: "flex-end",
-};
-
-const saveButtonStyle: CSSProperties = {
-  border: "none",
-  color: "#fff",
-  padding: "15px 30px",
-  borderRadius: "12px",
-  fontSize: "14px",
-  fontWeight: 900,
-  boxShadow:
-    "0 10px 25px rgba(0,0,0,.12)",
-};

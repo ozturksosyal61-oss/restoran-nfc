@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../lib/supabase/client";
+import AdminIcon from "../AdminIcon";
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -72,292 +73,74 @@ export default function LoginPage() {
   }
 
   return (
-    <main
-      className="login-page"
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
-        boxSizing: "border-box",
-        background:
-          "linear-gradient(135deg, #f7f4ee 0%, #eee9df 100%)",
-      }}
-    >
-      <section
-        className="login-card"
-        style={{
-          width: "100%",
-          maxWidth: "430px",
-          boxSizing: "border-box",
-          padding: "32px 28px",
-          borderRadius: "22px",
-          background: "#fff",
-          border: "1px solid #e7e0d5",
-          boxShadow:
-            "0 20px 55px rgba(0,0,0,.08)",
-        }}
-      >
-        {/* =================================================
-            LOGO
-        ================================================= */}
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "20px",
-          }}
-        >
-          <div
-            className="logo"
-            style={{
-              width: "58px",
-              height: "58px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "16px",
-              background: "#111",
-              color: "#d49a16",
-              fontSize: "20px",
-              fontWeight: 900,
-              letterSpacing: "1px",
-              boxShadow:
-                "0 10px 25px rgba(0,0,0,.12)",
-            }}
-          >
-            OZT
-          </div>
+    <main className="adm-auth">
+      <aside className="adm-auth-art" aria-hidden="true">
+        <span className="adm-logo-mark">
+          <span>O</span>
+          OZT DIGITAL
+        </span>
+        <div>
+          <h2>Restoranınız tek ekranda.</h2>
+          <p>Siparişler, masalar, menü ve ödemeler; mutfaktan kasaya aynı panelde.</p>
         </div>
+        <ul className="adm-auth-points">
+          <li><AdminIcon name="orders" size={16} /> Masadan gelen siparişler anlık düşer</li>
+          <li><AdminIcon name="qr" size={16} /> Her masa için QR ve NFC</li>
+          <li><AdminIcon name="chart" size={16} /> Günlük ciro ve yorumlar</li>
+        </ul>
+      </aside>
 
-        {/* =================================================
-            BAŞLIK
-        ================================================= */}
+      <section className="adm-auth-form">
+        <form className="adm-auth-card" onSubmit={handleLogin} noValidate>
+          <span className="adm-logo-mark" style={{ color: "var(--a-ink)" }}>
+            <span>O</span>
+            İşletme paneli
+          </span>
 
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "25px",
-          }}
-        >
-          <div
-            style={{
-              marginBottom: "7px",
-              color: "#c58d08",
-              fontSize: "10px",
-              fontWeight: 900,
-              letterSpacing: "1.8px",
-            }}
-          >
-            OZT DIGITAL MENU
-          </div>
+          <h1>Giriş yapın</h1>
+          <p>İşletmenize ait e-posta ve şifre ile devam edin.</p>
 
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "25px",
-              lineHeight: 1.2,
-              color: "#171717",
-            }}
-          >
-            İşletme Girişi
-          </h1>
-
-          <p
-            style={{
-              margin:
-                "9px 0 0",
-              color: "#777",
-              fontSize: "13px",
-              lineHeight: 1.5,
-            }}
-          >
-            Yönetim panelinize güvenli şekilde
-            giriş yapın.
-          </p>
-        </div>
-
-        {/* =================================================
-            FORM
-        ================================================= */}
-
-        <form onSubmit={handleLogin}>
-          <label
-            htmlFor="email"
-            style={{
-              display: "block",
-              marginBottom: "16px",
-            }}
-          >
-            <span
-              style={{
-                display: "block",
-                marginBottom: "7px",
-                color: "#292929",
-                fontSize: "12px",
-                fontWeight: 800,
-              }}
-            >
-              E-posta
-            </span>
-
+          <div className="adm-field">
+            <label className="adm-label" htmlFor="giris-eposta">E-posta</label>
             <input
-              id="email"
-              name="email"
+              id="giris-eposta"
+              className="adm-input"
               type="email"
-              inputMode="email"
-              autoComplete="email"
-              placeholder="ornek@mail.com"
               value={email}
-              onChange={(event) =>
-                setEmail(event.target.value)
-              }
-              disabled={loading}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="ornek@restoran.com"
+              autoComplete="email"
+              inputMode="email"
               required
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                padding: "13px 14px",
-                border:
-                  "1px solid #d9d4cc",
-                borderRadius: "10px",
-                background:
-                  loading
-                    ? "#f5f5f5"
-                    : "#fff",
-                color: "#171717",
-                fontSize: "14px",
-                outline: "none",
-              }}
             />
-          </label>
+          </div>
 
-          <label
-            htmlFor="password"
-            style={{
-              display: "block",
-              marginBottom: "18px",
-            }}
-          >
-            <span
-              style={{
-                display: "block",
-                marginBottom: "7px",
-                color: "#292929",
-                fontSize: "12px",
-                fontWeight: 800,
-              }}
-            >
-              Şifre
-            </span>
-
+          <div className="adm-field">
+            <label className="adm-label" htmlFor="giris-sifre">Şifre</label>
             <input
-              id="password"
-              name="password"
+              id="giris-sifre"
+              className="adm-input"
               type="password"
-              autoComplete="current-password"
-              placeholder="Şifreniz"
               value={password}
-              onChange={(event) =>
-                setPassword(event.target.value)
-              }
-              disabled={loading}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Şifreniz"
+              autoComplete="current-password"
               required
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                padding: "13px 14px",
-                border:
-                  "1px solid #d9d4cc",
-                borderRadius: "10px",
-                background:
-                  loading
-                    ? "#f5f5f5"
-                    : "#fff",
-                color: "#171717",
-                fontSize: "14px",
-                outline: "none",
-              }}
             />
-          </label>
-
-          {/* =================================================
-              HATA
-          ================================================= */}
+          </div>
 
           {error && (
-            <div
-              role="alert"
-              style={{
-                marginBottom: "17px",
-                padding:
-                  "12px 14px",
-                borderRadius: "10px",
-                background: "#fff0f0",
-                border:
-                  "1px solid #efb1b1",
-                color: "#b42318",
-                fontSize: "12px",
-                fontWeight: 700,
-                lineHeight: 1.5,
-              }}
-            >
-              ❌ {error}
-            </div>
+            <p className="adm-alert adm-alert-error" role="alert" style={{ margin: 0 }}>
+              <AdminIcon name="alert" size={16} />
+              {error}
+            </p>
           )}
 
-          {/* =================================================
-              GİRİŞ BUTONU
-          ================================================= */}
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              minHeight: "47px",
-              border: "none",
-              borderRadius: "11px",
-              background: loading
-                ? "#999"
-                : "#d49a16",
-              color: "#fff",
-              fontSize: "13px",
-              fontWeight: 900,
-              cursor: loading
-                ? "not-allowed"
-                : "pointer",
-              boxShadow:
-                "0 9px 22px rgba(212,154,22,.20)",
-            }}
-          >
-            {loading
-              ? "Giriş yapılıyor..."
-              : "Giriş Yap"}
+          <button type="submit" className="adm-btn adm-btn-primary adm-btn-lg adm-btn-block" disabled={loading}>
+            {loading ? "Giriş yapılıyor…" : "Giriş yap"}
+            {!loading && <AdminIcon name="arrowRight" size={17} />}
           </button>
         </form>
-
-        {/* =================================================
-            ALT BİLGİ
-        ================================================= */}
-
-        <div
-          style={{
-            marginTop: "22px",
-            paddingTop: "17px",
-            borderTop:
-              "1px solid #eee9e1",
-            textAlign: "center",
-            color: "#999",
-            fontSize: "10px",
-            lineHeight: 1.5,
-          }}
-        >
-          OZT Digital Menu • İşletme Yönetim
-          Sistemi
-        </div>
       </section>
     </main>
   );

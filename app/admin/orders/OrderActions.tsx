@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../lib/supabase/client";
+import AdminIcon, { type AdminIconName } from "../AdminIcon";
 
 type OrderStatus =
   | "pending"
@@ -27,48 +28,20 @@ type Props = {
   currentStatus: string;
 };
 
-const statusLabels: Record<OrderStatus, string> = {
-  pending: "Yeni Sipariş",
-  accepted: "Kabul Edildi",
-  preparing: "Hazırlanıyor",
-  ready: "Hazır",
-  delivered: "Tamamlandı",
-};
-
-const statusIcons: Record<OrderStatus, string> = {
-  pending: "🔔",
-  accepted: "👍",
-  preparing: "👨‍🍳",
-  ready: "✅",
-  delivered: "✓",
-};
-
 function getPaymentMethodLabel(method: PaymentMethod) {
   if (method === "cash") {
-    return "💵 Nakit";
+    return "Nakit";
   }
 
   if (method === "card") {
-    return "💳 Kart / POS";
+    return "Kart / POS";
   }
 
   if (method === "online") {
-    return "🌐 Online Ödeme";
+    return "Online ödeme";
   }
 
-  return "💳 Ödeme yöntemi belirtilmedi";
-}
-
-function getPaymentStatusLabel(paymentStatus: PaymentStatus) {
-  if (paymentStatus === "paid") {
-    return "🟢 Ödendi";
-  }
-
-  if (paymentStatus === "refunded") {
-    return "↩️ İade Edildi";
-  }
-
-  return "🔴 Ödenmedi";
+  return "Belirtilmedi";
 }
 
 function isValidOrderStatus(
@@ -544,335 +517,106 @@ export default function OrderActions({
    */
 
   function renderNextAction() {
-    if (loading) {
-      return (
-        <button
-          type="button"
-          disabled
-          className="order-action-button order-action-loading"
-        >
-          <span>⏳</span>
-          <span>Güncelleniyor...</span>
-        </button>
-      );
-    }
-
-    if (status === "pending") {
-      return (
-        <button
-          type="button"
-          className="order-action-button order-action-accept"
-          onClick={() =>
-            updateStatus("accepted")
-          }
-        >
-          <span>👍</span>
-          <span>Siparişi Kabul Et</span>
-          <span className="order-action-arrow">
-            →
-          </span>
-        </button>
-      );
-    }
-
-    if (status === "accepted") {
-      return (
-        <button
-          type="button"
-          className="order-action-button order-action-prepare"
-          onClick={() =>
-            updateStatus("preparing")
-          }
-        >
-          <span>👨‍🍳</span>
-          <span>Hazırlamaya Başla</span>
-          <span className="order-action-arrow">
-            →
-          </span>
-        </button>
-      );
-    }
-
-    if (status === "preparing") {
-      return (
-        <button
-          type="button"
-          className="order-action-button order-action-ready"
-          onClick={() =>
-            updateStatus("ready")
-          }
-        >
-          <span>✅</span>
-          <span>Siparişi Hazırla</span>
-          <span className="order-action-arrow">
-            →
-          </span>
-        </button>
-      );
-    }
-
-    if (status === "ready") {
-      return (
-        <button
-          type="button"
-          className="order-action-button order-action-deliver"
-          onClick={() =>
-            updateStatus("delivered")
-          }
-        >
-          <span>🛎️</span>
-          <span>Teslim Edildi</span>
-          <span className="order-action-arrow">
-            →
-          </span>
-        </button>
-      );
-    }
+    const next: Record<
+      Exclude<OrderStatus, "delivered">,
+      { to: OrderStatus; label: string; icon: AdminIconName; tone: string }
+    > = {
+      pending: { to: "accepted", label: "Siparişi kabul et", icon: "check", tone: "adm-btn-primary" },
+      accepted: { to: "preparing", label: "Hazırlamaya başla", icon: "chef", tone: "adm-btn-primary" },
+      preparing: { to: "ready", label: "Hazır olarak işaretle", icon: "bell", tone: "adm-btn-primary" },
+      ready: { to: "delivered", label: "Masaya teslim edildi", icon: "check", tone: "adm-btn-gold" },
+    };
 
     if (status === "delivered") {
       return (
-        <div className="order-action-completed">
-          <span className="completed-icon">
-            ✓
-          </span>
-
-          <span>
-            Sipariş Tamamlandı
-          </span>
-        </div>
+        <p className="adm-order-done">
+          <AdminIcon name="check" size={16} />
+          Sipariş tamamlandı
+        </p>
       );
     }
 
-    return null;
+    const action = next[status];
+
+    return (
+      <button
+        type="button"
+        className={`adm-btn adm-btn-lg adm-btn-block ${action.tone}`}
+        onClick={() => updateStatus(action.to)}
+        disabled={loading}
+      >
+        <AdminIcon name={action.icon} size={17} />
+        {loading ? "Güncelleniyor…" : action.label}
+      </button>
+    );
   }
 
   /*
    * =====================================================
-   * EKRAN
+   * GÖRÜNÜM
    * =====================================================
    */
 
+  const paymentBadge =
+    paymentStatus === "paid"
+      ? { className: "s-ok", label: "Ödendi" }
+      : paymentStatus === "refunded"
+      ? { className: "s-danger", label: "İade edildi" }
+      : { className: "s-pending", label: "Ödenmedi" };
+
   return (
-    <div className="order-actions">
-
-      {/* =================================================
-          SİPARİŞ DURUMU
-      ================================================= */}
-
-      <div className="order-action-status">
-        <span>SİPARİŞ DURUMU</span>
-
-        <strong>
-          <span
-            className={`order-action-status-dot status-dot-${status}`}
-          />
-
-          <span>
-            {statusIcons[status]}
-          </span>
-
-          <span>
-            {statusLabels[status]}
-          </span>
-        </strong>
-      </div>
-
-      {/* =================================================
-          ÖDEME DURUMU
-      ================================================= */}
-
-      <div
-        style={{
-          marginTop: "12px",
-          padding: "13px",
-          borderRadius: "12px",
-          background:
-            paymentStatus === "paid"
-              ? "#edf8ef"
-              : "#fff8e7",
-          border:
-            paymentStatus === "paid"
-              ? "1px solid #b9dfc0"
-              : "1px solid #f0d48a",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "10px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: "10px",
-                fontWeight: 900,
-                letterSpacing: "0.5px",
-                color: "#777",
-                marginBottom: "4px",
-              }}
-            >
-              ÖDEME
-            </div>
-
-            <div
-              style={{
-                fontSize: "13px",
-                fontWeight: 800,
-                color: "#222",
-              }}
-            >
-              {paymentLoaded
-                ? getPaymentMethodLabel(
-                    paymentMethod
-                  )
-                : "⏳ Ödeme bilgisi yükleniyor..."}
-            </div>
-          </div>
-
-          <div
-            style={{
-              fontSize: "12px",
-              fontWeight: 900,
-            }}
-          >
-            {getPaymentStatusLabel(
-              paymentStatus
-            )}
-          </div>
-        </div>
-
-        {/* =================================================
-            ÖDEME BUTONLARI
-        ================================================= */}
+    <div className="adm-order-actions">
+      <div className="adm-order-pay">
+        <span className="adm-order-pay-text">
+          <small>Ödeme</small>
+          <strong>
+            {paymentLoaded ? getPaymentMethodLabel(paymentMethod) : "Yükleniyor…"}
+          </strong>
+        </span>
+        <span className={`adm-badge is-dot ${paymentBadge.className}`}>{paymentBadge.label}</span>
 
         {paymentStatus === "unpaid" && (
           <button
             type="button"
-            disabled={
-              paymentLoading ||
-              !paymentLoaded
-            }
-            onClick={() =>
-              updatePaymentStatus("paid")
-            }
-            style={{
-              width: "100%",
-              marginTop: "11px",
-              border: "none",
-              borderRadius: "10px",
-              padding: "11px 13px",
-              background: "#111",
-              color: "#fff",
-              fontSize: "12px",
-              fontWeight: 900,
-              cursor:
-                paymentLoading ||
-                !paymentLoaded
-                  ? "not-allowed"
-                  : "pointer",
-              opacity:
-                paymentLoading ||
-                !paymentLoaded
-                  ? 0.55
-                  : 1,
-            }}
+            className="adm-btn adm-btn-sm adm-btn-ok"
+            disabled={paymentLoading || !paymentLoaded}
+            onClick={() => updatePaymentStatus("paid")}
           >
-            {paymentLoading
-              ? "⏳ Güncelleniyor..."
-              : "💰 Ödemeyi Al / Ödendi Yap"}
+            <AdminIcon name="wallet" size={15} />
+            {paymentLoading ? "Kaydediliyor…" : "Ödeme alındı"}
           </button>
         )}
 
         {paymentStatus === "paid" && (
           <button
             type="button"
+            className="adm-btn adm-btn-sm adm-btn-ghost"
             disabled={paymentLoading}
-            onClick={() =>
-              updatePaymentStatus("unpaid")
-            }
-            style={{
-              width: "100%",
-              marginTop: "11px",
-              border:
-                "1px solid #d7d2c8",
-              borderRadius: "10px",
-              padding: "10px 13px",
-              background: "#fff",
-              color: "#555",
-              fontSize: "11px",
-              fontWeight: 800,
-              cursor:
-                paymentLoading
-                  ? "not-allowed"
-                  : "pointer",
-              opacity:
-                paymentLoading
-                  ? 0.55
-                  : 1,
-            }}
+            onClick={() => updatePaymentStatus("unpaid")}
           >
-            ↩️ Ödemeyi Tekrar Ödenmedi Yap
+            Geri al
           </button>
         )}
 
         {paymentStatus === "refunded" && (
           <button
             type="button"
+            className="adm-btn adm-btn-sm"
             disabled={paymentLoading}
-            onClick={() =>
-              updatePaymentStatus("paid")
-            }
-            style={{
-              width: "100%",
-              marginTop: "11px",
-              border: "none",
-              borderRadius: "10px",
-              padding: "10px 13px",
-              background: "#111",
-              color: "#fff",
-              fontSize: "11px",
-              fontWeight: 800,
-              cursor:
-                paymentLoading
-                  ? "not-allowed"
-                  : "pointer",
-            }}
+            onClick={() => updatePaymentStatus("paid")}
           >
-            ↩️ İadeyi Geri Al / Ödendi Yap
+            İadeyi geri al
           </button>
         )}
       </div>
 
-      {/* =================================================
-          SONRAKİ İŞLEM
-      ================================================= */}
-
-      <div className="order-action-next">
-        {renderNextAction()}
-      </div>
-
-      {/* =================================================
-          HATA
-      ================================================= */}
+      {renderNextAction()}
 
       {error && (
-        <div
-          style={{
-            marginTop: "10px",
-            padding: "9px 12px",
-            borderRadius: "8px",
-            background: "#fff0f0",
-            color: "#b42318",
-            fontSize: "11px",
-            fontWeight: 700,
-          }}
-        >
-          ⚠️ {error}
-        </div>
+        <p className="adm-alert adm-alert-error" role="alert" style={{ margin: 0 }}>
+          <AdminIcon name="alert" size={16} />
+          {error}
+        </p>
       )}
     </div>
   );

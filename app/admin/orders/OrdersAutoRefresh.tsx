@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import AdminIcon from "../AdminIcon";
 import { createClient } from "../../../lib/supabase/client";
 
 type Props = {
@@ -338,149 +339,50 @@ export default function OrdersAutoRefresh({
   // --------------------------------------------------
 
   return (
-    <>
-      {/* BİLDİRİM BUTONU */}
+    <div className="adm-notify" aria-live="polite">
+      {newOrders.length > 0 && (
+        <section className="adm-notify-panel" aria-label="Yeni siparişler">
+          <div className="adm-notify-head">
+            <span className="adm-notify-icon">
+              <AdminIcon name="bell" size={17} />
+            </span>
+            <span>
+              <strong>
+                {newOrders.length === 1 ? "Yeni sipariş geldi" : `${newOrders.length} yeni sipariş`}
+              </strong>
+              <small>Panoda &quot;Yeni&quot; sütununda</small>
+            </span>
+          </div>
+
+          <ul>
+            {newOrders.map((orderId) => (
+              <li key={orderId}>
+                <span>Sipariş #{orderId}</span>
+                <button type="button" onClick={() => dismissOrder(orderId)}>
+                  Gördüm
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          {newOrders.length > 1 && (
+            <button type="button" className="adm-notify-all" onClick={dismissAllOrders}>
+              Tümünü gördüm
+            </button>
+          )}
+        </section>
+      )}
 
       <button
+        type="button"
+        className={`adm-notify-toggle ${notificationEnabled ? "is-on" : ""}`}
         onClick={enableNotifications}
-        style={{
-          marginBottom: "20px",
-          padding: "10px 16px",
-          borderRadius: "10px",
-          border: "1px solid #ddd",
-          background: notificationEnabled
-            ? "#e8f5e9"
-            : "white",
-          color: "#111",
-          cursor: "pointer",
-          fontWeight: 600,
-        }}
+        aria-pressed={notificationEnabled}
+        title="Yeni siparişte tarayıcı bildirimi gönder"
       >
-        {notificationEnabled
-          ? "🔔 Bildirimler Açık"
-          : "🔔 Bildirimleri Aç"}
+        <AdminIcon name="bell" size={16} />
+        {notificationEnabled ? "Bildirimler açık" : "Bildirimleri aç"}
       </button>
-
-      {/* YENİ SİPARİŞ UYARILARI */}
-
-      {newOrders.length > 0 && (
-        <div
-          style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            zIndex: 99999,
-            width: "340px",
-            maxWidth:
-              "calc(100vw - 40px)",
-          }}
-        >
-          <div
-            style={{
-              background: "#111",
-              color: "white",
-              padding: "20px",
-              borderRadius: "16px",
-              boxShadow:
-                "0 15px 40px rgba(0,0,0,0.35)",
-              border:
-                "1px solid rgba(255,255,255,0.1)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "20px",
-                fontWeight: 800,
-                marginBottom: "8px",
-              }}
-            >
-              🔔 Yeni Sipariş!
-            </div>
-
-            <div
-              style={{
-                fontSize: "14px",
-                opacity: 0.8,
-                marginBottom: "15px",
-              }}
-            >
-              {newOrders.length === 1
-                ? "Yeni bir müşteri siparişi geldi."
-                : `${newOrders.length} yeni sipariş geldi.`}
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                marginBottom: "15px",
-              }}
-            >
-              {newOrders.map(
-                (orderId) => (
-                  <div
-                    key={orderId}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent:
-                        "space-between",
-                      padding: "10px 12px",
-                      borderRadius: "10px",
-                      background:
-                        "rgba(255,255,255,0.08)",
-                    }}
-                  >
-                    <strong>
-                      Sipariş #{orderId}
-                    </strong>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        dismissOrder(
-                          orderId
-                        )
-                      }
-                      style={{
-                        border: "none",
-                        background:
-                          "rgba(255,255,255,0.15)",
-                        color: "white",
-                        borderRadius: "8px",
-                        padding:
-                          "6px 10px",
-                        cursor: "pointer",
-                        fontWeight: 700,
-                      }}
-                    >
-                      Gördüm
-                    </button>
-                  </div>
-                )
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={dismissAllOrders}
-              style={{
-                width: "100%",
-                padding: "11px",
-                borderRadius: "10px",
-                border: "none",
-                background: "white",
-                color: "#111",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              Tüm Siparişleri Gördüm
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }

@@ -1,0 +1,201 @@
+"use client";
+
+import { useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "../../lib/supabase/client";
+import AdminIcon, { type AdminIconName } from "./AdminIcon";
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: AdminIconName;
+  locked?: boolean;
+};
+
+export type AdminShellRestaurant = {
+  name: string;
+  slug: string;
+  logo_url: string | null;
+};
+
+// Menüde hangi öğenin seçili olduğunu bulur. /admin/menu altında
+// kategori ve kampanya sayfaları kendi öğelerine aittir.
+function isActive(pathname: string, href: string) {
+  if (href === "/admin") return pathname === "/admin";
+  if (href === "/admin/menu") {
+    return (
+      pathname.startsWith("/admin/menu") &&
+      !pathname.startsWith("/admin/menu/kategori") &&
+      !pathname.startsWith("/admin/menu/promosyon")
+    );
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export default function AdminShell({
+  restaurant,
+  planLabel,
+  canUseOrders,
+  canUseStaff,
+  children,
+}: {
+  restaurant: AdminShellRestaurant | null;
+  planLabel: string;
+  canUseOrders: boolean;
+  canUseStaff: boolean;
+  children: ReactNode;
+}) {
+  const pathname = usePathname() || "/admin";
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+
+  // Sayfa değişince mobil menüyü kapat.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Giriş sayfası ve oturumsuz durumlar kabuksuz gösterilir.
+  if (pathname.startsWith("/admin/login") || !restaurant) {
+    return <div className="adm">{children}</div>;
+  }
+
+  async function logout() {
+    await createClient().auth.signOut();
+    router.push("/admin/login");
+    router.refresh();
+  }
+
+  const groups: { label: string; items: NavItem[] }[] = [
+    {
+      label: "Genel",
+      items: [
+        { href: "/admin", label: "Panel", icon: "dashboard" },
+        { href: "/admin/orders", label: "Siparişler", icon: "orders", locked: !canUseOrders },
+      ],
+    },
+    {
+      label: "Menü",
+      items: [
+        { href: "/admin/menu", label: "Ürünler", icon: "menu" },
+        { href: "/admin/menu/kategori", label: "Kategoriler", icon: "category" },
+        { href: "/admin/menu/promosyon", label: "Kampanyalar", icon: "promo" },
+      ],
+    },
+    {
+      label: "İşletme",
+      items: [
+        { href: "/admin/tables", label: "Masalar", icon: "table" },
+        { href: "/admin/qr", label: "QR / NFC", icon: "qr" },
+        { href: "/admin/calisanlar", label: "Çalışanlar", icon: "staff", locked: !canUseStaff },
+        { href: "/admin/degerlendirmeler", label: "Değerlendirmeler", icon: "star" },
+        { href: "/admin/odemeler", label: "Ödemeler", icon: "card" },
+      ],
+    },
+    {
+      label: "Ayarlar",
+      items: [
+        { href: "/admin/ayarlar", label: "İşletme ayarları", icon: "settings" },
+        { href: "/admin/tema", label: "Tema", icon: "palette" },
+      ],
+    },
+  ];
+
+  const initial = restaurant.name.trim().charAt(0).toLocaleUpperCase("tr-TR");
+
+  return (
+    <div className={`adm adm-shell ${open ? "is-open" : ""}`}>
+      <button
+        type="button"
+        className="adm-drawer-backdrop"
+        aria-label="Menüyü kapat"
+        tabIndex={-1}
+        onClick={() => setOpen(false)}
+      />
+
+      <aside className="adm-side" aria-label="Yönetim menüsü">
+        <div className="adm-brand">
+          <span className="adm-brand-logo">
+            {restaurant.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={restaurant.logo_url} alt="" />
+            ) : (
+              initial
+            )}
+          </span>
+          <span className="adm-brand-text">
+            <strong>{restaurant.name}</strong>
+            <small>
+              İşletme paneli <span className="adm-plan">{planLabel}</span>
+            </small>
+          </span>
+        </div>
+
+        <nav className="adm-nav">
+          {groups.map((group) => (
+            <div key={group.label} className="adm-nav-group">
+              <span className="adm-nav-label">{group.label}</span>
+              {group.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`adm-nav-item ${isActive(pathname, item.href) ? "is-active" : ""} ${item.locked ? "is-locked" : ""}`}
+                  aria-current={isActive(pathname, item.href) ? "page" : undefined}
+                >
+                  <AdminIcon name={item.icon} />
+                  {item.label}
+                  {item.locked && <span className="adm-nav-lock">PRO</span>}
+                </Link>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <div className="adm-side-foot">
+          <a
+            className="adm-nav-item"
+            href={`/restoran/${restaurant.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <AdminIcon name="external" />
+            Müşteri sayfası
+          </a>
+          <button type="button" className="adm-nav-item" onClick={logout}>
+            <AdminIcon name="logout" />
+            Çıkış yap
+          </button>
+        </div>
+      </aside>
+
+      <div className="adm-main">
+        <header className="adm-topbar">
+          <button
+            type="button"
+            className="adm-btn adm-btn-icon"
+            onClick={() => setOpen(true)}
+            aria-label="Menüyü aç"
+            aria-expanded={open}
+          >
+            <AdminIcon name="menuBars" />
+          </button>
+          <strong>{restaurant.name}</strong>
+          <span className="adm-badge s-accent">{planLabel}</span>
+        </header>
+
+        {children}
+      </div>
+    </div>
+  );
+}

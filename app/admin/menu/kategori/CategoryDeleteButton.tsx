@@ -1,5 +1,7 @@
 "use client";
 
+import AdminIcon from "../../AdminIcon";
+
 import { useState } from "react";
 import { deleteCategory } from "./actions";
 
@@ -37,9 +39,10 @@ export default function CategoryDeleteButton({
       type="button"
       onClick={handleDelete}
       disabled={loading}
-      className="delete-button"
+      className="adm-btn adm-btn-sm adm-btn-ghost adm-text-danger"
     >
-      {loading ? "Siliniyor..." : "🗑️ Sil"}
+      <AdminIcon name="trash" size={15} />
+      {loading ? "Siliniyor…" : "Sil"}
     </button>
   );
 }

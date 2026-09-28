@@ -1,5 +1,7 @@
 "use client";
 
+import AdminIcon from "../AdminIcon";
+
 import { useState } from "react";
 import { createClient } from "../../../lib/supabase/client";
 
@@ -64,9 +66,10 @@ export default function ProductMoveButton({
       onClick={moveProduct}
       disabled={loading || !neighborId}
       title={direction === "up" ? "Yukarı taşı" : "Aşağı taşı"}
-      className="sort-button"
+      aria-label={direction === "up" ? "Ürünü yukarı taşı" : "Ürünü aşağı taşı"}
+      className="adm-btn adm-btn-sm adm-btn-icon adm-btn-ghost"
     >
-      {loading ? "..." : direction === "up" ? "↑" : "↓"}
+      <AdminIcon name={direction === "up" ? "up" : "down"} size={16} />
     </button>
   );
 }

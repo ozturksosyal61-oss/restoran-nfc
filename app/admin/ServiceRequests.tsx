@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "../../lib/supabase/client";
+import AdminIcon from "./AdminIcon";
 
 type ServiceRequest = {
   id: number;
@@ -26,11 +27,11 @@ type Props = {
 };
 
 const requestLabels: Record<string, string> = {
-  garson: "Garson Çağırıyor",
-  hesap: "Hesap İstiyor",
-  su: "Su İstiyor",
-  servis: "Servis İstiyor",
-  yardim: "Yardım İstiyor",
+  garson: "Garson çağırıyor",
+  hesap: "Hesap istiyor",
+  su: "Su istiyor",
+  servis: "Servis istiyor",
+  yardim: "Yardım istiyor",
 };
 
 function getTableNumber(request: ServiceRequest) {
@@ -538,414 +539,80 @@ export default function ServiceRequests({
 
   /*
    * =====================================================
-   * LOADING
-   * =====================================================
-   */
-
-  if (loading) {
-    return (
-      <section
-        style={{
-          background: "white",
-          borderRadius: "18px",
-          padding: "22px",
-          boxShadow:
-            "0 10px 30px rgba(0,0,0,0.05)",
-        }}
-      >
-        <div className="dashboard-section-heading">
-          <span>
-            PERSONEL ÇAĞRILARI
-          </span>
-
-          <h2>
-            Garson Çağrıları
-          </h2>
-        </div>
-
-        <p
-          style={{
-            margin: 0,
-            color: "#888",
-            fontSize: "13px",
-          }}
-        >
-          Çağrılar yükleniyor...
-        </p>
-      </section>
-    );
-  }
-
-  /*
-   * =====================================================
-   * ANA EKRAN
+   * GÖRÜNÜM
    * =====================================================
    */
 
   return (
-    <section
-      style={{
-        background: "white",
-        borderRadius: "18px",
-        padding: "22px",
-        boxShadow:
-          "0 10px 30px rgba(0,0,0,0.05)",
-        minWidth: 0,
-        position: "relative",
-      }}
-    >
-      {requests.length > 0 && (
-        <div
-          style={{
-            position: "absolute",
-            top: "14px",
-            right: "14px",
-            width: "9px",
-            height: "9px",
-            borderRadius: "50%",
-            background: "#b42318",
-            boxShadow:
-              "0 0 0 5px rgba(180,35,24,0.08)",
-          }}
-          aria-label="Bekleyen çağrı var"
-        />
-      )}
-
-      <div
-        className="dashboard-section-heading"
-        style={{
-          marginBottom: "18px",
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "12px",
-          alignItems: "flex-start",
-        }}
-      >
+    <section className="adm-card" aria-labelledby="cagri-baslik" aria-live="polite">
+      <div className="adm-card-head">
         <div>
-          <span>
-            PERSONEL ÇAĞRILARI
-          </span>
-
-          <h2>
-            Garson Çağrıları
+          <h2 id="cagri-baslik">
+            Masa çağrıları{requests.length > 0 ? ` · ${requests.length}` : ""}
           </h2>
+          <p>Garson ve hesap istekleri anlık gelir; tamamlananlar listeden düşer.</p>
         </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
+        <button
+          type="button"
+          className={`adm-btn adm-btn-sm ${soundEnabled ? "adm-btn-ok" : ""}`}
+          onClick={enableNotificationSound}
+          aria-pressed={soundEnabled}
         >
-          <button
-            type="button"
-            onClick={
-              enableNotificationSound
-            }
-            style={{
-              border:
-                "1px solid #e5dfd2",
-              borderRadius: "9px",
-              padding: "7px 9px",
-              background:
-                soundEnabled
-                  ? "#e8f5e9"
-                  : "white",
-              color:
-                soundEnabled
-                  ? "#2e7d32"
-                  : "#555",
-              fontSize: "10px",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            {soundEnabled
-              ? "🔊 Ses Açık"
-              : "🔇 Sesi Aç"}
-          </button>
-
-          <div
-            style={{
-              minWidth: "28px",
-              height: "28px",
-              padding: "0 8px",
-              borderRadius: "20px",
-              display: "grid",
-              placeItems: "center",
-              background:
-                requests.length > 0
-                  ? "#fff3cd"
-                  : "#f5f3ef",
-              color:
-                requests.length > 0
-                  ? "#946b00"
-                  : "#888",
-              fontSize: "12px",
-              fontWeight: 800,
-            }}
-          >
-            {requests.length}
-          </div>
-        </div>
+          <AdminIcon name="bell" size={15} />
+          {soundEnabled ? "Ses açık" : "Sesi aç"}
+        </button>
       </div>
 
       {error && (
-        <p
-          className="login-error"
-          style={{
-            marginBottom: "12px",
-          }}
-        >
-          ❌ {error}
+        <p className="adm-alert adm-alert-error" role="alert">
+          <AdminIcon name="alert" size={16} />
+          {error}
         </p>
       )}
 
-      {requests.length === 0 ? (
-        <div
-          style={{
-            padding: "28px 18px",
-            textAlign: "center",
-            border:
-              "1px dashed #ddd4c3",
-            borderRadius: "14px",
-            background: "#faf8f3",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "34px",
-            }}
-          >
-            🔕
-          </div>
-
-          <h3
-            style={{
-              margin: "8px 0 5px",
-            }}
-          >
-            Bekleyen çağrı yok
-          </h3>
-
-          <p
-            style={{
-              margin: 0,
-              color: "#888",
-              fontSize: "12px",
-            }}
-          >
-            Yeni bir masa çağrısı geldiğinde
-            burada anında görünecek.
-          </p>
+      {loading ? (
+        <p className="adm-hint" style={{ margin: 0 }}>Çağrılar yükleniyor…</p>
+      ) : requests.length === 0 ? (
+        <div className="adm-empty" style={{ padding: "24px 16px" }}>
+          <span className="adm-empty-icon"><AdminIcon name="check" /></span>
+          <strong>Bekleyen çağrı yok</strong>
+          <p>Bir masa garson çağırdığında ya da hesap istediğinde burada görünür.</p>
         </div>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gap: "10px",
-          }}
-        >
+        <div className="adm-calls">
           {requests.map((request) => {
-            const tableNumber =
-              getTableNumber(request);
-
-            const label =
-              requestLabels[
-                request.request_type
-              ] ||
-              "Personel Talebi";
-
-            const waitingSeconds =
-              getWaitingSeconds(
-                request.created_at,
-                now
-              );
+            const seconds = getWaitingSeconds(request.created_at, now);
+            const late = seconds >= 180;
+            const isBill = request.request_type === "hesap";
 
             return (
-              <div
-                key={request.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent:
-                    "space-between",
-                  gap: "14px",
-                  padding: "14px",
-                  border:
-                    waitingSeconds >= 180
-                      ? "1px solid #e2b4af"
-                      : "1px solid #eee3cb",
-                  borderRadius: "13px",
-                  background:
-                    waitingSeconds >= 180
-                      ? "#fff6f5"
-                      : "#fffaf0",
-                }}
-              >
-                <div
-                  style={{
-                    minWidth: 0,
-                    flex: 1,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        flexShrink: 0,
-                        display: "grid",
-                        placeItems: "center",
-                        borderRadius: "10px",
-                        background:
-                          waitingSeconds >=
-                          180
-                            ? "#fde3df"
-                            : "#fff0bf",
-                        fontSize: "15px",
-                      }}
-                    >
-                      🔔
-                    </span>
-
-                    <div
-                      style={{
-                        minWidth: 0,
-                      }}
-                    >
-                      <strong
-                        style={{
-                          display: "block",
-                          fontSize: "13px",
-                        }}
-                      >
-                        Masa {tableNumber}
-                      </strong>
-
-                      <span
-                        style={{
-                          display: "block",
-                          marginTop: "2px",
-                          color: "#666",
-                          fontSize: "11px",
-                          whiteSpace:
-                            "nowrap",
-                          overflow:
-                            "hidden",
-                          textOverflow:
-                            "ellipsis",
-                        }}
-                      >
-                        {label} ·{" "}
-                        {formatTime(
-                          request.created_at
-                        )}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: "9px",
-                      display:
-                        "inline-flex",
-                      alignItems:
-                        "center",
-                      gap: "6px",
-                      padding:
-                        "5px 8px",
-                      borderRadius:
-                        "8px",
-                      background:
-                        waitingSeconds >=
-                        180
-                          ? "#fde3df"
-                          : "#f5f1e8",
-                      color:
-                        waitingSeconds >=
-                        180
-                          ? "#b42318"
-                          : "#6d5a32",
-                      fontSize: "10px",
-                      fontWeight: 800,
-                    }}
-                  >
-                    ⏱{" "}
-                    {formatWaitingTime(
-                      waitingSeconds
-                    )}{" "}
-                    bekliyor
-                  </div>
-                </div>
-
+              <article key={request.id} className={`adm-call ${late ? "is-late" : ""}`}>
+                <span className={`adm-call-icon ${isBill ? "is-bill" : ""}`}>
+                  <AdminIcon name={isBill ? "orders" : "bell"} />
+                </span>
+                <span className="adm-call-main">
+                  <strong>Masa {getTableNumber(request)}</strong>
+                  <small>
+                    {requestLabels[request.request_type] || "Çağırıyor"} · {formatTime(request.created_at)}
+                  </small>
+                </span>
+                <span className={`adm-call-wait ${late ? "is-late" : ""}`} title="Bekleme süresi">
+                  {formatWaitingTime(seconds)}
+                </span>
                 <button
                   type="button"
-                  onClick={() =>
-                    completeRequest(
-                      request.id
-                    )
-                  }
-                  disabled={
-                    updatingId ===
-                    request.id
-                  }
-                  style={{
-                    flexShrink: 0,
-                    border: "none",
-                    borderRadius:
-                      "9px",
-                    padding:
-                      "9px 12px",
-                    background:
-                      "#111",
-                    color:
-                      "white",
-                    fontSize:
-                      "11px",
-                    fontWeight:
-                      700,
-                    cursor:
-                      updatingId ===
-                      request.id
-                        ? "not-allowed"
-                        : "pointer",
-                    opacity:
-                      updatingId ===
-                      request.id
-                        ? 0.6
-                        : 1,
-                  }}
+                  className="adm-btn adm-btn-sm adm-btn-primary"
+                  onClick={() => completeRequest(request.id)}
+                  disabled={updatingId === request.id}
                 >
-                  {updatingId ===
-                  request.id
-                    ? "Tamamlanıyor..."
-                    : "✓ Tamamlandı"}
+                  <AdminIcon name="check" size={15} />
+                  {updatingId === request.id ? "Kaydediliyor…" : "Tamamlandı"}
                 </button>
-              </div>
+              </article>
             );
           })}
         </div>
       )}
-
-      <p
-        style={{
-          margin: "14px 0 0",
-          color: "#999",
-          fontSize: "11px",
-        }}
-      >
-        Yeni çağrılar Realtime ile otomatik
-        gelir; bekleme süresi canlı olarak
-        güncellenir.
-      </p>
     </section>
   );
 }

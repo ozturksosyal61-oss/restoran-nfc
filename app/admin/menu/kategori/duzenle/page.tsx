@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "../../../../../lib/supabase-server";
+import AdminIcon from "../../../AdminIcon";
 
 export default async function EditCategoryPage({
   searchParams,
@@ -89,36 +90,46 @@ export default async function EditCategoryPage({
     revalidatePath("/admin/menu");
     revalidatePath("/admin/menu/kategori");
 
-    redirect("/admin/menu");
+    redirect("/admin/menu/kategori");
   }
 
   return (
-    <main className="admin-page">
-      <section className="admin-header">
-        <a href="/admin/menu">← Menü Yönetimi</a>
+    <main className="adm-page" style={{ maxWidth: 640 }}>
+      <a className="adm-back" href="/admin/menu/kategori">
+        <AdminIcon name="arrowLeft" size={15} />
+        Kategoriler
+      </a>
 
-        <h1>Kategori Düzenle</h1>
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">Menü</span>
+          <h1>Kategoriyi düzenle</h1>
+          <p>Ad değişikliği müşteri menüsüne hemen yansır.</p>
+        </div>
+      </header>
 
-        <p>Kategori adını değiştirebilirsiniz.</p>
-      </section>
+      <form action={updateCategory} className="adm-card adm-form">
+        <div className="adm-field">
+          <label className="adm-label" htmlFor="kategori-ad">Kategori adı</label>
+          <input
+            id="kategori-ad"
+            className="adm-input"
+            type="text"
+            name="name"
+            defaultValue={category.name}
+            maxLength={60}
+            required
+          />
+        </div>
 
-      <section className="admin-form">
-        <form action={updateCategory}>
-          <label>
-            Kategori Adı
-            <input
-              type="text"
-              name="name"
-              defaultValue={category.name}
-              required
-            />
-          </label>
-
-          <button type="submit">
-            Değişiklikleri Kaydet
+        <div className="adm-form-actions">
+          <a className="adm-btn" href="/admin/menu/kategori">Vazgeç</a>
+          <button type="submit" className="adm-btn adm-btn-primary">
+            <AdminIcon name="save" size={16} />
+            Kaydet
           </button>
-        </form>
-      </section>
+        </div>
+      </form>
     </main>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../../../lib/supabase/client";
+import AdminIcon from "../../../AdminIcon";
 
 export default function NewCategoryPage() {
   const router = useRouter();
@@ -140,7 +141,7 @@ export default function NewCategoryPage() {
       // BAŞARILI
       // =====================================================
 
-      router.push("/admin/menu");
+      router.push("/admin/menu/kategori");
       router.refresh();
 
     } catch (error) {
@@ -158,197 +159,51 @@ export default function NewCategoryPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#f5f3ef",
-        padding: "40px 18px",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "760px",
-          margin: "0 auto",
-        }}
-      >
+    <main className="adm-page" style={{ maxWidth: 640 }}>
+      <a className="adm-back" href="/admin/menu/kategori">
+        <AdminIcon name="arrowLeft" size={15} />
+        Kategoriler
+      </a>
 
-        {/* =================================================
-            BAŞLIK
-        ================================================= */}
-
-        <div
-          style={{
-            marginBottom: "24px",
-          }}
-        >
-          <div
-            style={{
-              color: "#c8941d",
-              fontSize: "11px",
-              fontWeight: 800,
-              letterSpacing: "2px",
-              marginBottom: "7px",
-            }}
-          >
-            MENÜ YÖNETİMİ
-          </div>
-
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "32px",
-              fontWeight: 900,
-              color: "#171717",
-            }}
-          >
-            Yeni Kategori
-          </h1>
-
-          <p
-            style={{
-              marginTop: "8px",
-              color: "#777",
-              fontSize: "14px",
-            }}
-          >
-            Menünüze yeni bir kategori ekleyin.
-          </p>
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">Menü</span>
+          <h1>Yeni kategori</h1>
+          <p>Kategori, müşteri menüsünde listenin sonuna eklenir.</p>
         </div>
+      </header>
 
-        {/* =================================================
-            FORM
-        ================================================= */}
-
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            background: "#fff",
-            border: "1px solid #e5e0d8",
-            borderRadius: "18px",
-            padding: "24px",
-            boxShadow:
-              "0 10px 30px rgba(0,0,0,0.05)",
-          }}
-        >
-
-          <label
-            htmlFor="category-name"
-            style={{
-              display: "block",
-              fontSize: "13px",
-              fontWeight: 800,
-              color: "#222",
-              marginBottom: "8px",
-            }}
-          >
-            Kategori Adı
-          </label>
-
+      <form onSubmit={handleSubmit} className="adm-card adm-form">
+        <div className="adm-field">
+          <label className="adm-label" htmlFor="category-name">Kategori adı</label>
           <input
             id="category-name"
+            className="adm-input"
             type="text"
             value={name}
-            onChange={(event) =>
-              setName(event.target.value)
-            }
-            placeholder="Örn. Ana Yemekler"
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Örn. Ana yemekler"
+            maxLength={60}
             disabled={loading}
             autoFocus
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              height: "50px",
-              border: "1px solid #ddd7ce",
-              borderRadius: "10px",
-              padding: "0 14px",
-              fontSize: "15px",
-              outline: "none",
-              background: "#fff",
-              color: "#171717",
-            }}
           />
+        </div>
 
-          {/* =================================================
-              HATA
-          ================================================= */}
+        {error && (
+          <p className="adm-alert adm-alert-error" role="alert" style={{ margin: 0 }}>
+            <AdminIcon name="alert" size={16} />
+            {error}
+          </p>
+        )}
 
-          {error && (
-            <div
-              style={{
-                marginTop: "14px",
-                padding: "11px 13px",
-                borderRadius: "10px",
-                background: "#fff0f0",
-                border: "1px solid #ffd0d0",
-                color: "#b42318",
-                fontSize: "12px",
-                fontWeight: 700,
-              }}
-            >
-              ⚠️ {error}
-            </div>
-          )}
-
-          {/* =================================================
-              BUTONLAR
-          ================================================= */}
-
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              marginTop: "20px",
-            }}
-          >
-
-            <button
-              type="button"
-              onClick={() =>
-                router.push("/admin/menu")
-              }
-              disabled={loading}
-              style={{
-                flex: 1,
-                height: "48px",
-                border: "1px solid #ddd7ce",
-                borderRadius: "10px",
-                background: "#fff",
-                color: "#333",
-                fontWeight: 800,
-                cursor: loading
-                  ? "not-allowed"
-                  : "pointer",
-              }}
-            >
-              Vazgeç
-            </button>
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                flex: 1,
-                height: "48px",
-                border: "none",
-                borderRadius: "10px",
-                background: "#c8941d",
-                color: "#fff",
-                fontWeight: 800,
-                cursor: loading
-                  ? "not-allowed"
-                  : "pointer",
-              }}
-            >
-              {loading
-                ? "Oluşturuluyor..."
-                : "＋ Kategori Oluştur"}
-            </button>
-
-          </div>
-
-        </form>
-
-      </div>
+        <div className="adm-form-actions">
+          <a className="adm-btn" href="/admin/menu/kategori">Vazgeç</a>
+          <button type="submit" className="adm-btn adm-btn-primary" disabled={loading}>
+            <AdminIcon name="plus" size={16} />
+            {loading ? "Ekleniyor…" : "Kategori ekle"}
+          </button>
+        </div>
+      </form>
     </main>
   );
 }

@@ -2,6 +2,7 @@
 import QRCode from "qrcode";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "../../../lib/supabase-server";
+import AdminIcon from "../AdminIcon";
 
 export const dynamic = "force-dynamic";
 
@@ -25,14 +26,10 @@ export default async function AdminQRPage() {
 
   if (membershipError || !membership) {
     return (
-      <main className="admin-page">
-        <section className="admin-header">
-          <Link href="/admin">← Admin Paneli</Link>
-
-          <h1>QR Kod Yönetimi</h1>
-
-          <p>İşletme bağlantısı bulunamadı.</p>
-        </section>
+      <main className="adm-page">
+        <div className="adm-empty">
+          <strong>İşletme bağlantısı bulunamadı.</strong>
+        </div>
       </main>
     );
   }
@@ -46,14 +43,10 @@ export default async function AdminQRPage() {
 
   if (restaurantError || !restaurant) {
     return (
-      <main className="admin-page">
-        <section className="admin-header">
-          <Link href="/admin">← Admin Paneli</Link>
-
-          <h1>QR Kod Yönetimi</h1>
-
-          <p>İşletme bilgileri bulunamadı.</p>
-        </section>
+      <main className="adm-page">
+        <div className="adm-empty">
+          <strong>İşletme bilgileri bulunamadı.</strong>
+        </div>
       </main>
     );
   }
@@ -143,547 +136,101 @@ const tableQrs = await Promise.all(
   )
 );
 
+  const activeCount = tableQrs.filter((table) => table.isActive).length;
+
   return (
-    <main className="admin-page">
+    <main className="adm-page">
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">İşletme</span>
+          <h1>QR ve NFC</h1>
+          <p>Genel QR menüyü gösterir; masa QR&apos;ları siparişi o masaya bağlar.</p>
+        </div>
+        <div className="adm-head-actions">
+          <Link className="adm-btn" href="/admin/tables">
+            <AdminIcon name="table" size={16} />
+            Masaları yönet
+          </Link>
+        </div>
+      </header>
 
-      {/* HEADER */}
-
-      <section className="admin-header">
-
-        <Link href="/admin">
-          ← Admin Paneli
-        </Link>
-
-        <h1>QR Kod Yönetimi</h1>
-
-        <p>
-          İşletmenizin genel QR kodunu veya
-          masa bazlı QR kodlarını oluşturabilirsiniz.
-        </p>
-
-      </section>
-
-
-      {/* =================================================
-          GENEL QR
-          ================================================= */}
-
-      <section
-        style={{
-          maxWidth: "700px",
-          margin: "30px auto",
-        }}
-      >
-
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "24px",
-            padding: "35px",
-            boxShadow:
-              "0 15px 40px rgba(0,0,0,0.08)",
-            textAlign: "center",
-          }}
-        >
-
-          {restaurant.logo_url ? (
-            <img
-              src={restaurant.logo_url}
-              alt={`${restaurant.name} logosu`}
-              style={{
-                width: "90px",
-                height: "90px",
-                objectFit: "contain",
-                borderRadius: "18px",
-                marginBottom: "18px",
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: "90px",
-                height: "90px",
-                margin: "0 auto 18px",
-                borderRadius: "18px",
-                background: "#111",
-                color: "#d4a017",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "28px",
-                fontWeight: 900,
-              }}
-            >
-              OZT
-            </div>
-          )}
-
-          <h2
-            style={{
-              margin: "0 0 8px",
-              fontSize: "28px",
-              fontWeight: 900,
-            }}
-          >
-            {restaurant.name}
-          </h2>
-
-          <p
-            style={{
-              margin: "0 0 25px",
-              color: "#777",
-              fontSize: "14px",
-            }}
-          >
-            Genel Dijital Menü QR Kodu
+      {/* ============ GENEL QR ============ */}
+      <section className="adm-card adm-general-qr" aria-labelledby="genel-qr">
+        <div className="adm-general-qr-code">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={generalQrCode} alt={`${restaurant.name} genel menü QR kodu`} />
+        </div>
+        <div className="adm-general-qr-text">
+          <span className="adm-badge s-accent">Genel menü</span>
+          <h2 id="genel-qr">{restaurant.name}</h2>
+          <p>
+            Vitrin, broşür ya da Instagram için. Bu kodla gelen müşteri menüyü görür
+            ama sipariş veremez; sipariş için masa QR&apos;ı gerekir.
           </p>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "25px",
-            }}
-          >
-            <div
-              style={{
-                background: "#fff",
-                padding: "18px",
-                borderRadius: "20px",
-                border: "1px solid #eee",
-              }}
-            >
-              <img
-                src={generalQrCode}
-                alt={`${restaurant.name} QR kodu`}
-                style={{
-                  width: "300px",
-                  height: "300px",
-                  display: "block",
-                }}
-              />
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: "#f7f5f0",
-              borderRadius: "12px",
-              padding: "12px 15px",
-              marginBottom: "20px",
-              wordBreak: "break-all",
-              fontSize: "12px",
-              color: "#666",
-            }}
-          >
-            {restaurantUrl}
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "10px",
-              flexWrap: "wrap",
-            }}
-          >
-
+          <code className="adm-code">{restaurantUrl}</code>
+          <div className="adm-head-actions">
             <a
-              href={restaurantUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                padding: "12px 18px",
-                borderRadius: "10px",
-                background: "#111",
-                color: "#fff",
-                textDecoration: "none",
-                fontWeight: 700,
-                fontSize: "13px",
-              }}
-            >
-              👁️ Sayfayı Gör
-            </a>
-
-            <a
+              className="adm-btn adm-btn-primary"
               href={generalQrCode}
               download={`${restaurant.slug}-genel-qr.png`}
-              style={{
-                padding: "12px 18px",
-                borderRadius: "10px",
-                background: "#d4a017",
-                color: "#111",
-                textDecoration: "none",
-                fontWeight: 800,
-                fontSize: "13px",
-              }}
             >
-              📥 QR Kodunu İndir
+              <AdminIcon name="download" size={16} />
+              QR&apos;ı indir
             </a>
-
+            <a className="adm-btn" href={restaurantUrl} target="_blank" rel="noopener noreferrer">
+              <AdminIcon name="external" size={16} />
+              Sayfayı aç
+            </a>
           </div>
-
-        </div>
-
-      </section>
-
-
-      {/* =================================================
-          QR / NFC ÖZETİ
-          ================================================= */}
-
-      <section
-        style={{
-          maxWidth: "1100px",
-          margin: "0 auto 24px",
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: "12px",
-        }}
-      >
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid #e7e1d7",
-            borderRadius: "16px",
-            padding: "16px",
-          }}
-        >
-          <div style={{ fontSize: "20px", marginBottom: "7px" }}>
-            🪑
-          </div>
-          <div
-            style={{
-              color: "#888",
-              fontSize: "11px",
-              fontWeight: 700,
-            }}
-          >
-            TOPLAM MASA
-          </div>
-          <strong style={{ fontSize: "24px" }}>
-            {tableQrs.length}
-          </strong>
-        </div>
-
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid #e7e1d7",
-            borderRadius: "16px",
-            padding: "16px",
-          }}
-        >
-          <div style={{ fontSize: "20px", marginBottom: "7px" }}>
-            🟢
-          </div>
-          <div
-            style={{
-              color: "#888",
-              fontSize: "11px",
-              fontWeight: 700,
-            }}
-          >
-            AKTİF MASA
-          </div>
-          <strong style={{ fontSize: "24px" }}>
-            {tableQrs.filter((table) => table.isActive).length}
-          </strong>
-        </div>
-
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid #e7e1d7",
-            borderRadius: "16px",
-            padding: "16px",
-          }}
-        >
-          <div style={{ fontSize: "20px", marginBottom: "7px" }}>
-            ⚪
-          </div>
-          <div
-            style={{
-              color: "#888",
-              fontSize: "11px",
-              fontWeight: 700,
-            }}
-          >
-            PASİF MASA
-          </div>
-          <strong style={{ fontSize: "24px" }}>
-            {tableQrs.filter((table) => !table.isActive).length}
-          </strong>
-        </div>
-
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid #e7e1d7",
-            borderRadius: "16px",
-            padding: "16px",
-          }}
-        >
-          <div style={{ fontSize: "20px", marginBottom: "7px" }}>
-            📱
-          </div>
-          <div
-            style={{
-              color: "#888",
-              fontSize: "11px",
-              fontWeight: 700,
-            }}
-          >
-            QR HAZIR
-          </div>
-          <strong style={{ fontSize: "24px" }}>
-            {tableQrs.length}
-          </strong>
         </div>
       </section>
 
-      {/* =================================================
-          MASA QR'LARI
-          ================================================= */}
-
-      <section
-        style={{
-          maxWidth: "1100px",
-          margin: "40px auto",
-        }}
-      >
-
-        <div
-          style={{
-            marginBottom: "20px",
-          }}
-        >
-
-          <span
-            style={{
-              color: "#c8941d",
-              fontSize: "11px",
-              fontWeight: 900,
-              letterSpacing: "2px",
-            }}
-          >
-            MASA YÖNETİMİ
-          </span>
-
-          <h2
-            style={{
-              margin: "5px 0",
-              fontSize: "28px",
-            }}
-          >
-            Masa QR Kodları
-          </h2>
-
-          <p
-            style={{
-              color: "#777",
-              fontSize: "13px",
-            }}
-          >
-            Her masanın QR kodunu ayrı ayrı indirip
-            masalara yerleştirebilirsiniz.
-          </p>
-
+      {/* ============ MASA QR'LARI ============ */}
+      <section className="adm-section" aria-labelledby="masa-qr">
+        <div className="adm-section-head">
+          <div>
+            <h2 id="masa-qr">Masa QR kodları</h2>
+            <p>
+              {tableQrs.length} masa · {activeCount} aktif. Pasif masaların kodu sipariş almaz.
+            </p>
+          </div>
         </div>
 
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(230px, 1fr))",
-            gap: "20px",
-          }}
-        >
-
-          {tableQrs.map((table) => (
-
-            <div
-              key={table.tableNumber}
-              style={{
-                background: "#fff",
-                borderRadius: "20px",
-                padding: "22px",
-                boxShadow:
-                  "0 10px 30px rgba(0,0,0,0.06)",
-                textAlign: "center",
-              }}
-            >
-
-              <h3
-                style={{
-                  margin: "0 0 15px",
-                  fontSize: "22px",
-                }}
-              >
-                🪑 Masa {table.tableNumber}
-              </h3>
-              <div
-  style={{
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    marginBottom: "15px",
-    padding: "6px 10px",
-    borderRadius: "999px",
-    background: table.isActive
-      ? "#eaf8ef"
-      : "#fcebea",
-    color: table.isActive
-      ? "#16803c"
-      : "#b42318",
-    fontSize: "11px",
-    fontWeight: 800,
-  }}
->
-  <span>
-    {table.isActive ? "●" : "●"}
-  </span>
-
-  {table.isActive
-    ? " AKTİF"
-    : " PASİF"}
-</div>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  marginBottom: "15px",
-                }}
-              >
-
-                <div
-                  style={{
-                    padding: "10px",
-                    border: "1px solid #eee",
-                    borderRadius: "14px",
-                  }}
-                >
-
-                  <img
-                    src={table.qrCode}
-                    alt={`Masa ${table.tableNumber} QR kodu`}
-                    style={{
-                      width: "190px",
-                      height: "190px",
-                      display: "block",
-                    }}
-                  />
-
+        {tableQrs.length === 0 ? (
+          <div className="adm-empty">
+            <span className="adm-empty-icon"><AdminIcon name="qr" /></span>
+            <strong>Henüz masa yok</strong>
+            <p>Masalar sayfasından masa eklediğinizde her birinin QR kodu burada oluşur.</p>
+            <Link className="adm-btn adm-btn-primary" href="/admin/tables">
+              <AdminIcon name="plus" size={16} />
+              Masa ekle
+            </Link>
+          </div>
+        ) : (
+          <div className="adm-qr-gallery">
+            {tableQrs.map((table) => (
+              <article key={table.id} className={`adm-qr-mini ${table.isActive ? "" : "is-off"}`}>
+                <div className="adm-qr-head">
+                  <strong>Masa {table.tableNumber}</strong>
+                  <span className={`adm-badge is-dot ${table.isActive ? "s-ok" : "s-delivered"}`}>
+                    {table.isActive ? "Aktif" : "Pasif"}
+                  </span>
                 </div>
-
-              </div>
-
-              <p
-                style={{
-                  fontSize: "11px",
-                  color: "#888",
-                  wordBreak: "break-all",
-                  marginBottom: "15px",
-                }}
-              >
-                {table.tableUrl}
-              </p>
-
-              <a
-                href={table.qrCode}
-                download={`${restaurant.slug}-masa-${table.tableNumber}-qr.png`}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "11px 16px",
-                  borderRadius: "10px",
-                  background: "#d4a017",
-                  color: "#111",
-                  textDecoration: "none",
-                  fontWeight: 800,
-                  fontSize: "12px",
-                  width: "100%",
-                }}
-              >
-                📥 Masa {table.tableNumber} QR İndir
-              </a>
-
-            </div>
-
-          ))}
-
-        </div>
-
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={table.qrCode} alt={`Masa ${table.tableNumber} QR kodu`} />
+                <a
+                  className="adm-btn adm-btn-sm adm-btn-block"
+                  href={table.qrCode}
+                  download={`${restaurant.slug}-masa-${table.tableNumber}-qr.png`}
+                >
+                  <AdminIcon name="download" size={15} />
+                  İndir
+                </a>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
-
-
-      {/* BİLGİ */}
-
-      <section
-        style={{
-          maxWidth: "700px",
-          margin: "0 auto 50px",
-        }}
-      >
-
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "18px",
-            padding: "22px",
-            border: "1px solid #eee",
-          }}
-        >
-
-          <h3
-            style={{
-              marginTop: 0,
-            }}
-          >
-            📱 Sistem Nasıl Çalışır?
-          </h3>
-
-          <ol
-            style={{
-              color: "#666",
-              lineHeight: 1.8,
-              fontSize: "13px",
-            }}
-          >
-
-            <li>
-              Örneğin Masa 5 QR kodunu Masa 5'e koyarsınız.
-            </li>
-
-            <li>
-              Müşteri QR kodu telefonuyla okutur.
-            </li>
-
-            <li>
-              Masa 5'in dijital menüsü açılır.
-            </li>
-
-            <li>
-              Müşteri sipariş verirken masa numarası
-              otomatik olarak Masa 5 olur.
-            </li>
-
-            <li>
-              Admin panelindeki siparişte
-              <strong> Masa 5 </strong>
-              görünür.
-            </li>
-
-          </ol>
-
-        </div>
-
-      </section>
-
     </main>
   );
 }

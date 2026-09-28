@@ -1,5 +1,7 @@
 "use client";
 
+import AdminIcon from "../AdminIcon";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../lib/supabase/client";
@@ -44,9 +46,11 @@ export default function ProductDeleteButton({
       type="button"
       onClick={handleDelete}
       disabled={loading}
-      className="delete-button"
+      className="adm-btn adm-btn-sm adm-btn-icon adm-btn-ghost adm-text-danger"
+      aria-label="Ürünü sil"
+      title="Ürünü sil"
     >
-      {loading ? "Siliniyor..." : "Sil"}
+      <AdminIcon name="trash" size={15} />
     </button>
   );
 }

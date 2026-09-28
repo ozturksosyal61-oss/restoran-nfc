@@ -3,8 +3,8 @@ import { cookies } from "next/headers";
 
 import OrderActions from "./OrderActions";
 import OrdersAutoRefresh from "./OrdersAutoRefresh";
-import NewOrderNotification from "./NewOrderNotification";
 import SessionControls from "./SessionControls";
+import AdminIcon from "../AdminIcon";
 import { hasPlanFeature, getPlanLabel } from "../../../lib/plan";
 
 export const dynamic = "force-dynamic";
@@ -45,57 +45,6 @@ type DiningSession = {
   closed_at: string | null;
 };
 
-function statusText(status: string) {
-  switch (status) {
-    case "pending":
-      return "Yeni Sipariş";
-    case "accepted":
-      return "Kabul Edildi";
-    case "preparing":
-      return "Hazırlanıyor";
-    case "ready":
-      return "Hazır";
-    case "delivered":
-      return "Tamamlandı";
-    default:
-      return status;
-  }
-}
-
-function statusIcon(status: string) {
-  switch (status) {
-    case "pending":
-      return "🔔";
-    case "accepted":
-      return "👍";
-    case "preparing":
-      return "👨‍🍳";
-    case "ready":
-      return "✅";
-    case "delivered":
-      return "✓";
-    default:
-      return "•";
-  }
-}
-
-function statusColor(status: string) {
-  switch (status) {
-    case "pending":
-      return "#f59e0b";
-    case "accepted":
-      return "#3b82f6";
-    case "preparing":
-      return "#8b5cf6";
-    case "ready":
-      return "#10b981";
-    case "delivered":
-      return "#22c55e";
-    default:
-      return "#777";
-  }
-}
-
 function formatTime(date: string) {
   return new Date(date).toLocaleTimeString("tr-TR", {
     hour: "2-digit",
@@ -118,29 +67,16 @@ function formatPrice(price: number) {
   });
 }
 
-function paymentMethodText(method: string | null) {
-  switch (method) {
-    case "cash":
-      return "💵 Nakit";
-    case "card":
-      return "💳 Kart / POS";
-    case "online":
-      return "🌐 Online";
-    default:
-      return "Belirtilmedi";
-  }
-}
-
 function paymentStatusText(status: string | null) {
   switch (status) {
     case "paid":
-      return "🟢 Ödendi";
+      return "Ödendi";
     case "refunded":
-      return "↩️ İade";
+      return "İade";
     case "unpaid":
-      return "🔴 Ödenmedi";
+      return "Ödenmedi";
     default:
-      return "🔴 Ödenmedi";
+      return "Ödenmedi";
   }
 }
 
@@ -206,8 +142,8 @@ const {
 
 if (!user) {
   return (
-    <main className="orders-page">
-      <div className="orders-error">
+    <main className="adm-page">
+      <div className="adm-empty">
         <h1>Oturum bulunamadı.</h1>
         <p>Lütfen tekrar giriş yapın.</p>
       </div>
@@ -228,8 +164,8 @@ const { data: membership, error: membershipError } =
 
 if (membershipError || !membership?.restaurant_id) {
   return (
-    <main className="orders-page">
-      <div className="orders-error">
+    <main className="adm-page">
+      <div className="adm-empty">
         <h1>Restoran bağlantısı bulunamadı.</h1>
         <p>
           Bu kullanıcı herhangi bir restorana bağlı değil.
@@ -254,8 +190,8 @@ const {
 
 if (restaurantError || !restaurant) {
   return (
-    <main className="orders-page">
-      <div className="orders-error">
+    <main className="adm-page">
+      <div className="adm-empty">
         <h1>Restoran bulunamadı.</h1>
       </div>
     </main>
@@ -277,96 +213,18 @@ if (restaurantError || !restaurant) {
 
   if (!canUseOrders) {
     return (
-      <main className="orders-page">
-        <section
-          className="orders-empty"
-          style={{
-            maxWidth: "720px",
-            margin: "80px auto",
-            background: "#fff",
-            borderRadius: "22px",
-            padding: "50px 28px",
-            textAlign: "center",
-            boxShadow: "0 12px 35px rgba(0,0,0,0.06)",
-            border: "1px solid #eee",
-          }}
-        >
-          <div
-            style={{
-              width: "72px",
-              height: "72px",
-              margin: "0 auto 18px",
-              borderRadius: "20px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "#fff5dc",
-              fontSize: "34px",
-            }}
-          >
-            🔒
-          </div>
-
-          <div
-            style={{
-              fontSize: "11px",
-              fontWeight: 900,
-              letterSpacing: "0.08em",
-              color: "#b27b00",
-              marginBottom: "8px",
-            }}
-          >
-            {getPlanLabel(restaurantPlan)} PAKET
-          </div>
-
-          <h1
-            style={{
-              margin: "0 0 10px",
-              fontSize: "28px",
-            }}
-          >
-            Sipariş Yönetimi Kilitli
-          </h1>
-
-          <p
-            style={{
-              maxWidth: "520px",
-              margin: "0 auto",
-              color: "#666",
-              lineHeight: 1.7,
-              fontSize: "14px",
-            }}
-          >
-            Sipariş alma ve sipariş yönetimi özelliği PRO ve
-            PREMIUM paketlerinde kullanılabilir.
+      <main className="adm-page">
+        <div className="adm-lock">
+          <span className="adm-badge s-accent">
+            <AdminIcon name="lock" size={12} /> {getPlanLabel(restaurantPlan)} PAKET
+          </span>
+          <h2>Sipariş yönetimi kilitli</h2>
+          <p>
+            Masadaki QR ile sipariş alma ve mutfak panosu PRO ve PREMIUM
+            paketlerinde kullanılabilir.
           </p>
-
-          <div
-            style={{
-              marginTop: "24px",
-              display: "flex",
-              justifyContent: "center",
-              gap: "10px",
-              flexWrap: "wrap",
-            }}
-          >
-            <a
-              href="/admin"
-              style={{
-                display: "inline-block",
-                padding: "12px 20px",
-                borderRadius: "10px",
-                background: "#1b1b1b",
-                color: "#fff",
-                textDecoration: "none",
-                fontWeight: 800,
-                fontSize: "13px",
-              }}
-            >
-              ← Yönetim Paneline Dön
-            </a>
-          </div>
-        </section>
+          <a href="/admin" className="adm-btn">Panele dön</a>
+        </div>
       </main>
     );
   }
@@ -402,8 +260,8 @@ if (restaurantError || !restaurant) {
 
   if (ordersError) {
     return (
-      <main className="orders-page">
-        <div className="orders-error">
+      <main className="adm-page">
+        <div className="adm-empty">
           <h1>Siparişler</h1>
 
           <p>
@@ -521,8 +379,8 @@ if (restaurantError || !restaurant) {
 
     if (itemsError) {
       return (
-        <main className="orders-page">
-          <div className="orders-error">
+        <main className="adm-page">
+          <div className="adm-empty">
             <h1>Siparişler</h1>
 
             <p>
@@ -566,12 +424,6 @@ if (restaurantError || !restaurant) {
     orders?.filter(
       (order) => order.status === "delivered"
     ) ?? [];
-
-  const activeOrders =
-    pendingOrders.length +
-    acceptedOrders.length +
-    preparingOrders.length +
-    readyOrders.length;
 
   // =====================================================
   // TOPLAM CİRO
@@ -673,1296 +525,319 @@ if (restaurantError || !restaurant) {
   // SAYFA
   // =====================================================
 
+  const hasFilter = Boolean(search) || selectedStatus !== "all";
+  const paidCount = orders?.filter((order) => order.payment_status === "paid").length ?? 0;
+
+  // Mutfak panosu: her durum bir sütun. Filtre seçiliyse yalnızca o sütun.
+  const boardColumns = [
+    { status: "pending", title: "Yeni", hint: "Onay bekliyor" },
+    { status: "accepted", title: "Onaylandı", hint: "Sırada" },
+    { status: "preparing", title: "Hazırlanıyor", hint: "Mutfakta" },
+    { status: "ready", title: "Hazır", hint: "Servis bekliyor" },
+  ].filter((column) => selectedStatus === "all" || selectedStatus === column.status);
+
+  const filters = [
+    { status: "all", label: "Tümü", count: orders?.length ?? 0 },
+    { status: "pending", label: "Yeni", count: pendingOrders.length },
+    { status: "accepted", label: "Onaylandı", count: acceptedOrders.length },
+    { status: "preparing", label: "Hazırlanıyor", count: preparingOrders.length },
+    { status: "ready", label: "Hazır", count: readyOrders.length },
+    { status: "delivered", label: "Tamamlanan", count: completedOrders.length },
+  ];
+
+  const COMPLETED_LIMIT = 50;
+  const completedRows = visibleCompletedOrders.slice(0, COMPLETED_LIMIT);
+
   return (
-    <main className="orders-page">
-        <NewOrderNotification
-  restaurantId={restaurant.id}
-/>
+    <main className="adm-page">
+      <OrdersAutoRefresh restaurantId={restaurant.id} />
 
-      <OrdersAutoRefresh
-        restaurantId={restaurant.id}
-      />
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">Sipariş yönetimi</span>
+          <h1>Siparişler</h1>
+          <p>Masalardan gelen siparişler anlık düşer; durumu tek dokunuşla ilerletin.</p>
+        </div>
+        <span className="adm-live">CANLI</span>
+      </header>
 
-      {/* =================================================
-          HEADER
-      ================================================== */}
-
-      <section className="orders-header">
-
-        <div className="orders-header-left">
-
-          <a
-            href="/admin"
-            className="orders-back"
-          >
-            ← Yönetim Paneli
-          </a>
-
-          <div className="orders-kicker">
-            SİPARİŞ YÖNETİMİ
+      <section className="adm-stats" aria-label="Sipariş özeti">
+        <div className="adm-stat tone-new">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Yeni</span>
+            <span className="adm-stat-icon"><AdminIcon name="bell" size={16} /></span>
           </div>
-
-          <h1>
-            Gelen Siparişler
-          </h1>
-
-          <p>
-            {restaurant.name} müşterilerinden gelen
-            siparişleri buradan yönetin.
-          </p>
-
+          <span className="adm-stat-value">{pendingOrders.length}</span>
+          <span className="adm-stat-hint">Onay bekliyor</span>
         </div>
-
-        <div className="orders-live">
-          <span className="orders-live-dot" />
-          CANLI
+        <div className="adm-stat tone-preparing">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Mutfakta</span>
+            <span className="adm-stat-icon"><AdminIcon name="chef" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{acceptedOrders.length + preparingOrders.length}</span>
+          <span className="adm-stat-hint">Onaylı ve hazırlanan</span>
         </div>
-
+        <div className="adm-stat tone-ready">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Hazır</span>
+            <span className="adm-stat-icon"><AdminIcon name="check" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{readyOrders.length}</span>
+          <span className="adm-stat-hint">Servis bekliyor</span>
+        </div>
+        <div className="adm-stat is-highlight">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Toplam ciro</span>
+            <span className="adm-stat-icon"><AdminIcon name="lira" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{formatPrice(totalRevenue)} ₺</span>
+          <span className="adm-stat-hint">İadeler hariç · {orders?.length ?? 0} sipariş</span>
+        </div>
+        <div className="adm-stat tone-ok">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Ödenen</span>
+            <span className="adm-stat-icon"><AdminIcon name="wallet" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{paidCount}</span>
+          <span className="adm-stat-hint">Ödemesi alınan sipariş</span>
+        </div>
       </section>
 
-      {/* =================================================
-          İSTATİSTİKLER
-      ================================================== */}
-
-      <section
-        className="orders-stats"
-        style={{
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(170px, 1fr))",
-        }}
-      >
-
-        <div className="orders-stat">
-
-          <div className="orders-stat-icon">
-            🔔
-          </div>
-
-          <div>
-            <span>Yeni Sipariş</span>
-
-            <strong>
-              {pendingOrders.length}
-            </strong>
-
-            <small>
-              Onay bekliyor
-            </small>
-          </div>
-
-        </div>
-
-        <div className="orders-stat">
-
-          <div className="orders-stat-icon">
-            👨‍🍳
-          </div>
-
-          <div>
-            <span>Hazırlanıyor</span>
-
-            <strong>
-              {acceptedOrders.length +
-                preparingOrders.length}
-            </strong>
-
-            <small>
-              Mutfakta
-            </small>
-          </div>
-
-        </div>
-
-        <div className="orders-stat">
-
-          <div className="orders-stat-icon">
-            ✅
-          </div>
-
-          <div>
-            <span>Hazır</span>
-
-            <strong>
-              {readyOrders.length}
-            </strong>
-
-            <small>
-              Teslim bekliyor
-            </small>
-          </div>
-
-        </div>
-
-        <div className="orders-stat">
-
-          <div className="orders-stat-icon">
-            ⚡
-          </div>
-
-          <div>
-            <span>Aktif</span>
-
-            <strong>
-              {activeOrders}
-            </strong>
-
-            <small>
-              İşlem bekleyen
-            </small>
-          </div>
-
-        </div>
-
-        <div className="orders-stat">
-
-          <div className="orders-stat-icon">
-            📦
-          </div>
-
-          <div>
-            <span>Toplam</span>
-
-            <strong>
-              {orders?.length ?? 0}
-            </strong>
-
-            <small>
-              Tüm siparişler
-            </small>
-          </div>
-
-        </div>
-
-        <div className="orders-stat">
-
-          <div className="orders-stat-icon">
-            💰
-          </div>
-
-          <div>
-            <span>Toplam Ciro</span>
-
-            <strong>
-              {formatPrice(totalRevenue)} TL
-            </strong>
-
-            <small>
-              İade edilenler hariç
-            </small>
-          </div>
-
-        </div>
-
-        <div className="orders-stat">
-
-          <div className="orders-stat-icon">
-            💳
-          </div>
-
-          <div>
-            <span>Ödenen</span>
-
-            <strong>
-              {orders?.filter(
-                (order) => order.payment_status === "paid"
-              ).length ?? 0}
-            </strong>
-
-            <small>
-              Başarılı ödeme
-            </small>
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* =================================================
-          ARAMA VE FİLTRE
-      ================================================== */}
-
-      <section
-        style={{
-          background: "#fff",
-          borderRadius: "18px",
-          padding: "18px",
-          marginBottom: "24px",
-          boxShadow:
-            "0 8px 25px rgba(0,0,0,0.05)",
-        }}
-      >
-
-        <form
-          action="/admin/orders"
-          method="GET"
-          style={{
-            display: "flex",
-            gap: "10px",
-            flexWrap: "wrap",
-          }}
-        >
-
-          <div
-            style={{
-              flex: "1 1 280px",
-              position: "relative",
-            }}
-          >
-
-            <span
-              style={{
-                position: "absolute",
-                left: "13px",
-                top: "50%",
-                transform:
-                  "translateY(-50%)",
-                fontSize: "16px",
-              }}
-            >
-              🔎
-            </span>
-
+      {/* ============ ARAMA VE FİLTRE ============ */}
+      <section className="adm-card adm-card-flat adm-toolbar">
+        <form action="/admin/orders" method="GET" className="adm-toolbar-search">
+          <label className="adm-input-group">
+            <AdminIcon name="search" size={17} />
             <input
-              type="text"
+              type="search"
               name="search"
               defaultValue={search}
-              placeholder="Sipariş no, müşteri veya masa ara..."
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                height: "44px",
-                border:
-                  "1px solid #e2e2e2",
-                borderRadius: "11px",
-                padding:
-                  "0 14px 0 40px",
-                outline: "none",
-                fontSize: "13px",
-                background: "#fafafa",
-              }}
+              placeholder="Sipariş no, müşteri adı veya masa ara"
+              aria-label="Siparişlerde ara"
             />
-
-          </div>
-
-          {selectedStatus !==
-            "all" && (
-            <input
-              type="hidden"
-              name="status"
-              value={selectedStatus}
-            />
-          )}
-
-          <button
-            type="submit"
-            style={{
-              height: "44px",
-              border: "none",
-              borderRadius: "11px",
-              padding:
-                "0 20px",
-              background: "#c8941d",
-              color: "#fff",
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            Ara
-          </button>
-
+          </label>
+          {selectedStatus !== "all" && <input type="hidden" name="status" value={selectedStatus} />}
+          <button type="submit" className="adm-btn adm-btn-primary">Ara</button>
         </form>
 
-        {/* DURUM FİLTRELERİ */}
-
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            flexWrap: "wrap",
-            marginTop: "13px",
-          }}
-        >
-
-          <a
-            href={filterUrl("all")}
-            style={{
-              textDecoration: "none",
-              padding:
-                "9px 13px",
-              borderRadius: "9px",
-              fontSize: "11px",
-              fontWeight: 800,
-              background:
-                selectedStatus === "all"
-                  ? "#1b1b1b"
-                  : "#f3f3f3",
-              color:
-                selectedStatus === "all"
-                  ? "#fff"
-                  : "#555",
-            }}
-          >
-            Tümü ({orders?.length ?? 0})
-          </a>
-
-          <a
-            href={filterUrl("pending")}
-            style={{
-              textDecoration: "none",
-              padding:
-                "9px 13px",
-              borderRadius: "9px",
-              fontSize: "11px",
-              fontWeight: 800,
-              background:
-                selectedStatus === "pending"
-                  ? "#fff3d6"
-                  : "#f3f3f3",
-              color:
-                selectedStatus === "pending"
-                  ? "#a66d00"
-                  : "#555",
-            }}
-          >
-            🔔 Yeni ({pendingOrders.length})
-          </a>
-
-          <a
-            href={filterUrl("accepted")}
-            style={{
-              textDecoration: "none",
-              padding:
-                "9px 13px",
-              borderRadius: "9px",
-              fontSize: "11px",
-              fontWeight: 800,
-              background:
-                selectedStatus === "accepted"
-                  ? "#eaf2ff"
-                  : "#f3f3f3",
-              color:
-                selectedStatus === "accepted"
-                  ? "#2563eb"
-                  : "#555",
-            }}
-          >
-            👍 Kabul ({acceptedOrders.length})
-          </a>
-
-          <a
-            href={filterUrl("preparing")}
-            style={{
-              textDecoration: "none",
-              padding:
-                "9px 13px",
-              borderRadius: "9px",
-              fontSize: "11px",
-              fontWeight: 800,
-              background:
-                selectedStatus === "preparing"
-                  ? "#f2edff"
-                  : "#f3f3f3",
-              color:
-                selectedStatus === "preparing"
-                  ? "#7c3aed"
-                  : "#555",
-            }}
-          >
-            👨‍🍳 Hazırlanıyor ({preparingOrders.length})
-          </a>
-
-          <a
-            href={filterUrl("ready")}
-            style={{
-              textDecoration: "none",
-              padding:
-                "9px 13px",
-              borderRadius: "9px",
-              fontSize: "11px",
-              fontWeight: 800,
-              background:
-                selectedStatus === "ready"
-                  ? "#e9fff5"
-                  : "#f3f3f3",
-              color:
-                selectedStatus === "ready"
-                  ? "#059669"
-                  : "#555",
-            }}
-          >
-            ✅ Hazır ({readyOrders.length})
-          </a>
-
-          <a
-            href={filterUrl("delivered")}
-            style={{
-              textDecoration: "none",
-              padding:
-                "9px 13px",
-              borderRadius: "9px",
-              fontSize: "11px",
-              fontWeight: 800,
-              background:
-                selectedStatus === "delivered"
-                  ? "#eaffef"
-                  : "#f3f3f3",
-              color:
-                selectedStatus === "delivered"
-                  ? "#15803d"
-                  : "#555",
-            }}
-          >
-            ✓ Tamamlanan ({completedOrders.length})
-          </a>
-
-        </div>
-
+        <nav className="adm-chips" aria-label="Duruma göre filtrele">
+          {filters.map((filter) => (
+            <a
+              key={filter.status}
+              href={filterUrl(filter.status)}
+              className={`adm-chip ${selectedStatus === filter.status ? "is-active" : ""}`}
+              aria-current={selectedStatus === filter.status ? "page" : undefined}
+            >
+              {filter.label}
+              <b>{filter.count}</b>
+            </a>
+          ))}
+        </nav>
       </section>
 
-      {/* =================================================
-          SİPARİŞ YOK
-      ================================================== */}
-
       {filteredOrders.length === 0 ? (
-
-        <section
-          className="orders-empty"
-          style={{
-            background: "#fff",
-            borderRadius: "20px",
-            padding: "55px 20px",
-            textAlign: "center",
-          }}
-        >
-
-          <div className="orders-empty-icon">
-            {search ||
-            selectedStatus !== "all"
-              ? "🔎"
-              : "🛒"}
-          </div>
-
-          <h2>
-            {search ||
-            selectedStatus !== "all"
-              ? "Sipariş bulunamadı"
-              : "Henüz sipariş yok"}
-          </h2>
-
+        <div className="adm-empty">
+          <span className="adm-empty-icon">
+            <AdminIcon name={hasFilter ? "search" : "orders"} />
+          </span>
+          <strong>{hasFilter ? "Eşleşen sipariş yok" : "Henüz sipariş yok"}</strong>
           <p>
-            {search ||
-            selectedStatus !== "all"
-              ? "Arama veya filtre kriterlerini değiştirmeyi deneyin."
-              : "Müşteriler sipariş verdiğinde siparişler burada görünecek."}
+            {hasFilter
+              ? "Arama veya filtreyi değiştirip tekrar deneyin."
+              : "Müşteriler masadaki QR ile sipariş verdiğinde burada görünecek."}
           </p>
-
-          {(search ||
-            selectedStatus !== "all") && (
-            <a
-              href="/admin/orders"
-              style={{
-                display: "inline-block",
-                marginTop: "12px",
-                padding:
-                  "10px 16px",
-                borderRadius: "9px",
-                background: "#c8941d",
-                color: "#fff",
-                textDecoration: "none",
-                fontWeight: 800,
-                fontSize: "12px",
-              }}
-            >
-              Filtreleri Temizle
-            </a>
+          {hasFilter && (
+            <a href="/admin/orders" className="adm-btn">Filtreleri temizle</a>
           )}
-
-        </section>
-
+        </div>
       ) : (
-
         <>
-
-          {/* =============================================
-              AÇIK MASA HESAPLARI
-          ============================================== */}
-
+          {/* ============ AÇIK MASA HESAPLARI ============ */}
           {sessionStats.length > 0 && (
-            <section
-              className="orders-section"
-              style={{
-                marginBottom: "25px",
-              }}
-            >
-              <div className="orders-section-heading">
+            <section className="adm-section" aria-labelledby="acik-hesaplar">
+              <div className="adm-section-head">
                 <div>
-                  <span className="orders-kicker">
-                    MASA HESAPLARI
-                  </span>
-                  <h2>Açık Masa Oturumları</h2>
-                </div>
-
-                <div className="orders-count">
-                  {sessionStats.length} açık hesap
+                  <h2 id="acik-hesaplar">Açık masa hesapları</h2>
+                  <p>{sessionStats.length} masada hesap açık</p>
                 </div>
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gap: "14px",
-                }}
-              >
-                {sessionStats.map(
-                  ({
-                    session,
-                    orderCount,
-                    total,
-                    unpaidTotal,
-                  }) => (
-                    <article
-                      key={session.id}
-                      style={{
-                        background: "#fff",
-                        border: "1px solid #e7e0d5",
-                        borderRadius: "18px",
-                        padding: "18px",
-                        boxShadow:
-                          "0 8px 24px rgba(60,50,30,.05)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: "15px",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <div>
-                          <div
-                            style={{
-                              fontSize: "10px",
-                              fontWeight: 900,
-                              letterSpacing: "0.12em",
-                              color: "#c8941d",
-                            }}
-                          >
-                            AÇIK HESAP
-                          </div>
-
-                          <h3
-                            style={{
-                              margin: "5px 0",
-                              fontSize: "20px",
-                            }}
-                          >
-                            🪑 Masa{" "}
-                            {sessionOrdersTableLabel(
-                              session.id,
-                              orders
-                            )}
-                          </h3>
-
-                          <div
-                            style={{
-                              color: "#888",
-                              fontSize: "11px",
-                            }}
-                          >
-                            Oturum #{session.id} •{" "}
-                            {orderCount} sipariş • Açılış{" "}
-                            {formatDate(session.opened_at)}
-                          </div>
-                        </div>
-
-                        <div
-                          style={{
-                            textAlign: "right",
-                          }}
-                        >
-                          <div
-                            style={{
-                              color: "#999",
-                              fontSize: "9px",
-                              fontWeight: 900,
-                              letterSpacing: "0.08em",
-                            }}
-                          >
-                            HESAP TOPLAMI
-                          </div>
-
-                          <div
-                            style={{
-                              marginTop: "3px",
-                              fontSize: "22px",
-                              fontWeight: 950,
-                            }}
-                          >
-                            {formatPrice(total)} TL
-                          </div>
-
-                          <div
-                            style={{
-                              marginTop: "3px",
-                              color:
-                                unpaidTotal > 0
-                                  ? "#b42318"
-                                  : "#15803d",
-                              fontSize: "10px",
-                              fontWeight: 800,
-                            }}
-                          >
-                            {unpaidTotal > 0
-                              ? `Açık: ${formatPrice(
-                                  unpaidTotal
-                                )} TL`
-                              : "Ödemeler tamamlandı"}
-                          </div>
-                        </div>
-
-                        <SessionControls
-                          sessionId={session.id}
-                        />
+              <div className="adm-grid-3">
+                {sessionStats.map(({ session, orderCount, total, unpaidTotal }) => (
+                  <article key={session.id} className="adm-card adm-session">
+                    <div className="adm-card-head">
+                      <div>
+                        <h3>Masa {sessionOrdersTableLabel(session.id, orders ?? [])}</h3>
+                        <p>
+                          {orderCount} sipariş · {formatTime(session.opened_at)} açıldı
+                        </p>
                       </div>
-                    </article>
-                  )
-                )}
+                      <span className={`adm-badge is-dot ${unpaidTotal > 0 ? "s-pending" : "s-ok"}`}>
+                        {unpaidTotal > 0 ? "Ödeme bekliyor" : "Ödendi"}
+                      </span>
+                    </div>
+                    <div className="adm-session-sum">
+                      <span>
+                        <small>Hesap</small>
+                        <strong>{formatPrice(total)} ₺</strong>
+                      </span>
+                      <span>
+                        <small>Kalan</small>
+                        <strong className={unpaidTotal > 0 ? "is-due" : ""}>
+                          {formatPrice(unpaidTotal)} ₺
+                        </strong>
+                      </span>
+                    </div>
+                    <SessionControls sessionId={session.id} />
+                  </article>
+                ))}
               </div>
             </section>
           )}
 
-          {/* =============================================
-              AKTİF SİPARİŞLER
-          ============================================== */}
-
-          {visibleActiveOrders.length >
-            0 && (
-
-            <section className="orders-section">
-
-              <div className="orders-section-heading">
-
+          {/* ============ MUTFAK PANOSU ============ */}
+          {selectedStatus !== "delivered" && (
+            <section className="adm-section" aria-labelledby="aktif-siparisler">
+              <div className="adm-section-head">
                 <div>
-                  <span className="orders-kicker">
-                    AKTİF SİPARİŞLER
-                  </span>
-
-                  <h2>
-                    Mutfak Siparişleri
-                  </h2>
+                  <h2 id="aktif-siparisler">Aktif siparişler</h2>
+                  <p>{visibleActiveOrders.length} sipariş işlem bekliyor</p>
                 </div>
-
-                <div className="orders-count">
-                  {visibleActiveOrders.length} aktif
-                </div>
-
               </div>
 
-              <div className="orders-list">
-
-                {visibleActiveOrders.map(
-                  (order) => {
-
-                    const items =
-                      orderItems.filter(
-                        (item) =>
-                          item.order_id ===
-                          order.id
-                      );
-
-                    const color =
-                      statusColor(
-                        order.status
-                      );
-
-                    return (
-                      <article
-                        key={order.id}
-                        className={`order-card status-${order.status}`}
-                        style={{
-                          borderLeft:
-                            `4px solid ${color}`,
-                        }}
-                      >
-
-                        {/* KART BAŞLIK */}
-
-                        <div className="order-card-header">
-
-                          <div>
-
-                            <div className="order-number">
-                              Sipariş #{order.id}
-                            </div>
-
-                            <div className="order-table">
-                              🪑 Masa{" "}
-                              <strong>
-                                {order.table_number}
-                              </strong>
-                            </div>
-
-                            {order.session_id && (
-                              <div
-                                style={{
-                                  marginTop: "5px",
-                                  color: "#9a6b00",
-                                  fontSize: "10px",
-                                  fontWeight: 800,
-                                }}
-                              >
-                                Hesap Oturumu #{order.session_id}
-                              </div>
-                            )}
-
-                          </div>
-
-                          <div className="order-header-right">
-
-                            <span
-                              className={`order-status status-${order.status}`}
-                            >
-                              <span>
-                                {statusIcon(
-                                  order.status
-                                )}
-                              </span>
-
-                              {statusText(
-                                order.status
-                              )}
-                            </span>
-
-                            <span className="order-time">
-                              {formatTime(
-                                order.created_at
-                              )}
-                            </span>
-
-                          </div>
-
-                        </div>
-
-                        {/* ÖDEME */}
-
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            gap: "10px",
-                            flexWrap: "wrap",
-                            padding: "11px 13px",
-                            marginBottom: "14px",
-                            background: "#fafafa",
-                            border: "1px solid #ece8df",
-                            borderRadius: "12px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: "12px",
-                              fontWeight: 800,
-                            }}
-                          >
-                            💳 {paymentMethodText(order.payment_method)}
-                          </div>
-
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              fontWeight: 800,
-                              padding: "6px 9px",
-                              borderRadius: "999px",
-                              background:
-                                order.payment_status === "paid"
-                                  ? "#e9f8ed"
-                                  : "#fff0f0",
-                              color:
-                                order.payment_status === "paid"
-                                  ? "#23753a"
-                                  : "#a32929",
-                            }}
-                          >
-                            {paymentStatusText(order.payment_status)}
-                          </div>
-                        </div>
-
-                        {/* MÜŞTERİ */}
-
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            gap: "10px",
-                            flexWrap: "wrap",
-                            padding: "11px 13px",
-                            marginBottom: "14px",
-                            background: "#fafafa",
-                            border: "1px solid #ece8df",
-                            borderRadius: "12px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: "12px",
-                              fontWeight: 800,
-                            }}
-                          >
-                            💳 {paymentMethodText(order.payment_method)}
-                          </div>
-
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              fontWeight: 800,
-                              padding: "6px 9px",
-                              borderRadius: "999px",
-                              background:
-                                order.payment_status === "paid"
-                                  ? "#e9f8ed"
-                                  : "#fff0f0",
-                              color:
-                                order.payment_status === "paid"
-                                  ? "#23753a"
-                                  : "#a32929",
-                            }}
-                          >
-                            {paymentStatusText(order.payment_status)}
-                          </div>
-                        </div>
-
-                        <div className="order-customer">
-
-                          <div className="order-customer-icon">
-                            👤
-                          </div>
-
-                          <div>
-
-                            <span>
-                              MÜŞTERİ
-                            </span>
-
-                            <strong>
-                              {order.customer_name ||
-                                "İsimsiz müşteri"}
-                            </strong>
-
-                          </div>
-
-                        </div>
-
-                        {/* ÜRÜNLER */}
-
-                        <div className="order-products">
-
-                          <div className="order-products-title">
-                            SİPARİŞ İÇERİĞİ
-                          </div>
-
-                          {items.length === 0 ? (
-
-                            <p className="order-no-items">
-                              Ürün bulunamadı.
-                            </p>
-
-                          ) : (
-
-                            items.map(
-                              (item) => (
-
-                                <div
-                                  key={item.id}
-                                  className="order-product"
-                                >
-
-                                  <div className="order-product-name">
-
-                                    <strong>
-                                      {item.product_name}
-                                    </strong>
-
-                                    <span>
-                                      ×{" "}
-                                      {item.quantity}
-                                    </span>
-
-                                  </div>
-
-                                  <strong>
-                                    {formatPrice(
-                                      Number(
-                                        item.price
-                                      ) *
-                                        Number(
-                                          item.quantity
-                                        )
-                                    )}{" "}
-                                    TL
-                                  </strong>
-
-                                </div>
-
-                              )
-                            )
-
-                          )}
-
-                        </div>
-
-                        {/* NOT */}
-
-                        {order.note && (
-
-                          <div className="order-note">
-
-                            <div className="order-note-icon">
-                              📝
-                            </div>
-
-                            <div>
-
-                              <strong>
-                                Müşteri Notu
-                              </strong>
-
-                              <p>
-                                {order.note}
-                              </p>
-
-                            </div>
-
-                          </div>
-
-                        )}
-
-                        {/* ALT */}
-
-                        <div className="order-card-footer">
-
-                          <div className="order-total">
-
-                            <span>
-                              Toplam
-                            </span>
-
-                            <strong>
-                              {formatPrice(
-                                Number(
-                                  order.total_amount
-                                )
-                              )}{" "}
-                              TL
-                            </strong>
-
-                          </div>
-
-                          <OrderActions
-                            orderId={order.id}
-                            currentStatus={
-                              order.status
-                            }
+              <div className="adm-board" data-columns={boardColumns.length}>
+                {boardColumns.map((column) => {
+                  const columnOrders = visibleActiveOrders.filter(
+                    (order) => order.status === column.status
+                  );
+
+                  return (
+                    <div key={column.status} className={`adm-board-col c-${column.status}`}>
+                      <div className="adm-board-head">
+                        <span className={`adm-badge is-dot s-${column.status}`}>{column.title}</span>
+                        <small>{column.hint}</small>
+                        <b>{columnOrders.length}</b>
+                      </div>
+
+                      {columnOrders.length === 0 ? (
+                        <p className="adm-board-empty">Bu aşamada sipariş yok</p>
+                      ) : (
+                        columnOrders.map((order) => (
+                          <OrderCard
+                            key={order.id}
+                            order={order}
+                            items={orderItems.filter((item) => item.order_id === order.id)}
                           />
-
-                        </div>
-
-                      </article>
-                    );
-                  }
-                )}
-
+                        ))
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-
             </section>
           )}
 
-          {/* =============================================
-              TAMAMLANAN
-          ============================================== */}
-
-          {visibleCompletedOrders.length >
-            0 && (
-
-            <section
-              className="orders-section completed-section"
-              style={{
-                marginTop: "25px",
-              }}
-            >
-
-              <div className="orders-section-heading">
-
+          {/* ============ TAMAMLANAN ============ */}
+          {completedRows.length > 0 && (
+            <section className="adm-section" aria-labelledby="tamamlanan">
+              <div className="adm-section-head">
                 <div>
-
-                  <span className="orders-kicker">
-                    GEÇMİŞ
-                  </span>
-
-                  <h2>
-                    Tamamlanan Siparişler
-                  </h2>
-
+                  <h2 id="tamamlanan">Tamamlanan siparişler</h2>
+                  <p>
+                    {visibleCompletedOrders.length > COMPLETED_LIMIT
+                      ? `Son ${COMPLETED_LIMIT} sipariş gösteriliyor (toplam ${visibleCompletedOrders.length})`
+                      : `${visibleCompletedOrders.length} sipariş`}
+                  </p>
                 </div>
-
-                <span className="orders-count">
-                  {visibleCompletedOrders.length} sipariş
-                </span>
-
               </div>
 
-              <div className="orders-list">
-
-                {visibleCompletedOrders.map(
-                  (order) => {
-
-                    const items =
-                      orderItems.filter(
-                        (item) =>
-                          item.order_id ===
-                          order.id
+              <div className="adm-table-wrap">
+                <table className="adm-table">
+                  <thead>
+                    <tr>
+                      <th>Sipariş</th>
+                      <th>Masa</th>
+                      <th>Müşteri</th>
+                      <th>Ürünler</th>
+                      <th>Ödeme</th>
+                      <th style={{ textAlign: "right" }}>Tutar</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {completedRows.map((order) => {
+                      const items = orderItems.filter((item) => item.order_id === order.id);
+                      return (
+                        <tr key={order.id}>
+                          <td>
+                            <strong>#{order.id}</strong>
+                            <div className="adm-muted" style={{ fontSize: 12 }}>
+                              {formatDate(order.created_at)} · {formatTime(order.created_at)}
+                            </div>
+                          </td>
+                          <td>{order.table_number}</td>
+                          <td>{order.customer_name || <span className="adm-muted">Misafir</span>}</td>
+                          <td className="adm-muted" style={{ maxWidth: 320 }}>
+                            {items.map((item) => `${item.quantity}× ${item.product_name}`).join(", ") || "—"}
+                          </td>
+                          <td>
+                            <span className={`adm-badge ${order.payment_status === "paid" ? "s-ok" : order.payment_status === "refunded" ? "s-danger" : "s-pending"}`}>
+                              {paymentStatusText(order.payment_status)}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: "right" }} className="adm-num">
+                            {formatPrice(Number(order.total_amount))} ₺
+                          </td>
+                        </tr>
                       );
-
-                    return (
-
-                      <article
-                        key={order.id}
-                        className="order-card order-completed"
-                        style={{
-                          borderLeft:
-                            "4px solid #22c55e",
-                        }}
-                      >
-
-                        <div className="order-card-header">
-
-                          <div>
-
-                            <div className="order-number">
-                              Sipariş #{order.id}
-                            </div>
-
-                            <div className="order-table">
-                              🪑 Masa{" "}
-                              <strong>
-                                {order.table_number}
-                              </strong>
-                            </div>
-
-                            {order.session_id && (
-                              <div
-                                style={{
-                                  marginTop: "5px",
-                                  color: "#9a6b00",
-                                  fontSize: "10px",
-                                  fontWeight: 800,
-                                }}
-                              >
-                                Hesap Oturumu #{order.session_id}
-                              </div>
-                            )}
-
-                          </div>
-
-                          <div className="order-header-right">
-
-                            <span className="order-status status-delivered">
-                              ✓ Tamamlandı
-                            </span>
-
-                            <span className="order-time">
-                              {formatTime(
-                                order.created_at
-                              )}
-                            </span>
-
-                          </div>
-
-                        </div>
-
-                        <div className="order-customer">
-
-                          <div className="order-customer-icon">
-                            👤
-                          </div>
-
-                          <div>
-
-                            <span>
-                              MÜŞTERİ
-                            </span>
-
-                            <strong>
-                              {order.customer_name ||
-                                "İsimsiz müşteri"}
-                            </strong>
-
-                          </div>
-
-                        </div>
-
-                        <div className="order-products">
-
-                          <div className="order-products-title">
-                            SİPARİŞ İÇERİĞİ
-                          </div>
-
-                          {items.map(
-                            (item) => (
-
-                              <div
-                                key={item.id}
-                                className="order-product"
-                              >
-
-                                <div className="order-product-name">
-
-                                  <strong>
-                                    {item.product_name}
-                                  </strong>
-
-                                  <span>
-                                    ×{" "}
-                                    {item.quantity}
-                                  </span>
-
-                                </div>
-
-                                <strong>
-                                  {formatPrice(
-                                    Number(
-                                      item.price
-                                    ) *
-                                      Number(
-                                        item.quantity
-                                      )
-                                  )}{" "}
-                                  TL
-                                </strong>
-
-                              </div>
-
-                            )
-                          )}
-
-                        </div>
-
-                        {order.note && (
-
-                          <div className="order-note">
-
-                            <div className="order-note-icon">
-                              📝
-                            </div>
-
-                            <div>
-
-                              <strong>
-                                Müşteri Notu
-                              </strong>
-
-                              <p>
-                                {order.note}
-                              </p>
-
-                            </div>
-
-                          </div>
-
-                        )}
-
-                        <div className="order-card-footer">
-
-                          <div className="order-total">
-
-                            <span>
-                              Toplam
-                            </span>
-
-                            <strong>
-                              {formatPrice(
-                                Number(
-                                  order.total_amount
-                                )
-                              )}{" "}
-                              TL
-                            </strong>
-
-                          </div>
-
-                          <div
-                            style={{
-                              textAlign:
-                                "right",
-                            }}
-                          >
-
-                            <div
-                              style={{
-                                color:
-                                  "#15803d",
-                                fontWeight:
-                                  800,
-                                fontSize:
-                                  "12px",
-                              }}
-                            >
-                              ✓ Sipariş tamamlandı
-                            </div>
-
-                            <div
-                              style={{
-                                color:
-                                  "#999",
-                                fontSize:
-                                  "10px",
-                                marginTop:
-                                  "3px",
-                              }}
-                            >
-                              {formatDate(
-                                order.created_at
-                              )}
-                            </div>
-
-                          </div>
-
-                        </div>
-
-                      </article>
-
-                    );
-                  }
-                )}
-
+                    })}
+                  </tbody>
+                </table>
               </div>
-
             </section>
           )}
-
         </>
+      )}
+    </main>
+  );
+}
 
+// Mutfak panosundaki sipariş kartı.
+function OrderCard({ order, items }: { order: Order; items: OrderItem[] }) {
+  return (
+    <article className={`adm-order c-${order.status}`}>
+      <div className="adm-order-top">
+        <span>
+          <strong>Masa {order.table_number}</strong>
+          <small>
+            #{order.id} · {formatTime(order.created_at)}
+            {order.customer_name ? ` · ${order.customer_name}` : ""}
+          </small>
+        </span>
+        <span className="adm-num">{formatPrice(Number(order.total_amount))} ₺</span>
+      </div>
+
+      {items.length > 0 ? (
+        <ul className="adm-order-items">
+          {items.map((item) => (
+            <li key={item.id}>
+              <b>{item.quantity}×</b>
+              <span>{item.product_name}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="adm-hint" style={{ margin: 0 }}>Ürün bilgisi bulunamadı.</p>
       )}
 
-      {/* =================================================
-          ALT BİLGİ
-      ================================================== */}
+      {order.note && (
+        <p className="adm-order-note">
+          <AdminIcon name="info" size={15} />
+          {order.note}
+        </p>
+      )}
 
-      <footer
-        style={{
-          textAlign: "center",
-          padding:
-            "35px 0 10px",
-          color: "#999",
-          fontSize: "11px",
-        }}
-      >
-        OZT Digital Menu • Sipariş & Ödeme Yönetim Sistemi
-      </footer>
-
-    </main>
+      <OrderActions orderId={order.id} currentStatus={order.status} />
+    </article>
   );
 }

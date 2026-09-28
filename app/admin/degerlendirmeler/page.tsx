@@ -1,8 +1,13 @@
 import { createSupabaseServerClient } from "../../../lib/supabase-server";
 import { notFound } from "next/navigation";
 import ReviewActions from "./ReviewActions";
+import AdminIcon from "../AdminIcon";
 
-export default async function ReviewsPage() {
+export default async function ReviewsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ durum?: string }>;
+}) {
   const supabase = await createSupabaseServerClient();
 
   // Giriş yapan kullanıcıyı bul
@@ -85,454 +90,122 @@ export default async function ReviewsPage() {
     ).length,
   };
 
+  const { durum } = await searchParams;
+  const filter = durum === "gizli" || durum === "yayinda" ? durum : "tumu";
+  const visibleCount = reviewList.filter((review) => review.is_visible).length;
+  const hiddenCount = reviewList.length - visibleCount;
+  const shown = reviewList.filter((review) =>
+    filter === "tumu" ? true : filter === "yayinda" ? review.is_visible : !review.is_visible
+  );
+
   return (
-    <main className="admin-page">
-
-      {/* =========================
-          ÜST ALAN
-      ========================= */}
-
-      <section className="admin-header">
-
-        <a
-          href="/admin"
-          style={{
-            color: "#c8941d",
-            textDecoration: "none",
-            fontWeight: 700,
-          }}
-        >
-          ← Yönetim Paneli
-        </a>
-
-        <div
-          style={{
-            marginTop: "18px",
-          }}
-        >
-          <span
-            style={{
-              color: "#c8941d",
-              fontSize: "12px",
-              fontWeight: 800,
-              letterSpacing: "2px",
-            }}
-          >
-            MÜŞTERİ GERİ BİLDİRİMLERİ
-          </span>
-
+    <main className="adm-page">
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">Müşteri geri bildirimi</span>
           <h1>Değerlendirmeler</h1>
-
           <p>
-            {restaurant.name} müşterilerinin
-            değerlendirmelerini buradan görüntüleyin.
+            Siparişe bağlı yorumlar doğrudan yayına girer. Çalışan değerlendirmeleri
+            siz onaylayana kadar gizli kalır.
           </p>
         </div>
+      </header>
 
-      </section>
-
-      {/* =========================
-          İSTATİSTİKLER
-      ========================= */}
-
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: "16px",
-          marginTop: "20px",
-        }}
-      >
-
-        {/* Ortalama */}
-
-        <div className="admin-card">
-
-          <span>⭐</span>
-
-          <h2>
-            {averageRating.toFixed(1)}
-          </h2>
-
-          <p>
-            Ortalama Puan
-          </p>
-
-        </div>
-
-        {/* Toplam */}
-
-        <div className="admin-card">
-
-          <span>💬</span>
-
-          <h2>
-            {reviewList.length}
-          </h2>
-
-          <p>
-            Toplam Değerlendirme
-          </p>
-
-        </div>
-
-        {/* Yayındaki */}
-
-        <div className="admin-card">
-
-          <span>🟢</span>
-
-          <h2>
-            {
-              reviewList.filter(
-                (review) => review.is_visible
-              ).length
-            }
-          </h2>
-
-          <p>
-            Yayındaki Değerlendirme
-          </p>
-
-        </div>
-
-      </section>
-
-      {/* =========================
-          YILDIZ DAĞILIMI
-      ========================= */}
-
-      <section
-        style={{
-          background: "white",
-          borderRadius: "18px",
-          padding: "24px",
-          marginTop: "20px",
-          boxShadow:
-            "0 10px 30px rgba(0,0,0,0.06)",
-        }}
-      >
-
-        <h2>
-          ⭐ Puan Dağılımı
-        </h2>
-
-        {[5, 4, 3, 2, 1].map((star) => {
-
-          const count =
-            starCounts[
-              star as keyof typeof starCounts
-            ];
-
-          const percentage =
-            reviewList.length > 0
-              ? (count / reviewList.length) * 100
-              : 0;
-
-          return (
-            <div
-              key={star}
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "60px 1fr 50px",
-                alignItems: "center",
-                gap: "10px",
-                marginTop: "12px",
-              }}
-            >
-
-              <strong>
-                {star} ⭐
-              </strong>
-
-              <div
-                style={{
-                  height: "9px",
-                  background: "#eee",
-                  borderRadius: "20px",
-                  overflow: "hidden",
-                }}
-              >
-
-                <div
-                  style={{
-                    width: `${percentage}%`,
-                    height: "100%",
-                    background: "#d59b19",
-                    borderRadius: "20px",
-                  }}
+      <div className="adm-split adm-split-reverse">
+        <section className="adm-card adm-rating-summary" aria-label="Puan özeti">
+          <div className="adm-rating-big">
+            <strong>{reviewList.length > 0 ? averageRating.toFixed(1) : "—"}</strong>
+            <span className="adm-stars" aria-label={`5 üzerinden ${averageRating.toFixed(1)}`}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <AdminIcon
+                  key={star}
+                  name="star"
+                  size={16}
+                  strokeWidth={star <= Math.round(averageRating) ? 0 : 1.6}
                 />
-
-              </div>
-
-              <span>
-                {count}
-              </span>
-
-            </div>
-          );
-        })}
-
-      </section>
-
-      {/* =========================
-          DEĞERLENDİRMELER
-      ========================= */}
-
-      <section
-        style={{
-          marginTop: "28px",
-        }}
-      >
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "16px",
-          }}
-        >
-
-          <div>
-
-            <span
-              style={{
-                color: "#c8941d",
-                fontSize: "12px",
-                fontWeight: 800,
-                letterSpacing: "2px",
-              }}
-            >
-              MÜŞTERİ YORUMLARI
+              ))}
             </span>
-
-            <h2
-              style={{
-                marginTop: "5px",
-              }}
-            >
-              Son Değerlendirmeler
-            </h2>
-
+            <small>{reviewList.length} değerlendirme</small>
           </div>
 
-          <span
-            style={{
-              background: "white",
-              border: "1px solid #e5dfd3",
-              padding: "8px 12px",
-              borderRadius: "20px",
-              fontSize: "13px",
-              fontWeight: 700,
-            }}
-          >
-            {reviewList.length} değerlendirme
-          </span>
-
-        </div>
-
-        {/* DEĞERLENDİRME YOK */}
-
-        {reviewList.length === 0 ? (
-
-          <div
-            style={{
-              background: "white",
-              borderRadius: "18px",
-              padding: "45px 20px",
-              textAlign: "center",
-              boxShadow:
-                "0 10px 30px rgba(0,0,0,0.05)",
-            }}
-          >
-
-            <div
-              style={{
-                fontSize: "42px",
-                marginBottom: "12px",
-              }}
-            >
-              ⭐
-            </div>
-
-            <h3>
-              Henüz değerlendirme yok
-            </h3>
-
-            <p
-              style={{
-                color: "#777",
-                marginTop: "8px",
-              }}
-            >
-              Müşterileriniz değerlendirme
-              yaptığında burada görünecek.
-            </p>
-
-          </div>
-
-        ) : (
-
-          /* DEĞERLENDİRME LİSTESİ */
-
-          <div
-            style={{
-              display: "grid",
-              gap: "14px",
-            }}
-          >
-
-            {reviewList.map((review) => (
-
-              <article
-                key={review.id}
-                style={{
-                  background: "white",
-                  borderRadius: "18px",
-                  padding: "20px",
-                  boxShadow:
-                    "0 10px 30px rgba(0,0,0,0.05)",
-
-                  border:
-                    review.is_visible
-                      ? "1px solid #eee"
-                      : "1px solid #f0caca",
-                }}
-              >
-
-                {/* ÜST BİLGİ */}
-
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent:
-                      "space-between",
-                    gap: "15px",
-                    flexWrap: "wrap",
-                  }}
-                >
-
-                  <div>
-
-                    <strong>
-                      👤{" "}
-                      {review.customer_name ||
-                        "Anonim Müşteri"}
-                    </strong>
-
-                    {/* YILDIZLAR */}
-
-                    <div
-                      style={{
-                        marginTop: "7px",
-                        fontSize: "18px",
-                      }}
-                    >
-
-                      {"⭐".repeat(
-                        review.rating
-                      )}
-
-                      <span
-                        style={{
-                          color: "#aaa",
-                        }}
-                      >
-                        {"⭐".repeat(
-                          5 - review.rating
-                        )}
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                  {/* TARİH + DURUM */}
-
-                  <div
-                    style={{
-                      textAlign: "right",
-                      fontSize: "12px",
-                      color: "#888",
-                    }}
-                  >
-
-                    {new Date(
-                      review.created_at
-                    ).toLocaleDateString(
-                      "tr-TR"
-                    )}
-
-                    <div
-                      style={{
-                        marginTop: "6px",
-                        display: "inline-block",
-                        padding: "4px 8px",
-                        borderRadius: "10px",
-
-                        background:
-                          review.is_visible
-                            ? "#e8f7ed"
-                            : "#fdeaea",
-
-                        color:
-                          review.is_visible
-                            ? "#258345"
-                            : "#b33a3a",
-
-                        fontWeight: 700,
-                      }}
-                    >
-
-                      {review.is_visible
-                        ? "Yayında"
-                        : "Gizli"}
-
-                    </div>
-
-                  </div>
-
+          <div className="adm-rating-bars">
+            {[5, 4, 3, 2, 1].map((star) => {
+              const count = starCounts[star as keyof typeof starCounts];
+              const percentage = reviewList.length > 0 ? (count / reviewList.length) * 100 : 0;
+              return (
+                <div key={star} className="adm-rating-bar">
+                  <span>{star}</span>
+                  <span className="adm-rating-track">
+                    <span style={{ width: `${percentage}%` }} />
+                  </span>
+                  <b>{count}</b>
                 </div>
+              );
+            })}
+          </div>
+        </section>
 
-                {/* YORUM */}
-
-                {review.comment && (
-
-                  <p
-                    style={{
-                      marginTop: "15px",
-                      paddingTop: "15px",
-                      borderTop:
-                        "1px solid #eee",
-                      lineHeight: 1.6,
-                      color: "#444",
-                    }}
-                  >
-                    “{review.comment}”
-                  </p>
-
-                )}
-
-                {/* BUTONLAR */}
-
-                <ReviewActions
-                  reviewId={review.id}
-                  isVisible={review.is_visible}
-                />
-
-              </article>
-
-            ))}
-
+        <section className="adm-section" aria-labelledby="yorum-listesi">
+          <div className="adm-section-head">
+            <h2 id="yorum-listesi">Yorumlar</h2>
+            <nav className="adm-chips" aria-label="Yorumları filtrele">
+              <a className={`adm-chip ${filter === "tumu" ? "is-active" : ""}`} href="/admin/degerlendirmeler">
+                Tümü <b>{reviewList.length}</b>
+              </a>
+              <a className={`adm-chip ${filter === "gizli" ? "is-active" : ""}`} href="/admin/degerlendirmeler?durum=gizli">
+                Onay bekleyen <b>{hiddenCount}</b>
+              </a>
+              <a className={`adm-chip ${filter === "yayinda" ? "is-active" : ""}`} href="/admin/degerlendirmeler?durum=yayinda">
+                Yayında <b>{visibleCount}</b>
+              </a>
+            </nav>
           </div>
 
-        )}
+          {shown.length === 0 ? (
+            <div className="adm-empty">
+              <span className="adm-empty-icon"><AdminIcon name="star" /></span>
+              <strong>{reviewList.length === 0 ? "Henüz değerlendirme yok" : "Bu filtrede yorum yok"}</strong>
+              <p>Müşteriler sipariş sonrası ya da çalışan sayfasından değerlendirme yaptığında burada görünür.</p>
+            </div>
+          ) : (
+            <div className="adm-reviews">
+              {shown.map((review) => (
+                <article key={review.id} className={`adm-card adm-review ${review.is_visible ? "" : "is-hidden"}`}>
+                  <div className="adm-review-head">
+                    <span className="adm-review-avatar">
+                      {(review.customer_name || "M").trim().charAt(0).toLocaleUpperCase("tr-TR")}
+                    </span>
+                    <span className="adm-row-main">
+                      <strong>{review.customer_name || "Misafir"}</strong>
+                      <small>
+                        {new Date(review.created_at).toLocaleDateString("tr-TR", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </small>
+                    </span>
+                    <span className="adm-stars" aria-label={`${review.rating} yıldız`}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <AdminIcon key={star} name="star" size={14} strokeWidth={star <= review.rating ? 0 : 1.6} />
+                      ))}
+                    </span>
+                  </div>
 
-      </section>
+                  {review.comment && <p className="adm-review-text">{review.comment}</p>}
 
+                  <div className="adm-review-foot">
+                    <span className={`adm-badge is-dot ${review.is_visible ? "s-ok" : "s-pending"}`}>
+                      {review.is_visible ? "Yayında" : "Onay bekliyor"}
+                    </span>
+                    <ReviewActions reviewId={review.id} isVisible={review.is_visible} />
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </main>
   );
 }

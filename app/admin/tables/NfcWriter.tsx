@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AdminIcon from "../AdminIcon";
 
 type Props = {
   url: string;
@@ -79,101 +80,22 @@ export default function NfcWriter({
     }
   }
 
-  async function copyUrl() {
-    try {
-      await navigator.clipboard.writeText(
-        url
-      );
-
-      setMessage(
-        "NFC bağlantısı kopyalandı."
-      );
-    } catch {
-      setError(
-        "Bağlantı kopyalanamadı."
-      );
-    }
-  }
-
   return (
-    <div
-      style={{
-        marginTop: "10px",
-      }}
-    >
+    <div className="adm-nfc">
       <button
         type="button"
+        className="adm-btn adm-btn-sm adm-btn-block adm-nfc-btn"
         onClick={writeNfc}
-        disabled={loading}
-        style={{
-          width: "100%",
-          border: "none",
-          background: loading
-            ? "#999"
-            : "#b8860b",
-          color: "#fff",
-          padding: "11px",
-          borderRadius: "9px",
-          fontWeight: 800,
-          cursor: loading
-            ? "not-allowed"
-            : "pointer",
-        }}
+        disabled={loading || !url}
       >
-        {loading
-          ? "📡 NFC'ye Yazılıyor..."
-          : "📡 NFC'ye Yaz"}
+        <AdminIcon name="nfc" size={15} />
+        {loading ? "Etiketi telefona yaklaştırın…" : "NFC etikete yaz"}
       </button>
-
-      <button
-        type="button"
-        onClick={copyUrl}
-        style={{
-          width: "100%",
-          marginTop: "7px",
-          border: "1px solid #ddd",
-          background: "#fff",
-          color: "#222",
-          padding: "9px",
-          borderRadius: "9px",
-          fontWeight: 700,
-          cursor: "pointer",
-          fontSize: "12px",
-        }}
-      >
-        🔗 NFC URL'sini Kopyala
-      </button>
-
       {message && (
-        <div
-          style={{
-            marginTop: "8px",
-            padding: "8px",
-            background: "#edf9ef",
-            color: "#18752b",
-            borderRadius: "8px",
-            fontSize: "11px",
-            fontWeight: 700,
-          }}
-        >
-          ✅ {message}
-        </div>
+        <p className="adm-nfc-msg is-ok" role="status">{message}</p>
       )}
-
       {error && (
-        <div
-          style={{
-            marginTop: "8px",
-            padding: "8px",
-            background: "#fff0f0",
-            color: "#b42318",
-            borderRadius: "8px",
-            fontSize: "11px",
-            fontWeight: 700,
-          }}
-        >
-          ⚠️ {error}
-        </div>
+        <p className="adm-nfc-msg is-error" role="alert">{error}</p>
       )}
     </div>
   );

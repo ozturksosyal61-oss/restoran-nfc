@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../lib/supabase/client";
+import AdminIcon from "../AdminIcon";
 
 type Props = {
   reviewId: number;
@@ -134,55 +135,25 @@ export default function ReviewActions({
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: "8px",
-        marginTop: "15px",
-      }}
-    >
+    <div className="adm-review-actions">
       <button
         type="button"
+        className={`adm-btn adm-btn-sm ${visible ? "" : "adm-btn-ok"}`}
         onClick={toggleVisibility}
         disabled={loading}
-        style={{
-          padding: "8px 14px",
-          borderRadius: "8px",
-          border: "1px solid #ddd",
-          background: "#fff",
-          color: "#333",
-          cursor: loading
-            ? "not-allowed"
-            : "pointer",
-          fontWeight: 700,
-          opacity: loading ? 0.6 : 1,
-        }}
       >
-        {loading
-          ? "İşleniyor..."
-          : visible
-          ? "🙈 Gizle"
-          : "👁️ Yayına Al"}
+        <AdminIcon name={visible ? "eyeOff" : "check"} size={15} />
+        {loading ? "İşleniyor…" : visible ? "Gizle" : "Onayla ve yayınla"}
       </button>
-
       <button
         type="button"
+        className="adm-btn adm-btn-sm adm-btn-icon adm-btn-ghost adm-text-danger"
         onClick={deleteReview}
         disabled={loading}
-        style={{
-          padding: "8px 14px",
-          borderRadius: "8px",
-          border: "none",
-          background: "#c62828",
-          color: "#fff",
-          cursor: loading
-            ? "not-allowed"
-            : "pointer",
-          fontWeight: 700,
-          opacity: loading ? 0.6 : 1,
-        }}
+        aria-label="Değerlendirmeyi sil"
+        title="Sil"
       >
-        🗑️ Sil
+        <AdminIcon name="trash" size={15} />
       </button>
     </div>
   );

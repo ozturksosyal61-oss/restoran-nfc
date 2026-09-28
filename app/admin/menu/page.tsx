@@ -1,9 +1,8 @@
 import { createSupabaseServerClient } from "../../../lib/supabase-server";
 import ProductDeleteButton from "./ProductDeleteButton";
 import Link from "next/link";
-import CategoryDeleteButton from "./kategori/CategoryDeleteButton";
-import { CategoryMoveButton } from "./CategoryMoveButton";
 import ProductMoveButton from "./ProductMoveButton";
+import AdminIcon from "../AdminIcon";
 
 export default async function AdminMenuPage() {
   const supabase = await createSupabaseServerClient();
@@ -13,7 +12,7 @@ export default async function AdminMenuPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return <p>Oturum bulunamadı.</p>;
+    return <main className="adm-page"><p className="adm-empty">Oturum bulunamadı.</p></main>;
   }
 
   /* =====================================================
@@ -27,18 +26,8 @@ export default async function AdminMenuPage() {
     .single();
 
   if (!membership) {
-    return <p>İşletme bağlantısı bulunamadı.</p>;
+    return <main className="adm-page"><p className="adm-empty">İşletme bağlantısı bulunamadı.</p></main>;
   }
-
-  /* =====================================================
-     RESTORAN
-     ===================================================== */
-
-  const { data: restaurant } = await supabase
-    .from("restaurants")
-    .select("id, name")
-    .eq("id", membership.restaurant_id)
-    .single();
 
   /* =====================================================
      KATEGORİLER
@@ -72,506 +61,176 @@ export default async function AdminMenuPage() {
      EKRAN
      ===================================================== */
 
+  const productList = products ?? [];
+  const publishedCount = productList.filter((product) => product.is_available !== false).length;
+
   return (
-    <main className="admin-page">
-
-      {/* =================================================
-          HEADER
-          ================================================= */}
-
-      <section className="admin-header">
-
-        <a href="/admin">
-          ← Admin Paneli
-        </a>
-
-        <h1>
-          {restaurant?.name} - Menü Yönetimi
-        </h1>
-
-        <p>
-          Kategorilerinizi ve ürünlerinizi buradan
-          yönetebilirsiniz.
-        </p>
-
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "8px",
-            marginTop: "14px",
-          }}
-        >
-          <span
-            style={{
-              padding: "7px 10px",
-              borderRadius: "999px",
-              background: "#fff7df",
-              border: "1px solid #ead59a",
-              color: "#946b00",
-              fontSize: "11px",
-              fontWeight: 800,
-            }}
-          >
-            📂 {categories?.length || 0} kategori
-          </span>
-
-          <span
-            style={{
-              padding: "7px 10px",
-              borderRadius: "999px",
-              background: "#edf5ff",
-              border: "1px solid #c8def3",
-              color: "#245d91",
-              fontSize: "11px",
-              fontWeight: 800,
-            }}
-          >
-            🍽️ {products?.length || 0} ürün
-          </span>
-
-          <span
-            style={{
-              padding: "7px 10px",
-              borderRadius: "999px",
-              background: "#edf9f0",
-              border: "1px solid #c8e5cf",
-              color: "#26703c",
-              fontSize: "11px",
-              fontWeight: 800,
-            }}
-          >
-            🟢 {products?.filter((product) => product.is_available !== false).length || 0} yayında
-          </span>
+    <main className="adm-page">
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">Menü</span>
+          <h1>Ürünler</h1>
+          <p>Ürünleri kategori içinde sıralayın, fiyatını ve görünürlüğünü yönetin.</p>
         </div>
-
-        {/* BUTONLAR */}
-
-        <div className="menu-actions">
-
-          <Link
-            href="/admin/menu/kategori/yeni"
-            className="admin-button"
-          >
-            ➕ Yeni Kategori
+        <div className="adm-head-actions">
+          <Link className="adm-btn" href="/admin/menu/kategori">
+            <AdminIcon name="category" size={16} />
+            Kategoriler
           </Link>
-
-          <Link
-            href="/admin/menu/yeni"
-            className="admin-button"
-          >
-            ➕ Yeni Ürün
+          <Link className="adm-btn adm-btn-primary" href="/admin/menu/yeni">
+            <AdminIcon name="plus" size={16} />
+            Yeni ürün
           </Link>
-
         </div>
+      </header>
 
-        {/* KATEGORİ NAV */}
-
-        <nav className="category-nav">
-
-          {categories?.map((category) => (
-            <a
-              key={category.id}
-              href={`#category-${category.id}`}
-            >
-              {category.name}
-            </a>
-          ))}
-
-        </nav>
-
+      <section className="adm-stats" aria-label="Menü özeti">
+        <div className="adm-stat">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Kategori</span>
+            <span className="adm-stat-icon"><AdminIcon name="category" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{categories?.length || 0}</span>
+        </div>
+        <div className="adm-stat">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Ürün</span>
+            <span className="adm-stat-icon"><AdminIcon name="menu" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{productList.length}</span>
+        </div>
+        <div className="adm-stat tone-ok">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Yayında</span>
+            <span className="adm-stat-icon"><AdminIcon name="eye" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{publishedCount}</span>
+        </div>
+        <div className="adm-stat tone-done">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Gizli</span>
+            <span className="adm-stat-icon"><AdminIcon name="eyeOff" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{productList.length - publishedCount}</span>
+        </div>
       </section>
 
-      {/* =================================================
-          MENÜ
-          ================================================= */}
+      {!categories || categories.length === 0 ? (
+        <div className="adm-empty">
+          <span className="adm-empty-icon"><AdminIcon name="category" /></span>
+          <strong>Henüz kategori yok</strong>
+          <p>Önce &quot;Kahvaltı&quot;, &quot;Ana yemekler&quot; gibi bir kategori oluşturun, sonra ürün ekleyin.</p>
+          <Link className="adm-btn adm-btn-primary" href="/admin/menu/kategori">
+            <AdminIcon name="plus" size={16} />
+            İlk kategoriyi oluştur
+          </Link>
+        </div>
+      ) : (
+        <>
+          <nav className="adm-chips" aria-label="Kategoriye git">
+            {categories.map((category) => (
+              <a key={category.id} className="adm-chip" href={`#category-${category.id}`}>
+                {category.name}
+                <b>{productList.filter((product) => product.category_id === category.id).length}</b>
+              </a>
+            ))}
+          </nav>
 
-      <section className="menu">
+          {categories.map((category) => {
+            const categoryProducts = productList.filter(
+              (product) => product.category_id === category.id
+            );
 
-        {!categories || categories.length === 0 ? (
-          <div
-            style={{
-              maxWidth: "760px",
-              margin: "30px auto",
-              padding: "45px 24px",
-              textAlign: "center",
-              background: "#fff",
-              border: "1px dashed #d8c8a5",
-              borderRadius: "18px",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "44px",
-                marginBottom: "10px",
-              }}
-            >
-              🍽️
-            </div>
-
-            <h2
-              style={{
-                margin: "0 0 8px",
-                fontSize: "22px",
-              }}
-            >
-              Henüz menü kategorisi yok
-            </h2>
-
-            <p
-              style={{
-                margin: "0 auto",
-                maxWidth: "500px",
-                color: "#777",
-                fontSize: "13px",
-                lineHeight: 1.6,
-              }}
-            >
-              İlk kategorinizi oluşturarak menünüzü
-              hazırlamaya başlayabilirsiniz.
-            </p>
-
-            <Link
-              href="/admin/menu/kategori/yeni"
-              className="admin-button"
-              style={{
-                display: "inline-flex",
-                marginTop: "18px",
-                textDecoration: "none",
-              }}
-            >
-              ➕ İlk Kategoriyi Oluştur
-            </Link>
-          </div>
-        ) : (
-          categories.map((category, categoryIndex) => {
-
-          /* ---------------------------------------------
-             BU KATEGORİNİN ÜRÜNLERİ
-             --------------------------------------------- */
-
-          const categoryProducts =
-            products?.filter(
-              (product) =>
-                product.category_id === category.id
-            ) || [];
-
-          /* ---------------------------------------------
-             ÖNCEKİ / SONRAKİ KATEGORİ
-             --------------------------------------------- */
-
-          const previousCategory =
-            categoryIndex > 0
-              ? categories[categoryIndex - 1]
-              : undefined;
-
-          const nextCategory =
-            categoryIndex < categories.length - 1
-              ? categories[categoryIndex + 1]
-              : undefined;
-
-          return (
-            <div
-              key={category.id}
-              id={`category-${category.id}`}
-              className="admin-menu-category"
-            >
-
-              {/* =================================================
-                  KATEGORİ BAŞLIK
-                  ================================================= */}
-
-              <div className="category-header">
-
-                <h2>
-                  {category.name}
-                </h2>
-
-                {/* KATEGORİ İŞLEMLERİ */}
-
-                <div className="category-actions">
-
-                  <CategoryMoveButton
-                    categoryId={category.id}
-                    direction="up"
-                    currentOrder={category.sort_order}
-                    neighborId={previousCategory?.id}
-                    neighborOrder={
-                      previousCategory?.sort_order
-                    }
-                  />
-
-                  <CategoryMoveButton
-                    categoryId={category.id}
-                    direction="down"
-                    currentOrder={category.sort_order}
-                    neighborId={nextCategory?.id}
-                    neighborOrder={
-                      nextCategory?.sort_order
-                    }
-                  />
-
+            return (
+              <section
+                key={category.id}
+                id={`category-${category.id}`}
+                className="adm-card adm-menu-cat"
+                aria-labelledby={`kategori-${category.id}`}
+              >
+                <div className="adm-card-head">
+                  <div>
+                    <h2 id={`kategori-${category.id}`}>{category.name}</h2>
+                    <p>{categoryProducts.length} ürün</p>
+                  </div>
                   <Link
+                    className="adm-btn adm-btn-sm adm-btn-ghost"
                     href={`/admin/menu/kategori/duzenle?id=${category.id}`}
-                    className="edit-button"
                   >
-                    ✏️ Düzenle
+                    <AdminIcon name="edit" size={15} />
+                    Kategoriyi düzenle
                   </Link>
-
-                  <CategoryDeleteButton
-                    categoryId={category.id}
-                  />
-
                 </div>
 
-              </div>
+                {categoryProducts.length === 0 ? (
+                  <p className="adm-hint" style={{ margin: 0 }}>
+                    Bu kategoride henüz ürün yok.{" "}
+                    <Link className="adm-card-link" href="/admin/menu/yeni">Ürün ekle</Link>
+                  </p>
+                ) : (
+                  <div className="adm-list">
+                    {categoryProducts.map((product, productIndex) => {
+                      const previousProduct = categoryProducts[productIndex - 1];
+                      const nextProduct = categoryProducts[productIndex + 1];
+                      const hidden = product.is_available === false;
 
-              {/* =================================================
-                  ÜRÜN YOK
-                  ================================================= */}
-
-              {categoryProducts.length === 0 ? (
-
-                <p>
-                  Bu kategoride henüz ürün yok.
-                </p>
-
-              ) : (
-
-                /* =================================================
-                   ÜRÜNLER
-                   ================================================= */
-
-                categoryProducts.map(
-                  (product, productIndex) => {
-
-                    const previousProduct =
-                      productIndex > 0
-                        ? categoryProducts[
-                            productIndex - 1
-                          ]
-                        : undefined;
-
-                    const nextProduct =
-                      productIndex <
-                      categoryProducts.length - 1
-                        ? categoryProducts[
-                            productIndex + 1
-                          ]
-                        : undefined;
-
-                    return (
-                      <div
-                        key={product.id}
-                        className={`menu-item ${
-                          product.is_available === false
-                            ? "product-unavailable"
-                            : ""
-                        }`}
-                      >
-
-                        {/* =================================================
-                            FOTOĞRAF
-                            ================================================= */}
-
-                        {product.image_url ? (
-
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="product-image"
-                          />
-
-                        ) : (
-
-                          <div className="product-image-placeholder">
-                            🍽️
-                          </div>
-
-                        )}
-
-                        {/* =================================================
-                            ÜRÜN BİLGİLERİ
-                            ================================================= */}
-
-                        <div className="product-info">
-
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              flexWrap: "wrap",
-                            }}
-                          >
-
-                            <h3>
-                              {product.name}
-                            </h3>
-
-                            {/* DURUM */}
-
-                            {product.is_available ===
-                            false ? (
-
-                              <span
-                                style={{
-                                  display:
-                                    "inline-flex",
-                                  alignItems:
-                                    "center",
-                                  padding:
-                                    "4px 8px",
-                                  borderRadius:
-                                    "20px",
-                                  background:
-                                    "#fee2e2",
-                                  color:
-                                    "#b91c1c",
-                                  fontSize:
-                                    "10px",
-                                  fontWeight: 800,
-                                }}
-                              >
-                                GİZLİ
-                              </span>
-
+                      return (
+                        <div key={product.id} className={`adm-row adm-product ${hidden ? "is-hidden" : ""}`}>
+                          <span className="adm-product-thumb">
+                            {product.image_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={product.image_url} alt="" loading="lazy" />
                             ) : (
-
-                              <span
-                                style={{
-                                  display:
-                                    "inline-flex",
-                                  alignItems:
-                                    "center",
-                                  padding:
-                                    "4px 8px",
-                                  borderRadius:
-                                    "20px",
-                                  background:
-                                    "#dcfce7",
-                                  color:
-                                    "#15803d",
-                                  fontSize:
-                                    "10px",
-                                  fontWeight: 800,
-                                }}
-                              >
-                                YAYINDA
-                              </span>
-
+                              <AdminIcon name="image" size={20} />
                             )}
+                          </span>
 
-                          </div>
+                          <span className="adm-row-main">
+                            <strong>
+                              {product.name}
+                              {hidden && <span className="adm-badge s-delivered">Gizli</span>}
+                            </strong>
+                            {product.description && <small>{product.description}</small>}
+                          </span>
 
-                          {/* AÇIKLAMA */}
+                          <span className="adm-num adm-product-price">
+                            {Number(product.price).toLocaleString("tr-TR")} ₺
+                          </span>
 
-                          {product.description && (
-                            <p>
-                              {product.description}
-                            </p>
-                          )}
-
+                          <span className="adm-product-actions">
+                            <ProductMoveButton
+                              productId={product.id}
+                              direction="up"
+                              currentOrder={product.sort_order}
+                              neighborId={previousProduct?.id}
+                              neighborOrder={previousProduct?.sort_order}
+                            />
+                            <ProductMoveButton
+                              productId={product.id}
+                              direction="down"
+                              currentOrder={product.sort_order}
+                              neighborId={nextProduct?.id}
+                              neighborOrder={nextProduct?.sort_order}
+                            />
+                            <Link
+                              className="adm-btn adm-btn-sm"
+                              href={`/admin/menu/duzenle?id=${product.id}`}
+                            >
+                              <AdminIcon name="edit" size={15} />
+                              Düzenle
+                            </Link>
+                            <ProductDeleteButton productId={product.id} />
+                          </span>
                         </div>
-
-                        {/* =================================================
-                            FİYAT
-                            ================================================= */}
-
-                        <strong className="product-price">
-
-                          {Number(
-                            product.price
-                          ).toLocaleString("tr-TR")}{" "}
-
-                          TL
-
-                        </strong>
-
-                        {/* =================================================
-                            ÜRÜN İŞLEMLERİ
-                            ================================================= */}
-
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "8px",
-                            alignItems:
-                              "center",
-                            flexWrap:
-                              "wrap",
-                          }}
-                        >
-
-                          {/* YUKARI */}
-
-                          <ProductMoveButton
-                            productId={
-                              product.id
-                            }
-                            direction="up"
-                            currentOrder={
-                              product.sort_order
-                            }
-                            neighborId={
-                              previousProduct?.id
-                            }
-                            neighborOrder={
-                              previousProduct?.sort_order
-                            }
-                          />
-
-                          {/* AŞAĞI */}
-
-                          <ProductMoveButton
-                            productId={
-                              product.id
-                            }
-                            direction="down"
-                            currentOrder={
-                              product.sort_order
-                            }
-                            neighborId={
-                              nextProduct?.id
-                            }
-                            neighborOrder={
-                              nextProduct?.sort_order
-                            }
-                          />
-
-                          {/* DÜZENLE */}
-
-                          <Link
-                            href={`/admin/menu/duzenle?id=${product.id}`}
-                            className="edit-button"
-                          >
-                            ✏️ Düzenle
-                          </Link>
-
-                          {/* SİL */}
-
-                          <ProductDeleteButton
-                            productId={
-                              product.id
-                            }
-                          />
-
-                        </div>
-
-                      </div>
-                    );
-                  }
-                )
-
-              )}
-
-            </div>
-          );
-          })
-        )}
-
-      </section>
-
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </>
+      )}
     </main>
   );
 }

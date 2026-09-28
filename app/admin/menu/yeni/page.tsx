@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ProductFormView from "../ProductFormView";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/client";
 
@@ -175,210 +176,27 @@ export default function NewProductPage() {
      ===================================================== */
 
   return (
-    <main className="admin-page">
-
-      {/* HEADER */}
-
-      <section className="admin-header">
-
-        <a href="/admin/menu">
-          ← Menü Yönetimi
-        </a>
-
-        <h1>
-          Yeni Ürün Ekle
-        </h1>
-
-        <p>
-          Menünüze yeni bir ürün ekleyin.
-        </p>
-
-      </section>
-
-      {/* FORM */}
-
-      <section className="admin-form">
-
-        <form onSubmit={handleSubmit}>
-
-          {/* KATEGORİ */}
-
-          <label>
-            Kategori
-
-            <select
-              value={categoryId}
-              onChange={(event) =>
-                setCategoryId(event.target.value)
-              }
-              required
-            >
-              <option value="">
-                Kategori seçin
-              </option>
-
-              {categories.map((category) => (
-                <option
-                  key={category.id}
-                  value={category.id}
-                >
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {/* ÜRÜN ADI */}
-
-          <label>
-            Ürün Adı
-
-            <input
-              type="text"
-              value={name}
-              onChange={(event) =>
-                setName(event.target.value)
-              }
-              placeholder="Örn. Cheeseburger"
-              required
-            />
-          </label>
-
-          {/* AÇIKLAMA */}
-
-          <label>
-            Açıklama
-
-            <textarea
-              value={description}
-              onChange={(event) =>
-                setDescription(event.target.value)
-              }
-              placeholder="Ürünün kısa açıklaması"
-            />
-          </label>
-
-          {/* İÇİNDEKİLER */}
-
-          <label>
-            İçindekiler
-
-            <textarea
-              value={ingredients}
-              onChange={(event) =>
-                setIngredients(event.target.value)
-              }
-              placeholder="Örn. Dana eti, cheddar peyniri, marul, domates, soğan, özel sos"
-            />
-
-            <small>
-              Üründe bulunan malzemeleri yazabilirsiniz.
-            </small>
-          </label>
-
-          {/* ALERJENLER */}
-
-          <label>
-            Alerjenler
-
-            <textarea
-              value={allergens}
-              onChange={(event) =>
-                setAllergens(event.target.value)
-              }
-              placeholder="Örn. Süt ürünü, gluten, yumurta"
-            />
-
-            <small>
-              Varsa üründeki alerjenleri belirtin.
-            </small>
-          </label>
-
-          {/* FİYAT */}
-
-          <label>
-            Fiyat (TL)
-
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={price}
-              onChange={(event) =>
-                setPrice(event.target.value)
-              }
-              placeholder="380"
-              required
-            />
-          </label>
-
-          {/* FOTOĞRAF */}
-
-          <label>
-            Ürün Fotoğrafı
-
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={(event) => {
-
-                const file =
-                  event.target.files?.[0] || null;
-
-                if (!file) {
-                  setImage(null);
-                  return;
-                }
-
-                if (
-                  file.size >
-                  5 * 1024 * 1024
-                ) {
-                  setError(
-                    "Fotoğraf en fazla 5 MB olabilir."
-                  );
-
-                  event.target.value = "";
-
-                  setImage(null);
-
-                  return;
-                }
-
-                setError("");
-
-                setImage(file);
-              }}
-            />
-
-            <small>
-              JPG, PNG veya WEBP — maksimum 5 MB
-            </small>
-          </label>
-
-          {/* HATA */}
-
-          {error && (
-            <p className="login-error">
-              ❌ {error}
-            </p>
-          )}
-
-          {/* KAYDET */}
-
-          <button
-            type="submit"
-            disabled={loading}
-          >
-            {loading
-              ? "Kaydediliyor..."
-              : "Ürünü Kaydet"}
-          </button>
-
-        </form>
-
-      </section>
-
-    </main>
+    <ProductFormView
+      mode="new"
+      categories={categories}
+      categoryId={categoryId}
+      onCategoryId={setCategoryId}
+      name={name}
+      onName={setName}
+      description={description}
+      onDescription={setDescription}
+      ingredients={ingredients}
+      onIngredients={setIngredients}
+      allergens={allergens}
+      onAllergens={setAllergens}
+      price={price}
+      onPrice={setPrice}
+      image={image}
+      onImage={setImage}
+      error={error}
+      onError={setError}
+      loading={loading}
+      onSubmit={handleSubmit}
+    />
   );
 }

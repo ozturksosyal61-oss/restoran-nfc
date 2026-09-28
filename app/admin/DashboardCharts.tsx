@@ -12,339 +12,132 @@ type Props = {
   monthlyRevenue: RevenueItem[];
 };
 
-export default function DashboardCharts({
-  weeklyRevenue,
-  monthlyRevenue,
-}: Props) {
+const money = (value: number) =>
+  `${value.toLocaleString("tr-TR", { maximumFractionDigits: 0 })} ₺`;
+
+// Eksen 4 eşit aralığa bölünür; üst sınır her aralık yuvarlak kalacak
+// şekilde 1, 2, 4, 8 × 10ⁿ seçilir. Örnek: 2.890 → 4.000, aralık 1.000.
+function niceMax(value: number) {
+  if (value <= 0) return 1000;
+  const power = 10 ** Math.floor(Math.log10(value));
+  const step = [1, 2, 4, 8, 10].find((m) => m * power >= value) ?? 10;
+  return step * power;
+}
+
+function compact(value: number) {
+  if (value >= 100000) {
+    return `${(value / 1000).toLocaleString("tr-TR", { maximumFractionDigits: 0 })}B`;
+  }
+  return value.toLocaleString("tr-TR", { maximumFractionDigits: 0 });
+}
+
+export default function DashboardCharts({ weeklyRevenue, monthlyRevenue }: Props) {
   const [period, setPeriod] = useState<"week" | "month">("week");
 
-  const data =
-    period === "week" ? weeklyRevenue : monthlyRevenue;
+  const data = period === "week" ? weeklyRevenue : monthlyRevenue;
+  const top = niceMax(Math.max(...data.map((item) => item.revenue), 0));
+  const ticks = [top, top * 0.75, top * 0.5, top * 0.25, 0];
 
-  const maxRevenue = Math.max(
-    ...data.map((item) => item.revenue),
-    1
-  );
-
-  const totalRevenue = data.reduce(
-    (sum, item) => sum + item.revenue,
+  const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
+  const activeDays = data.filter((item) => item.revenue > 0).length;
+  const averageRevenue = activeDays > 0 ? totalRevenue / activeDays : 0;
+  const peakIndex = data.reduce(
+    (best, item, index) => (item.revenue > (data[best]?.revenue ?? -1) ? index : best),
     0
   );
-
-  const activeDays = data.filter(
-    (item) => item.revenue > 0
-  ).length;
-
-  const averageRevenue =
-    activeDays > 0 ? totalRevenue / activeDays : 0;
-
-  const peakItem = data.reduce<RevenueItem | null>(
-    (highest, item) => {
-      if (!highest || item.revenue > highest.revenue) {
-        return item;
-      }
-
-      return highest;
-    },
-    null
-  );
+  const peak = data[peakIndex];
+  const hasData = totalRevenue > 0;
 
   return (
-    <div
-      style={{
-        background: "white",
-        borderRadius: "18px",
-        padding: "22px",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
-        minWidth: 0,
-      }}
-    >
-      <div
-        className="dashboard-section-heading"
-        style={{
-          marginBottom: "18px",
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "12px",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-        }}
-      >
+    <section className="adm-card" aria-labelledby="ciro-baslik">
+      <div className="adm-card-head">
         <div>
-          <span>CİRO ANALİZİ</span>
-
-          <h2>
-            {period === "week"
-              ? "Son 7 gün"
-              : "Son 30 gün"}
-          </h2>
+          <h2 id="ciro-baslik">Ciro</h2>
+          <p>{period === "week" ? "Son 7 gün" : "Son 30 gün"} · sipariş tarihine göre</p>
         </div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: "5px",
-            padding: "4px",
-            background: "#f5f3ef",
-            borderRadius: "10px",
-          }}
-        >
+        <div className="adm-seg" role="tablist" aria-label="Dönem">
           <button
             type="button"
+            role="tab"
+            aria-selected={period === "week"}
+            className={period === "week" ? "is-active" : ""}
             onClick={() => setPeriod("week")}
-            style={{
-              border: "none",
-              borderRadius: "7px",
-              padding: "7px 10px",
-              background:
-                period === "week"
-                  ? "white"
-                  : "transparent",
-              color: "#222",
-              fontWeight: 700,
-              cursor: "pointer",
-              fontSize: "11px",
-            }}
           >
-            Haftalık
+            7 gün
           </button>
-
           <button
             type="button"
+            role="tab"
+            aria-selected={period === "month"}
+            className={period === "month" ? "is-active" : ""}
             onClick={() => setPeriod("month")}
-            style={{
-              border: "none",
-              borderRadius: "7px",
-              padding: "7px 10px",
-              background:
-                period === "month"
-                  ? "white"
-                  : "transparent",
-              color: "#222",
-              fontWeight: 700,
-              cursor: "pointer",
-              fontSize: "11px",
-            }}
           >
-            Aylık
+            30 gün
           </button>
         </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(145px, 1fr))",
-          gap: "10px",
-          marginBottom: "20px",
-        }}
-      >
-        <div
-          style={{
-            padding: "13px 14px",
-            borderRadius: "12px",
-            background: "#faf8f3",
-            border: "1px solid #eee7d8",
-          }}
-        >
-          <div
-            style={{
-              color: "#999",
-              fontSize: "9px",
-              fontWeight: 800,
-              letterSpacing: ".6px",
-            }}
-          >
-            TOPLAM CİRO
-          </div>
+      <div className="adm-chart-kpis">
+        <div>
+          <span>Toplam</span>
+          <strong>{money(totalRevenue)}</strong>
+        </div>
+        <div>
+          <span>Satış olan gün ortalaması</span>
+          <strong>{money(averageRevenue)}</strong>
+        </div>
+        <div>
+          <span>En yüksek gün</span>
+          <strong>{hasData && peak ? peak.label : "—"}</strong>
+          {hasData && peak && <small>{money(peak.revenue)}</small>}
+        </div>
+      </div>
 
-          <div
-            style={{
-              marginTop: "5px",
-              fontSize: "21px",
-              fontWeight: 800,
-            }}
-          >
-            {totalRevenue.toLocaleString("tr-TR")} TL
-          </div>
+      <div className="adm-chart" data-period={period}>
+        <div className="adm-chart-axis" aria-hidden="true">
+          {ticks.map((tick) => (
+            <span key={tick}>{compact(tick)}</span>
+          ))}
         </div>
 
-        <div
-          style={{
-            padding: "13px 14px",
-            borderRadius: "12px",
-            background: "#faf8f3",
-            border: "1px solid #eee7d8",
-          }}
-        >
-          <div
-            style={{
-              color: "#999",
-              fontSize: "9px",
-              fontWeight: 800,
-              letterSpacing: ".6px",
-            }}
-          >
-            AKTİF GÜN ORTALAMASI
+        <div className="adm-chart-plot">
+          <div className="adm-chart-grid" aria-hidden="true">
+            {ticks.map((tick) => (
+              <span key={tick} />
+            ))}
           </div>
 
-          <div
-            style={{
-              marginTop: "5px",
-              fontSize: "21px",
-              fontWeight: 800,
-            }}
-          >
-            {averageRevenue.toLocaleString(
-              "tr-TR",
-              {
-                maximumFractionDigits: 0,
-              }
-            )}{" "}
-            TL
-          </div>
-        </div>
+          <div className="adm-chart-bars">
+            {data.map((item, index) => {
+              const isToday = index === data.length - 1;
+              const isPeak = hasData && index === peakIndex;
+              const height = top > 0 ? (item.revenue / top) * 100 : 0;
 
-        <div
-          style={{
-            padding: "13px 14px",
-            borderRadius: "12px",
-            background: "#faf8f3",
-            border: "1px solid #eee7d8",
-          }}
-        >
-          <div
-            style={{
-              color: "#999",
-              fontSize: "9px",
-              fontWeight: 800,
-              letterSpacing: ".6px",
-            }}
-          >
-            EN YÜKSEK GÜN
-          </div>
-
-          <div
-            style={{
-              marginTop: "5px",
-              fontSize: "16px",
-              fontWeight: 800,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-            title={
-              peakItem
-                ? `${peakItem.label}: ${peakItem.revenue.toLocaleString(
-                    "tr-TR"
-                  )} TL`
-                : "Henüz veri yok"
-            }
-          >
-            {peakItem?.label || "-"}
-          </div>
-
-          <div
-            style={{
-              marginTop: "2px",
-              color: "#999",
-              fontSize: "10px",
-            }}
-          >
-            {peakItem
-              ? `${peakItem.revenue.toLocaleString(
-                  "tr-TR"
-                )} TL`
-              : "Henüz veri yok"}
+              return (
+                <div
+                  key={`${item.label}-${index}`}
+                  className="adm-chart-col"
+                  title={`${item.label}: ${money(item.revenue)}`}
+                >
+                  <span
+                    className={`adm-chart-bar ${isToday ? "is-today" : ""} ${isPeak ? "is-peak" : ""}`}
+                    style={{ height: `${Math.max(height, item.revenue > 0 ? 2 : 0)}%` }}
+                  />
+                  <span className="adm-chart-label">
+                    {period === "month" && index % 5 !== 4 && !isToday ? "" : item.label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
 
-      <div
-        style={{
-          height: "220px",
-          display: "flex",
-          alignItems: "flex-end",
-          gap: period === "week" ? "12px" : "4px",
-          padding: "10px 4px 0",
-          borderBottom: "1px solid #eee",
-          overflowX: "auto",
-        }}
-      >
-        {data.map((item, index) => {
-          const height = Math.max(
-            (item.revenue / maxRevenue) * 180,
-            item.revenue > 0 ? 8 : 3
-          );
-
-          return (
-            <div
-              key={`${item.label}-${index}`}
-              style={{
-                minWidth:
-                  period === "week"
-                    ? "34px"
-                    : "18px",
-                flex:
-                  period === "week"
-                    ? 1
-                    : "0 0 18px",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
-                alignItems: "center",
-                gap: "7px",
-              }}
-              title={`${item.label}: ${item.revenue.toLocaleString(
-                "tr-TR"
-              )} TL`}
-            >
-              <div
-                style={{
-                  width: "100%",
-                  maxWidth:
-                    period === "week"
-                      ? "34px"
-                      : "16px",
-                  height: `${height}px`,
-                  background: "#c8941d",
-                  borderRadius:
-                    "7px 7px 2px 2px",
-                  transition:
-                    "height 0.25s ease",
-                }}
-              />
-
-              <span
-                style={{
-                  color: "#888",
-                  fontSize:
-                    period === "week"
-                      ? "10px"
-                      : "8px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {item.label}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      <p
-        style={{
-          margin: "13px 0 0",
-          color: "#999",
-          fontSize: "11px",
-        }}
-      >
-        Grafik siparişlerin oluşturulma tarihine göre
-        hesaplanır. Ortalama yalnızca ciro oluşan günler
-        üzerinden hesaplanır.
-      </p>
-    </div>
+      {!hasData && (
+        <p className="adm-hint" style={{ margin: 0 }}>
+          Bu dönemde henüz ciro oluşmadı. Siparişler geldikçe grafik dolacak.
+        </p>
+      )}
+    </section>
   );
 }
