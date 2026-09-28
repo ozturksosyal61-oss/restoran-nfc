@@ -65,6 +65,15 @@ export default function RestaurantSettingsPage() {
   const [closingTime, setClosingTime] = useState("");
   const [menuLayout, setMenuLayout] = useState<MenuLayout>("grid");
 
+  const [wifiName, setWifiName] = useState("");
+  const [wifiPassword, setWifiPassword] = useState("");
+  // WiFi sütunları ayrı migration ile gelir; henüz yoksa alanlar kilitlenir.
+  const [wifiAvailable, setWifiAvailable] = useState(true);
+
+  // Slogan sütunu da ayrı migration ile gelir.
+  const [tagline, setTagline] = useState("");
+  const [taglineAvailable, setTaglineAvailable] = useState(true);
+
   /*
    * =====================================================
    * RESTORAN BİLGİLERİNİ GETİR
@@ -140,6 +149,35 @@ export default function RestaurantSettingsPage() {
       }
 
       fillForm(data as Restaurant);
+
+      const { data: wifi, error: wifiError } = await supabase
+        .from("restaurants")
+        .select("wifi_name, wifi_password")
+        .eq("id", membership.restaurant_id)
+        .single();
+
+      if (wifiError) {
+        console.error(wifiError);
+        setWifiAvailable(false);
+      } else {
+        setWifiAvailable(true);
+        setWifiName(wifi?.wifi_name || "");
+        setWifiPassword(wifi?.wifi_password || "");
+      }
+
+      const { data: extra, error: taglineError } = await supabase
+        .from("restaurants")
+        .select("tagline")
+        .eq("id", membership.restaurant_id)
+        .single();
+
+      if (taglineError) {
+        console.error(taglineError);
+        setTaglineAvailable(false);
+      } else {
+        setTaglineAvailable(true);
+        setTagline(extra?.tagline || "");
+      }
     } catch (err) {
       console.error(err);
 
@@ -491,6 +529,45 @@ export default function RestaurantSettingsPage() {
         fillForm(data as Restaurant);
       }
 
+      if (wifiAvailable) {
+        const { error: wifiError } = await supabase
+          .from("restaurants")
+          .update({
+            wifi_name: wifiName.trim() || null,
+            wifi_password: wifiPassword.trim() || null,
+          })
+          .eq("id", restaurant.id);
+
+        if (wifiError) {
+          console.error(wifiError);
+
+          setError(
+            "Diğer ayarlar kaydedildi ancak WiFi bilgileri kaydedilemedi: " +
+              wifiError.message
+          );
+
+          return;
+        }
+      }
+
+      if (taglineAvailable) {
+        const { error: taglineError } = await supabase
+          .from("restaurants")
+          .update({ tagline: tagline.trim() || null })
+          .eq("id", restaurant.id);
+
+        if (taglineError) {
+          console.error(taglineError);
+
+          setError(
+            "Diğer ayarlar kaydedildi ancak slogan kaydedilemedi: " +
+              taglineError.message
+          );
+
+          return;
+        }
+      }
+
       setMessage(
         "✓ Restoran ayarları başarıyla kaydedildi."
       );
@@ -659,6 +736,22 @@ export default function RestaurantSettingsPage() {
                   onChange={setAddress}
                   placeholder="İşletme adresi"
                 />
+
+                {taglineAvailable && (
+                  <div>
+                    <Field
+                      label="Kısa Slogan"
+                      value={tagline}
+                      onChange={setTagline}
+                      placeholder="Restaurant & Cafe"
+                    />
+
+                    <small style={hintStyle}>
+                      Restoran sayfanızda adınızın altında görünür.
+                      Boş bırakırsanız gösterilmez.
+                    </small>
+                  </div>
+                )}
 
               </div>
 
@@ -846,6 +939,51 @@ export default function RestaurantSettingsPage() {
             </section>
 
             {/* =========================================
+                WIFI
+            ========================================= */}
+
+            <section style={sectionStyle}>
+              <SectionTitle
+                eyebrow="MÜŞTERİ BİLGİSİ"
+                title="WiFi"
+              />
+
+              {wifiAvailable ? (
+                <>
+                  <div style={gridStyle}>
+
+                    <Field
+                      label="Ağ Adı"
+                      value={wifiName}
+                      onChange={setWifiName}
+                      placeholder="Restoran_WiFi"
+                    />
+
+                    <Field
+                      label="Şifre"
+                      value={wifiPassword}
+                      onChange={setWifiPassword}
+                      placeholder="WiFi şifresi"
+                    />
+
+                  </div>
+
+                  <p style={hintStyle}>
+                    Restoran sayfasındaki &quot;Bilgi&quot; penceresinde
+                    müşterilere gösterilir. Boş bırakırsanız WiFi
+                    bölümü görünmez.
+                  </p>
+                </>
+              ) : (
+                <div style={infoBoxStyle}>
+                  ℹ️ WiFi alanları henüz veritabanında
+                  tanımlı değil. Sistem yöneticisinin
+                  veritabanı güncellemesini yapması gerekiyor.
+                </div>
+              )}
+            </section>
+
+            {/* =========================================
                 ÇALIŞMA DURUMU
             ========================================= */}
 
@@ -950,7 +1088,10 @@ export default function RestaurantSettingsPage() {
               <div style={infoBoxStyle}>
                 ℹ️ İşletme kapatıldığında
                 müşteriler menüyü görebilir ancak
-                yeni sipariş oluşturamaz.
+                yeni sipariş oluşturamaz. Telefon,
+                adres ve çalışma saatleri restoran
+                sayfanızda gösterilir; boş bıraktığınız
+                bilgi müşteriye hiç gösterilmez.
               </div>
             </section>
 
