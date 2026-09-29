@@ -12,8 +12,53 @@ import {
   splitList,
   type TableRequestType,
 } from "../aurora-utils";
+import {
+  MENU_LANGUAGES,
+  isRtl,
+  localize,
+  menuStrings,
+  normalizeLanguages,
+  type DisplayLanguage,
+  type MenuLanguage,
+  type MenuStrings,
+} from "../../../../lib/menu-i18n";
 import { useCart } from "./CartContext";
 import styles from "./AuroraMenu.module.css";
+
+const LANGUAGE_STORAGE_KEY = "ozt_menu_language";
+
+// Müşterinin daha önce seçtiği ya da tarayıcısının dili, menüde varsa.
+function preferredLanguage(available: MenuLanguage[]): DisplayLanguage {
+  if (available.length === 0) return "tr";
+
+  try {
+    const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (saved === "tr") return "tr";
+    if (saved && available.includes(saved as MenuLanguage)) return saved as MenuLanguage;
+  } catch {
+    // Tarayıcı depolaması kapalı olabilir.
+  }
+
+  for (const tag of navigator.languages ?? [navigator.language]) {
+    const code = tag.slice(0, 2).toLowerCase();
+    if (code === "tr") return "tr";
+    if (available.includes(code as MenuLanguage)) return code as MenuLanguage;
+  }
+
+  return "tr";
+}
+
+// Çeviriler ayrı sorguyla okunur; sütun henüz yoksa menü Türkçe açılır.
+async function loadTranslations(
+  supabase: ReturnType<typeof createClient>,
+  table: "categories" | "products",
+  ids: number[]
+) {
+  if (ids.length === 0) return new Map<number, unknown>();
+  const { data, error } = await supabase.from(table).select("id, translations").in("id", ids);
+  if (error) return new Map<number, unknown>();
+  return new Map((data ?? []).map((row) => [Number(row.id), row.translations as unknown]));
+}
 
 // Renkler ve yazı tipleri restoran kabuğundan (layout.tsx) gelir;
 // her Aurora renk teması aynı menüyü kullanır.
@@ -21,6 +66,7 @@ import styles from "./AuroraMenu.module.css";
 type Category = {
   id: number;
   name: string;
+  translations?: unknown;
 };
 
 type Product = {
@@ -32,6 +78,7 @@ type Product = {
   image_url: string | null;
   ingredients: string | null;
   allergens: string | null;
+  translations?: unknown;
 };
 
 type Restaurant = {
@@ -78,7 +125,10 @@ export default function AuroraMenu({
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
-  const [sheet, setSheet] = useState<"cart" | "service" | null>(null);
+  const [sheet, setSheet] = useState<"cart" | "service" | "language" | null>(null);
+  const [languages, setLanguages] = useState<MenuLanguage[]>([]);
+  const [language, setLanguage] = useState<DisplayLanguage>("tr");
+  const t = menuStrings(language);
   const [toast, setToast] = useState<Toast | null>(null);
   const [pendingRequest, setPendingRequest] = useState<TableRequestType | null>(null);
   const [sentRequests, setSentRequests] = useState<TableRequestType[]>([]);
@@ -108,7 +158,7 @@ export default function AuroraMenu({
           .maybeSingle();
 
         if (!restaurantData) {
-          if (!cancelled) setLoadError("İşletme bulunamadı.");
+          if (!cancelled) setLoadError(menuStrings("tr").notFound);
           return;
         }
 
@@ -133,6 +183,24 @@ export default function AuroraMenu({
 
           safeProducts = (productData ?? []) as Product[];
         }
+
+        // Çok dilli menü: sütunlar henüz yoksa her şey Türkçe kalır.
+        const [languageResult, categoryTranslations, productTranslations] = await Promise.all([
+          supabase.from("restaurants").select("menu_languages").eq("id", restaurantData.id).maybeSingle(),
+          loadTranslations(supabase, "categories", safeCategories.map((category) => category.id)),
+          loadTranslations(supabase, "products", safeProducts.map((product) => product.id)),
+        ]);
+
+        const availableLanguages = languageResult.error
+          ? []
+          : normalizeLanguages(languageResult.data?.menu_languages);
+
+        safeCategories.forEach((category) => {
+          category.translations = categoryTranslations.get(category.id);
+        });
+        safeProducts.forEach((product) => {
+          product.translations = productTranslations.get(product.id);
+        });
 
         // Masa yalnızca QR/NFC kodu bu restoranla eşleşirse kabul edilir.
         const token = menuOnly ? "" : urlToken || readSavedTableToken();
@@ -165,9 +233,13 @@ export default function AuroraMenu({
 
         if (cancelled) return;
 
+        const initialLanguage = preferredLanguage(availableLanguages);
+
         setRestaurant(restaurantData as Restaurant);
         setCategories(safeCategories);
         setProducts(safeProducts);
+        setLanguages(availableLanguages);
+        setLanguage(initialLanguage);
         setTable(nextTable);
         setLastOrderId(nextTable ? readLastOrderId(slug, nextTable.token) : "");
 
@@ -181,14 +253,14 @@ export default function AuroraMenu({
           if (stale.length > 0) {
             stale.forEach((item) => cartRef.current.removeFromCart(item.id));
             setToast({
-              text: "Sepetinizde bu menüde olmayan ürünler vardı, çıkarıldı.",
+              text: menuStrings(initialLanguage).staleCart,
               tone: "error",
             });
           }
         }
       } catch (error) {
         console.error("Aurora menü yüklenemedi:", error);
-        if (!cancelled) setLoadError("Menü yüklenirken bir sorun oluştu. Sayfayı yenileyin.");
+        if (!cancelled) setLoadError(menuStrings("tr").loadError);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -204,24 +276,62 @@ export default function AuroraMenu({
 
   const query = search.trim().toLocaleLowerCase("tr-TR");
 
-  const sections = useMemo(
-    () =>
-      categories
-        .map((category) => ({
-          category,
-          items: products.filter(
-            (product) =>
-              product.category_id === category.id &&
-              (!query ||
-                [product.name, product.description, product.ingredients]
-                  .join(" ")
-                  .toLocaleLowerCase("tr-TR")
-                  .includes(query))
-          ),
-        }))
-        .filter((section) => section.items.length > 0),
-    [categories, products, query]
+  const shownCategories = useMemo(
+    () => categories.map((category) => localize(category, language)),
+    [categories, language]
   );
+
+  const shownProducts = useMemo(
+    () => products.map((product) => localize(product, language)),
+    [products, language]
+  );
+
+  const sections = useMemo(() => {
+    // Arama hem seçili dilde hem Türkçe adlarda çalışır.
+    const original = new Map(products.map((product) => [product.id, product]));
+
+    return shownCategories
+      .map((category) => ({
+        category,
+        items: shownProducts.filter((product) => {
+          if (product.category_id !== category.id) return false;
+          if (!query) return true;
+          const source = original.get(product.id);
+          return [
+            product.name,
+            product.description,
+            product.ingredients,
+            source?.name,
+            source?.description,
+          ]
+            .join(" ")
+            .toLocaleLowerCase("tr-TR")
+            .includes(query);
+        }),
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [shownCategories, shownProducts, products, query]);
+
+  function chooseLanguage(next: DisplayLanguage) {
+    setLanguage(next);
+    setSheet(null);
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, next);
+    } catch {
+      // Tarayıcı depolaması kapalı olabilir.
+    }
+  }
+
+  const languageOptions: { code: DisplayLanguage; label: string; short: string }[] = [
+    { code: "tr", label: "Türkçe", short: "TR" },
+    ...MENU_LANGUAGES.filter((item) => languages.includes(item.code)).map((item) => ({
+      code: item.code,
+      label: item.label,
+      short: item.flag,
+    })),
+  ];
+  const currentLanguageShort =
+    languageOptions.find((option) => option.code === language)?.short ?? "TR";
 
   const categoryCounts = useMemo(() => {
     const counts = new Map<number, number>();
@@ -339,10 +449,7 @@ export default function AuroraMenu({
     }
 
     setToast({
-      text:
-        quantity > 1
-          ? `${product.name} · ${quantity} adet sepete eklendi`
-          : `${product.name} sepete eklendi`,
+      text: t.added(product.name, quantity),
       tone: "ok",
     });
   }
@@ -357,12 +464,12 @@ export default function AuroraMenu({
     if (ok) {
       setSentRequests((current) => (current.includes(type) ? current : [...current, type]));
       setToast({
-        text: type === "garson" ? "Garson çağrınız iletildi" : "Hesap isteğiniz iletildi",
+        text: type === "garson" ? t.waiterSent : t.billSent,
         tone: "ok",
       });
     } else {
       setToast({
-        text: "Talep gönderilemedi. Tekrar deneyin ya da bir görevliye seslenin.",
+        text: t.requestFailed,
         tone: "error",
       });
     }
@@ -389,8 +496,8 @@ export default function AuroraMenu({
       <div className={styles.page}>
         <div className={styles.state} role="status">
           <span className={styles.spinner} aria-hidden="true" />
-          <strong>Menü hazırlanıyor</strong>
-          <span>Birkaç saniye sürebilir.</span>
+          <strong>{t.preparing}</strong>
+          <span>{t.preparingSub}</span>
         </div>
       </div>
     );
@@ -400,8 +507,8 @@ export default function AuroraMenu({
     return (
       <div className={styles.page}>
         <div className={styles.state} role="alert">
-          <strong>Menü açılamadı</strong>
-          <span>{loadError || "İşletme bulunamadı."}</span>
+          <strong>{t.cantOpen}</strong>
+          <span>{loadError || t.notFound}</span>
         </div>
       </div>
     );
@@ -410,23 +517,27 @@ export default function AuroraMenu({
   const initial = restaurant.name.trim().charAt(0).toLocaleUpperCase("tr-TR");
 
   const serviceProps = {
+    t,
     table,
     pendingRequest,
     sentRequests,
     onRequest: requestService,
   };
 
+  const hasLanguages = languages.length > 0;
+  const feedbackHref = `${base}/degerlendir`;
+
   /* ---------------- Ekran ---------------- */
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} lang={language} dir={isRtl(language) ? "rtl" : "ltr"}>
       <div className={`${styles.layout} ${menuOnly ? styles.layoutMenuOnly : ""}`}>
         {/* ===== Masaüstü: sol sütun ===== */}
         <aside className={styles.side}>
           {!menuOnly && (
             <a className={styles.sideBack} href={homeHref}>
               <AuroraIcon name="back" size={16} />
-              Ana sayfa
+              {t.home}
             </a>
           )}
 
@@ -440,18 +551,39 @@ export default function AuroraMenu({
               )}
             </span>
             <strong>{restaurant.name}</strong>
-            {table && <span className={styles.tableChip}>Masa {table.number}</span>}
+            {table && (
+              <span className={styles.tableChip}>
+                {t.table} {table.number}
+              </span>
+            )}
           </div>
 
-          <nav className={styles.sideNav} aria-label="Kategoriler">
+          {hasLanguages && (
+            <div className={styles.langRow} role="group" aria-label={t.language}>
+              {languageOptions.map((option) => (
+                <button
+                  type="button"
+                  key={option.code}
+                  lang={option.code}
+                  className={`${styles.langPill} ${language === option.code ? styles.langPillOn : ""}`}
+                  aria-pressed={language === option.code}
+                  onClick={() => chooseLanguage(option.code)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <nav className={styles.sideNav} aria-label={t.categories}>
             <button
               type="button"
               className={`${styles.sideNavItem} ${activeCategory === null && !query ? styles.sideNavOn : ""}`}
               onClick={() => goToCategory(null)}
             >
-              Tümü <small>{products.length}</small>
+              {t.all} <small>{products.length}</small>
             </button>
-            {categories.map((category) =>
+            {shownCategories.map((category) =>
               categoryCounts.get(category.id) ? (
                 <button
                   type="button"
@@ -467,17 +599,26 @@ export default function AuroraMenu({
 
           {!menuOnly && (
             <div className={styles.sideHelp}>
-              <span className={styles.kicker}>Masaya hizmet</span>
+              <span className={styles.kicker}>{t.tableService}</span>
               <SideServiceButtons {...serviceProps} />
               {lastOrderHref && (
                 <a className={styles.sideButton} href={lastOrderHref}>
                   <AuroraIcon name="clock" size={16} />
-                  Siparişim
+                  {t.myOrder}
                 </a>
               )}
               <a className={styles.sideButton} href={billHref}>
                 <AuroraIcon name="card" size={16} />
-                Ödeme yap
+                {t.pay}
+              </a>
+            </div>
+          )}
+
+          {menuOnly && (
+            <div className={styles.sideHelp}>
+              <a className={styles.sideButton} href={feedbackHref}>
+                <AuroraIcon name="star" size={16} />
+                {t.rateUs}
               </a>
             </div>
           )}
@@ -496,20 +637,30 @@ export default function AuroraMenu({
                 )}
               </span>
             ) : (
-              <a className={styles.round} href={homeHref} aria-label="Ana sayfaya dön">
+              <a className={styles.round} href={homeHref} aria-label={t.backHome}>
                 <AuroraIcon name="back" />
               </a>
             )}
             <div className={styles.brand}>
               <strong>{restaurant.name}</strong>
-              <small>{table ? `Masa ${table.number} · Menü` : "Menü"}</small>
+              <small>{table ? `${t.table} ${table.number} · ${t.menu}` : t.menu}</small>
             </div>
+            {hasLanguages && (
+              <button
+                type="button"
+                className={`${styles.round} ${styles.langButton}`}
+                onClick={() => setSheet("language")}
+                aria-label={`${t.language}: ${currentLanguageShort}`}
+              >
+                {currentLanguageShort}
+              </button>
+            )}
             {!menuOnly && (
               <button
                 type="button"
                 className={`${styles.round} ${styles.roundAccent}`}
                 onClick={() => setSheet("service")}
-                aria-label="Garson çağır veya hesap iste"
+                aria-label={t.serviceAria}
               >
                 <AuroraIcon name="bell" />
               </button>
@@ -517,7 +668,7 @@ export default function AuroraMenu({
           </header>
 
           <div className={styles.headRow}>
-            <h1 className={styles.title}>Menü</h1>
+            <h1 className={styles.title}>{t.menu}</h1>
             <label className={styles.search}>
               <AuroraIcon name="search" />
               <input
@@ -525,8 +676,8 @@ export default function AuroraMenu({
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Menüde ara"
-                aria-label="Menüde ara"
+                placeholder={t.search}
+                aria-label={t.search}
                 autoComplete="off"
               />
               {search && (
@@ -534,7 +685,7 @@ export default function AuroraMenu({
                   type="button"
                   className={styles.searchClear}
                   onClick={() => setSearch("")}
-                  aria-label="Aramayı temizle"
+                  aria-label={t.clearSearch}
                 >
                   <AuroraIcon name="close" size={16} />
                 </button>
@@ -547,16 +698,16 @@ export default function AuroraMenu({
               <div className={`${styles.notice} ${styles.noticeWarn}`} role="status">
                 <AuroraIcon name="clock" />
                 <span>
-                  <strong>Şu an kapalıyız</strong>
-                  Menümüzü inceleyebilirsiniz.
+                  <strong>{t.closedTitle}</strong>
+                  {t.closedSub}
                 </span>
               </div>
             ) : (
               <div className={`${styles.notice} ${styles.noticeWarn}`} role="status">
                 <AuroraIcon name="clock" />
                 <span>
-                  <strong>Şu an sipariş alınmıyor</strong>
-                  Menüyü inceleyebilirsiniz; siparişler işletme açıldığında alınır.
+                  <strong>{t.noOrdersTitle}</strong>
+                  {t.noOrdersSub}
                 </span>
               </div>
             ))}
@@ -565,22 +716,22 @@ export default function AuroraMenu({
             <div className={styles.notice}>
               <AuroraIcon name="qr" />
               <span>
-                <strong>Sipariş için masadaki QR kodu okutun</strong>
-                Menüye göz atabilir, sepetinizi hazırlayabilirsiniz.
+                <strong>{t.scanTitle}</strong>
+                {t.scanSub}
               </span>
             </div>
           )}
 
-          <div className={styles.chips} ref={chipsRef} role="navigation" aria-label="Kategoriler">
+          <div className={styles.chips} ref={chipsRef} role="navigation" aria-label={t.categories}>
             <button
               type="button"
               data-chip="all"
               className={`${styles.chip} ${activeCategory === null && !query ? styles.chipOn : ""}`}
               onClick={() => goToCategory(null)}
             >
-              Tümü
+              {t.all}
             </button>
-            {categories.map((category) =>
+            {shownCategories.map((category) =>
               categoryCounts.get(category.id) ? (
                 <button
                   type="button"
@@ -598,7 +749,7 @@ export default function AuroraMenu({
 
           {query && (
             <p className={styles.resultLine} role="status">
-              “{search.trim()}” için {sections.reduce((sum, s) => sum + s.items.length, 0)} ürün
+              {t.resultsFor(search.trim(), sections.reduce((sum, s) => sum + s.items.length, 0))}
             </p>
           )}
 
@@ -612,13 +763,14 @@ export default function AuroraMenu({
             >
               <h2 id={`kategori-baslik-${category.id}`} className={styles.sectionTitle}>
                 {category.name}
-                <small>{items.length} ürün</small>
+                <small>{t.items(items.length)}</small>
               </h2>
 
               <div className={styles.grid}>
                 {items.map((product) => (
                   <ProductRow
                     key={product.id}
+                    t={t}
                     product={product}
                     quantity={quantities.get(product.id) ?? 0}
                     onOpen={() => setOpenProduct(product)}
@@ -631,25 +783,32 @@ export default function AuroraMenu({
 
           {sections.length === 0 && (
             <div className={styles.empty}>
-              <strong>{query ? "Aramanızla eşleşen ürün yok" : "Menü henüz hazır değil"}</strong>
-              <span>
-                {query
-                  ? "Farklı bir kelime deneyin ya da tüm menüye dönün."
-                  : "İşletme menüsünü eklediğinde ürünler burada görünecek."}
-              </span>
+              <strong>{query ? t.noResults : t.emptyMenu}</strong>
+              <span>{query ? t.noResultsSub : t.emptyMenuSub}</span>
               {query && (
                 <button type="button" className={styles.textButton} onClick={() => setSearch("")}>
-                  Tüm menüyü göster
+                  {t.showAll}
                 </button>
               )}
             </div>
+          )}
+
+          {menuOnly && sections.length > 0 && !query && (
+            <a className={`${styles.notice} ${styles.rateLink}`} href={feedbackHref}>
+              <AuroraIcon name="star" />
+              <span>
+                <strong>{t.rateUs}</strong>
+              </span>
+              <AuroraIcon name="arrow" size={16} />
+            </a>
           )}
         </main>
 
         {/* ===== Masaüstü: sepet ===== */}
         {!menuOnly && (
-          <aside className={styles.cartPanel} aria-label="Sepet">
+          <aside className={styles.cartPanel} aria-label={t.cart}>
             <CartContents
+              t={t}
               cart={cart}
               table={table}
               onCheckout={goToCheckout}
@@ -665,10 +824,14 @@ export default function AuroraMenu({
           <span className={styles.cartCount}>{cart.itemCount}</span>
           <span className={styles.cartBarText}>
             <strong>{formatLira(cart.total)}</strong>
-            <small>{table ? `${cart.itemCount} ürün · Masa ${table.number}` : `${cart.itemCount} ürün`}</small>
+            <small>
+              {table
+                ? `${t.items(cart.itemCount)} · ${t.table} ${table.number}`
+                : t.items(cart.itemCount)}
+            </small>
           </span>
           <span className={styles.cartBarGo}>
-            Sepeti gör
+            {t.viewCart}
             <AuroraIcon name="arrow" />
           </span>
         </button>
@@ -690,14 +853,15 @@ export default function AuroraMenu({
       {openProduct && (
         <ProductDialog
           key={openProduct.id}
-          product={openProduct}
+          t={t}
+          product={localize(openProduct, language)}
           inCart={quantities.get(openProduct.id) ?? 0}
           onClose={() => setOpenProduct(null)}
           onAdd={
             menuOnly
               ? undefined
               : (quantity) => {
-                  addProduct(openProduct, quantity);
+                  addProduct(localize(openProduct, language), quantity);
                   setOpenProduct(null);
                 }
           }
@@ -706,9 +870,10 @@ export default function AuroraMenu({
 
       {/* ===== Sepet ===== */}
       {sheet === "cart" && (
-        <Sheet labelledBy="sepet-baslik" onClose={() => setSheet(null)}>
+        <Sheet labelledBy="sepet-baslik" onClose={() => setSheet(null)} closeLabel={t.close}>
           <span className={styles.handle} aria-hidden="true" />
           <CartContents
+            t={t}
             cart={cart}
             table={table}
             onCheckout={goToCheckout}
@@ -720,14 +885,14 @@ export default function AuroraMenu({
 
       {/* ===== Hizmet ===== */}
       {sheet === "service" && (
-        <Sheet labelledBy="hizmet-baslik" onClose={() => setSheet(null)}>
+        <Sheet labelledBy="hizmet-baslik" onClose={() => setSheet(null)} closeLabel={t.close}>
           <span className={styles.handle} aria-hidden="true" />
           <div className={styles.sheetHead}>
             <div>
-              <h2 id="hizmet-baslik">Size nasıl yardımcı olalım?</h2>
-              <small>{table ? `Masa ${table.number}` : "Masa bağlantısı yok"}</small>
+              <h2 id="hizmet-baslik">{t.helpTitle}</h2>
+              <small>{table ? `${t.table} ${table.number}` : t.noTableLink}</small>
             </div>
-            <button type="button" className={styles.round} onClick={() => setSheet(null)} aria-label="Kapat">
+            <button type="button" className={styles.round} onClick={() => setSheet(null)} aria-label={t.close}>
               <AuroraIcon name="close" />
             </button>
           </div>
@@ -735,38 +900,72 @@ export default function AuroraMenu({
           {table ? (
             <div className={styles.serviceList}>
               <ServiceItem
+                t={t}
                 icon="bell"
-                title="Garson çağır"
-                subtitle="Masanıza bir görevli gelsin"
-                doneTitle="Garson çağrıldı"
+                title={t.callWaiter}
+                subtitle={t.callWaiterSub}
+                doneTitle={t.waiterCalled}
                 done={sentRequests.includes("garson")}
                 pending={pendingRequest === "garson"}
                 onClick={() => requestService("garson")}
               />
               <ServiceItem
+                t={t}
                 icon="receipt"
-                title="Hesap iste"
-                subtitle="Adisyon masanıza getirilsin"
-                doneTitle="Hesap istendi"
+                title={t.askBill}
+                subtitle={t.askBillSub}
+                doneTitle={t.billAsked}
                 done={sentRequests.includes("hesap")}
                 pending={pendingRequest === "hesap"}
                 onClick={() => requestService("hesap")}
               />
               {lastOrderHref && (
-                <ServiceLink icon="clock" title="Siparişim" subtitle="Son siparişinizin durumu" href={lastOrderHref} />
+                <ServiceLink icon="clock" title={t.myOrder} subtitle={t.myOrderSub} href={lastOrderHref} />
               )}
-              <ServiceLink icon="card" title="Ödeme yap" subtitle="Masa hesabını görüntüleyin" href={billHref} />
+              <ServiceLink icon="card" title={t.pay} subtitle={t.paySub} href={billHref} />
             </div>
           ) : (
             <div className={styles.noTable}>
               <AuroraIcon name="qr" size={22} />
-              <strong>Masadaki QR kodu okutun</strong>
-              <span>
-                Garson çağırmak ve hesap istemek için masanızdaki QR kodu okutun ya da NFC
-                etiketine telefonunuzu yaklaştırın.
-              </span>
+              <strong>{t.scanTable}</strong>
+              <span>{t.scanTableSub}</span>
             </div>
           )}
+        </Sheet>
+      )}
+
+      {/* ===== Dil ===== */}
+      {sheet === "language" && (
+        <Sheet labelledBy="dil-baslik" onClose={() => setSheet(null)} closeLabel={t.close}>
+          <span className={styles.handle} aria-hidden="true" />
+          <div className={styles.sheetHead}>
+            <div>
+              <h2 id="dil-baslik">{t.language}</h2>
+            </div>
+            <button type="button" className={styles.round} onClick={() => setSheet(null)} aria-label={t.close}>
+              <AuroraIcon name="close" />
+            </button>
+          </div>
+
+          <div className={styles.serviceList}>
+            {languageOptions.map((option) => (
+              <button
+                type="button"
+                key={option.code}
+                lang={option.code}
+                className={`${styles.serviceItem} ${language === option.code ? styles.serviceDone : ""}`}
+                aria-pressed={language === option.code}
+                onClick={() => chooseLanguage(option.code)}
+              >
+                <span className={styles.serviceTile}>
+                  {language === option.code ? <AuroraIcon name="check" /> : option.short}
+                </span>
+                <span className={styles.serviceText}>
+                  <strong>{option.label}</strong>
+                </span>
+              </button>
+            ))}
+          </div>
         </Sheet>
       )}
     </div>
@@ -778,11 +977,13 @@ export default function AuroraMenu({
    ========================================================= */
 
 function ProductRow({
+  t,
   product,
   quantity,
   onOpen,
   onAdd,
 }: {
+  t: MenuStrings;
   product: Product;
   quantity: number;
   onOpen: () => void;
@@ -814,11 +1015,7 @@ function ProductRow({
           type="button"
           className={`${styles.add} ${quantity > 0 ? styles.addHas : ""}`}
           onClick={onAdd}
-          aria-label={
-            quantity > 0
-              ? `${product.name} sepette ${quantity} adet, bir tane daha ekle`
-              : `${product.name} sepete ekle`
-          }
+          aria-label={quantity > 0 ? t.inCartMore(product.name, quantity) : t.addToCartAria(product.name)}
         >
           <AuroraIcon name="plus" size={quantity > 0 ? 13 : 17} strokeWidth={2.4} />
           {quantity > 0 && <span>{quantity}</span>}
@@ -835,11 +1032,13 @@ function ProductRow({
 function Sheet({
   labelledBy,
   onClose,
+  closeLabel = "Kapat",
   className,
   children,
 }: {
   labelledBy: string;
   onClose: () => void;
+  closeLabel?: string;
   className?: string;
   children: ReactNode;
 }) {
@@ -851,7 +1050,7 @@ function Sheet({
 
   return (
     <div className={styles.dialogRoot} role="dialog" aria-modal="true" aria-labelledby={labelledBy}>
-      <button type="button" className={styles.backdrop} aria-label="Kapat" tabIndex={-1} onClick={onClose} />
+      <button type="button" className={styles.backdrop} aria-label={closeLabel} tabIndex={-1} onClick={onClose} />
       <div ref={panelRef} tabIndex={-1} className={`${styles.sheet} ${className ?? ""}`}>
         {children}
       </div>
@@ -864,11 +1063,13 @@ function Sheet({
    ========================================================= */
 
 function ProductDialog({
+  t,
   product,
   inCart,
   onClose,
   onAdd,
 }: {
+  t: MenuStrings;
   product: Product;
   inCart: number;
   onClose: () => void;
@@ -884,6 +1085,7 @@ function ProductDialog({
     <Sheet
       labelledBy="urun-baslik"
       onClose={onClose}
+      closeLabel={t.close}
       className={product.image_url ? "" : styles.productNoHero}
     >
       {product.image_url ? (
@@ -899,7 +1101,7 @@ function ProductDialog({
         type="button"
         className={`${styles.round} ${styles.sheetClose} ${product.image_url ? styles.closeOnImage : ""}`}
         onClick={onClose}
-        aria-label="Kapat"
+        aria-label={t.close}
       >
         <AuroraIcon name="close" />
       </button>
@@ -915,7 +1117,7 @@ function ProductDialog({
 
           {ingredients.length > 0 && (
             <div>
-              <span className={styles.kicker}>İçindekiler</span>
+              <span className={styles.kicker}>{t.ingredients}</span>
               <ul className={styles.tags}>
                 {ingredients.map((item) => (
                   <li key={item}>{item}</li>
@@ -926,7 +1128,7 @@ function ProductDialog({
 
           {allergens.length > 0 && (
             <div>
-              <span className={styles.kicker}>Alerjenler</span>
+              <span className={styles.kicker}>{t.allergens}</span>
               <ul className={`${styles.tags} ${styles.tagsWarn}`}>
                 {allergens.map((item) => (
                   <li key={item}>{item}</li>
@@ -935,7 +1137,7 @@ function ProductDialog({
             </div>
           )}
 
-          {onAdd && inCart > 0 && <p className={styles.inCart}>Sepetinizde {inCart} adet var.</p>}
+          {onAdd && inCart > 0 && <p className={styles.inCart}>{t.inCart(inCart)}</p>}
         </div>
       </div>
 
@@ -946,7 +1148,7 @@ function ProductDialog({
               type="button"
               onClick={() => setQuantity((value) => Math.max(1, value - 1))}
               disabled={quantity <= 1}
-              aria-label="Adedi azalt"
+              aria-label={t.decrease}
             >
               <AuroraIcon name="minus" strokeWidth={2.2} />
             </button>
@@ -954,14 +1156,14 @@ function ProductDialog({
             <button
               type="button"
               onClick={() => setQuantity((value) => Math.min(99, value + 1))}
-              aria-label="Adedi artır"
+              aria-label={t.increase}
             >
               <AuroraIcon name="plus" strokeWidth={2.2} />
             </button>
           </div>
 
           <button type="button" className={styles.cta} onClick={() => onAdd?.(quantity)}>
-            <span>Sepete ekle</span>
+            <span>{t.addToCart}</span>
             <span className={styles.ctaPrice}>{formatLira(price * quantity)}</span>
           </button>
         </div>
@@ -975,12 +1177,14 @@ function ProductDialog({
    ========================================================= */
 
 function CartContents({
+  t,
   cart,
   table,
   onCheckout,
   onClose,
   headingId,
 }: {
+  t: MenuStrings;
   cart: CartApi;
   table: Table | null;
   onCheckout: () => void;
@@ -993,12 +1197,16 @@ function CartContents({
     <div className={styles.cartBox}>
       <div className={styles.sheetHead}>
         <div>
-          <h2 id={headingId}>Sepetim</h2>
-          <small>{itemCount > 0 ? `${itemCount} ürün` : "Henüz ürün yok"}</small>
+          <h2 id={headingId}>{t.myCart}</h2>
+          <small>{itemCount > 0 ? t.items(itemCount) : t.noItems}</small>
         </div>
-        {table && <span className={styles.tableChip}>Masa {table.number}</span>}
+        {table && (
+          <span className={styles.tableChip}>
+            {t.table} {table.number}
+          </span>
+        )}
         {onClose && !table && (
-          <button type="button" className={styles.round} onClick={onClose} aria-label="Kapat">
+          <button type="button" className={styles.round} onClick={onClose} aria-label={t.close}>
             <AuroraIcon name="close" />
           </button>
         )}
@@ -1009,8 +1217,8 @@ function CartContents({
           <span className={styles.emptyIcon}>
             <AuroraIcon name="bag" size={22} />
           </span>
-          <strong>Sepetiniz boş</strong>
-          <span>Beğendiğiniz ürünün yanındaki + düğmesine dokunun.</span>
+          <strong>{t.cartEmpty}</strong>
+          <span>{t.cartEmptySub}</span>
         </div>
       ) : (
         <>
@@ -1032,7 +1240,7 @@ function CartContents({
                       <button
                         type="button"
                         onClick={() => decreaseQuantity(item.id)}
-                        aria-label={item.quantity === 1 ? `${item.name} ürününü kaldır` : `${item.name} adedini azalt`}
+                        aria-label={item.quantity === 1 ? t.removeItem(item.name) : t.decreaseItem(item.name)}
                       >
                         <AuroraIcon name={item.quantity === 1 ? "trash" : "minus"} size={15} strokeWidth={2} />
                       </button>
@@ -1040,7 +1248,7 @@ function CartContents({
                       <button
                         type="button"
                         onClick={() => increaseQuantity(item.id)}
-                        aria-label={`${item.name} adedini artır`}
+                        aria-label={t.increaseItem(item.name)}
                       >
                         <AuroraIcon name="plus" size={15} strokeWidth={2} />
                       </button>
@@ -1060,14 +1268,14 @@ function CartContents({
           </ul>
 
           <div className={styles.cartTotal}>
-            <span>Toplam</span>
+            <span>{t.total}</span>
             <strong>{formatLira(total)}</strong>
           </div>
 
           {!table && (
             <p className={styles.cartNote}>
               <AuroraIcon name="qr" size={16} />
-              Siparişi göndermek için masadaki QR kodu okutmanız gerekir.
+              {t.cartNeedsTable}
             </p>
           )}
         </>
@@ -1076,13 +1284,13 @@ function CartContents({
       <div className={styles.cartActions}>
         {items.length > 0 && (
           <button type="button" className={styles.cta} onClick={onCheckout}>
-            <span>Siparişe geç</span>
+            <span>{t.checkout}</span>
             <AuroraIcon name="arrow" />
           </button>
         )}
         {onClose && (
           <button type="button" className={styles.ghost} onClick={onClose}>
-            Menüye dön
+            {t.backToMenu}
           </button>
         )}
       </div>
@@ -1095,6 +1303,7 @@ function CartContents({
    ========================================================= */
 
 function ServiceItem({
+  t,
   icon,
   title,
   subtitle,
@@ -1103,6 +1312,7 @@ function ServiceItem({
   pending,
   onClick,
 }: {
+  t: MenuStrings;
   icon: AuroraIconName;
   title: string;
   subtitle: string;
@@ -1122,8 +1332,8 @@ function ServiceItem({
         <AuroraIcon name={done ? "check" : icon} />
       </span>
       <span className={styles.serviceText}>
-        <strong>{pending ? "Gönderiliyor…" : done ? doneTitle : title}</strong>
-        <small>{done ? "Talebiniz iletildi · tekrar göndermek için dokunun" : subtitle}</small>
+        <strong>{pending ? t.sending : done ? doneTitle : title}</strong>
+        <small>{done ? t.requestDone : subtitle}</small>
       </span>
     </button>
   );
@@ -1157,23 +1367,25 @@ function ServiceLink({
 }
 
 function SideServiceButtons({
+  t,
   table,
   pendingRequest,
   sentRequests,
   onRequest,
 }: {
+  t: MenuStrings;
   table: Table | null;
   pendingRequest: TableRequestType | null;
   sentRequests: TableRequestType[];
   onRequest: (type: TableRequestType) => void;
 }) {
   if (!table) {
-    return <p className={styles.sideHint}>Garson çağırmak için masadaki QR kodu okutun.</p>;
+    return <p className={styles.sideHint}>{t.scanForWaiter}</p>;
   }
 
   const buttons: { type: TableRequestType; icon: AuroraIconName; title: string; done: string }[] = [
-    { type: "garson", icon: "bell", title: "Garson çağır", done: "Garson çağrıldı" },
-    { type: "hesap", icon: "receipt", title: "Hesap iste", done: "Hesap istendi" },
+    { type: "garson", icon: "bell", title: t.callWaiter, done: t.waiterCalled },
+    { type: "hesap", icon: "receipt", title: t.askBill, done: t.billAsked },
   ];
 
   return (
@@ -1189,7 +1401,7 @@ function SideServiceButtons({
             disabled={pendingRequest === button.type}
           >
             <AuroraIcon name={done ? "check" : button.icon} size={16} />
-            {pendingRequest === button.type ? "Gönderiliyor…" : done ? button.done : button.title}
+            {pendingRequest === button.type ? t.sending : done ? button.done : button.title}
           </button>
         );
       })}

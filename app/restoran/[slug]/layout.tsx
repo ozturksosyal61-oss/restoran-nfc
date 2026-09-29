@@ -56,7 +56,12 @@ export default async function RestaurantLayout({
         >
           <NovaThemeStyles />
           {menuOnly ? (
-            <MenuOnlyGate menuPath={restaurantMenuPath(slug)}>{children}</MenuOnlyGate>
+            <MenuOnlyGate
+              menuPath={restaurantMenuPath(slug)}
+              allowedPaths={[`/restoran/${encodeURIComponent(slug)}/degerlendir`]}
+            >
+              {children}
+            </MenuOnlyGate>
           ) : (
             children
           )}

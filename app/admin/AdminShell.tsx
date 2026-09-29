@@ -27,7 +27,9 @@ function isActive(pathname: string, href: string) {
     return (
       pathname.startsWith("/admin/menu") &&
       !pathname.startsWith("/admin/menu/kategori") &&
-      !pathname.startsWith("/admin/menu/promosyon")
+      !pathname.startsWith("/admin/menu/promosyon") &&
+      !pathname.startsWith("/admin/menu/ice-aktar") &&
+      !pathname.startsWith("/admin/menu/diller")
     );
   }
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -47,7 +49,7 @@ const MENU_ONLY_HOME = "/admin/menu";
 function isAllowedForMenuOnly(pathname: string) {
   if (pathname.startsWith("/admin/login")) return true;
   if (pathname.startsWith("/admin/menu/promosyon")) return false;
-  return ["/admin/menu", "/admin/qr", "/admin/ayarlar"].some(
+  return ["/admin/menu", "/admin/qr", "/admin/ayarlar", "/admin/geri-bildirim"].some(
     (href) => pathname === href || pathname.startsWith(`${href}/`)
   );
 }
@@ -110,8 +112,14 @@ export default function AdminShell({
       items: [
         { href: "/admin/menu", label: "Ürünler", icon: "menu" },
         { href: "/admin/menu/kategori", label: "Kategoriler", icon: "category" },
+        { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle" },
+        { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe" },
         { href: "/admin/qr", label: "QR kod", icon: "qr" },
       ],
+    },
+    {
+      label: "Müşteriler",
+      items: [{ href: "/admin/geri-bildirim", label: "Geri bildirimler", icon: "chat" }],
     },
     {
       label: "Ayarlar",
@@ -133,6 +141,8 @@ export default function AdminShell({
         { href: "/admin/menu", label: "Ürünler", icon: "menu" },
         { href: "/admin/menu/kategori", label: "Kategoriler", icon: "category" },
         { href: "/admin/menu/promosyon", label: "Kampanyalar", icon: "promo" },
+        { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle" },
+        { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe" },
       ],
     },
     {
@@ -141,6 +151,7 @@ export default function AdminShell({
         { href: "/admin/tables", label: "Masalar", icon: "table" },
         { href: "/admin/qr", label: "QR / NFC", icon: "qr" },
         { href: "/admin/calisanlar", label: "Çalışanlar", icon: "staff", locked: !canUseStaff },
+        { href: "/admin/geri-bildirim", label: "Geri bildirimler", icon: "chat" },
         { href: "/admin/degerlendirmeler", label: "Değerlendirmeler", icon: "star" },
         { href: "/admin/odemeler", label: "Ödemeler", icon: "card" },
       ],

@@ -776,22 +776,18 @@ export default async function RestaurantPage({
               </span>
             </a>
 
-            {restaurant.google_review_url && (
-              <a
-                href={restaurant.google_review_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ozt-modern-action google"
-              >
-                <span className="ozt-modern-icon">⭐</span>
-                <span className="ozt-modern-action-copy">
-                  <span className="ozt-modern-action-title">Bizi Değerlendirin</span>
-                  <span className="ozt-modern-action-sub">
-                    Deneyiminizi paylaşın
-                  </span>
+            <a
+              href={`/restoran/${encodeURIComponent(restaurant.slug)}/degerlendir`}
+              className="ozt-modern-action google"
+            >
+              <span className="ozt-modern-icon">⭐</span>
+              <span className="ozt-modern-action-copy">
+                <span className="ozt-modern-action-title">Bizi Değerlendirin</span>
+                <span className="ozt-modern-action-sub">
+                  Deneyiminizi paylaşın
                 </span>
-              </a>
-            )}
+              </span>
+            </a>
 
             {table && (
               <form action={callWaiter} style={{ margin: 0 }}>

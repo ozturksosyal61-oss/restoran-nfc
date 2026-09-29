@@ -8,9 +8,10 @@ export function formatLira(value: number) {
 }
 
 // Admin panelinde virgül, noktalı virgül veya satır sonuyla girilen listeyi ayırır.
+// Arapça çevirilerdeki "،" ve "؛" işaretleri de ayırıcı sayılır.
 export function splitList(value: string | null | undefined) {
   return (value || "")
-    .split(/[,;\n]+/)
+    .split(/[,;\n،؛]+/)
     .map((part) => part.trim().replace(/\.+$/, ""))
     .filter(Boolean);
 }

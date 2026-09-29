@@ -3149,3 +3149,301 @@ button.adm-chip {
   border-color: var(--a-gold);
   box-shadow: 0 0 0 3px var(--a-focus);
 }
+
+/* =========================================================
+   MENÜ DİLLERİ · FOTOĞRAFTAN AKTARMA · GERİ BİLDİRİM
+   ========================================================= */
+
+/* Ekran okuyucu için görünmez etiket */
+.adm .adm-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Menü dilleri ---------- */
+
+.adm-lang-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+  gap: 8px;
+}
+
+.adm-tr-progress,
+.adm-imp-files {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-tr-progress .adm-row-main {
+  flex: 0 0 104px;
+}
+
+.adm-tr-progress .adm-rating-track {
+  flex: 1 1 auto;
+}
+
+.adm-tr-group + .adm-tr-group {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--a-line-strong);
+}
+
+.adm-tr-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-tr-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--a-line);
+}
+
+.adm-tr-row:last-child {
+  border-bottom: 0;
+}
+
+/* Grubun ilk satırı kategori adıdır */
+.adm-tr-row:first-child .adm-tr-source strong {
+  font-family: var(--font-admin-display), Georgia, serif;
+  font-size: 19px;
+}
+
+.adm-tr-source {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.adm-tr-source small {
+  color: var(--a-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.adm-tr-form {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.adm-tr-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+}
+
+.adm-tr-ok {
+  color: var(--a-ready);
+}
+
+@media (max-width: 720px) {
+  .adm-tr-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+/* ---------- Fotoğraftan aktarma ---------- */
+
+.adm-imp {
+  display: grid;
+  gap: 16px;
+}
+
+.adm-imp-drop {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 34px 20px;
+  border-radius: var(--a-radius);
+  border: 1.5px dashed var(--a-line-strong);
+  background: var(--a-sunken);
+  color: var(--a-muted);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.adm-imp-drop:hover,
+.adm-imp-drop:focus-within {
+  border-color: var(--a-gold);
+  background: var(--a-accent-bg);
+}
+
+.adm-imp-drop strong {
+  color: var(--a-ink);
+  font-size: 15px;
+}
+
+.adm-imp-drop input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.adm-imp-drop.is-busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.adm-imp-files .adm-row-main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adm-imp-group {
+  display: grid;
+  gap: 14px;
+}
+
+.adm-imp-group.is-off {
+  opacity: 0.55;
+}
+
+.adm-imp-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.adm-imp-group-head input[type="checkbox"],
+.adm-imp-table input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--a-primary);
+}
+
+.adm-imp-cat {
+  flex: 1 1 220px;
+  font-family: var(--font-admin-display), Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.adm-imp-table td {
+  vertical-align: top;
+}
+
+.adm-imp-table td:first-child,
+.adm-imp-table th:first-child {
+  width: 44px;
+}
+
+.adm-imp-table td:nth-child(2) {
+  min-width: 200px;
+}
+
+.adm-imp-table td:nth-child(3) {
+  min-width: 220px;
+}
+
+.adm-imp-table tr.is-off input:not([type="checkbox"]) {
+  opacity: 0.5;
+}
+
+.adm-imp-price {
+  width: 110px;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-imp-price.is-missing {
+  border-color: var(--a-danger);
+}
+
+.adm-imp-note {
+  display: block;
+  margin-top: 4px;
+  color: var(--a-new);
+  font-size: 12px;
+}
+
+/* ---------- Geri bildirim ---------- */
+
+.adm-review.adm-fb-open {
+  border-color: var(--a-new);
+  box-shadow: inset 3px 0 0 var(--a-new);
+}
+
+.adm-fb-contact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--a-ink-2);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.adm-fb-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.adm-imp .adm-sticky-actions > span:first-child {
+  margin-right: auto;
+}
+
+/* Telefonda önizleme tablosu satır satır kartlara dönüşür */
+@media (max-width: 640px) {
+  .adm-imp-table thead {
+    display: none;
+  }
+
+  .adm-imp-table,
+  .adm-imp-table tbody {
+    display: block;
+  }
+
+  .adm-imp-table tr {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 8px;
+    padding: 12px;
+    border-bottom: 1px solid var(--a-line);
+  }
+
+  .adm-imp-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .adm-imp-table td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .adm-imp-table td:first-child {
+    grid-row: span 3;
+    width: auto;
+  }
+
+  .adm-imp-table td:nth-child(2),
+  .adm-imp-table td:nth-child(3),
+  .adm-imp-table td:nth-child(4) {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  .adm-imp-price {
+    width: 100%;
+  }
+}

@@ -562,20 +562,16 @@ export default function NovaRestaurantHome({
           </summary>
 
           <div className="nova-reference-more-grid">
-            {restaurant.google_review_url ? (
-              <a
-                className="nova-reference-more-card"
-                href={restaurant.google_review_url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <span>★</span>
-                <span>
-                  <strong>Bizi Değerlendirin</strong>
-                  <small>Deneyiminizi paylaşın</small>
-                </span>
-              </a>
-            ) : null}
+            <a
+              className="nova-reference-more-card"
+              href={`/restoran/${encodeURIComponent(restaurant.slug)}/degerlendir`}
+            >
+              <span>★</span>
+              <span>
+                <strong>Bizi Değerlendirin</strong>
+                <small>Deneyiminizi paylaşın</small>
+              </span>
+            </a>
 
             {table ? (
               <form action={callWaiter} className="nova-reference-more-card">

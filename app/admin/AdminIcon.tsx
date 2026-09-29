@@ -55,6 +55,11 @@ const paths = {
   mail: "M4 6h16v12H4zM4 7l8 6 8-6",
   calendar: "M4 6h16v14H4zM4 10h16M8 3v5M16 3v5",
   save: "M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6",
+  globe:
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3.5 9h17M3.5 15h17M12 3c2.3 2.5 3.5 5.5 3.5 9s-1.2 6.5-3.5 9c-2.3-2.5-3.5-5.5-3.5-9s1.2-6.5 3.5-9z",
+  chat: "M4 5h16v11H9l-5 4V5zM8 9.5h8M8 12.5h5",
+  sparkle:
+    "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3zM18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8z",
 } as const;
 
 export type AdminIconName = keyof typeof paths;

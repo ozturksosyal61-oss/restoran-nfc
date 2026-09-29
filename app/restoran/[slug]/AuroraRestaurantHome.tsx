@@ -171,8 +171,9 @@ export default function AuroraRestaurantHome({
   const wifiPassword = restaurant.wifi_password?.trim() || "";
   const totalReviews = reviews.length;
 
-  const reviewHref = restaurant.google_review_url || `${base}/calisan${tableQuery}`;
-  const reviewExternal = Boolean(restaurant.google_review_url);
+  // Değerlendirme sayfası memnun misafirleri Google'a davet eder,
+  // şikâyetleri işletmeye iletir.
+  const reviewHref = `${base}/degerlendir${tableQuery}`;
 
   const notices = [
     garsonStatus === "hata" &&
@@ -301,11 +302,7 @@ export default function AuroraRestaurantHome({
                 <Icon name="card" />
                 Ödeme Yap
               </a>
-              <a
-                className={styles.secondaryButton}
-                href={reviewHref}
-                {...(reviewExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-              >
+              <a className={styles.secondaryButton} href={reviewHref}>
                 <Icon name="star" />
                 Bizi Değerlendir
               </a>

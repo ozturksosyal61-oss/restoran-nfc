@@ -73,6 +73,10 @@ export default async function AdminMenuPage() {
           <p>Ürünleri kategori içinde sıralayın, fiyatını ve görünürlüğünü yönetin.</p>
         </div>
         <div className="adm-head-actions">
+          <Link className="adm-btn" href="/admin/menu/ice-aktar">
+            <AdminIcon name="sparkle" size={16} />
+            Fotoğraftan aktar
+          </Link>
           <Link className="adm-btn" href="/admin/menu/kategori">
             <AdminIcon name="category" size={16} />
             Kategoriler
@@ -119,11 +123,20 @@ export default async function AdminMenuPage() {
         <div className="adm-empty">
           <span className="adm-empty-icon"><AdminIcon name="category" /></span>
           <strong>Henüz kategori yok</strong>
-          <p>Önce &quot;Kahvaltı&quot;, &quot;Ana yemekler&quot; gibi bir kategori oluşturun, sonra ürün ekleyin.</p>
-          <Link className="adm-btn adm-btn-primary" href="/admin/menu/kategori">
-            <AdminIcon name="plus" size={16} />
-            İlk kategoriyi oluştur
-          </Link>
+          <p>
+            Basılı menünüzün fotoğrafını yükleyerek tüm menüyü tek seferde aktarabilir ya da kategorileri elle
+            oluşturabilirsiniz.
+          </p>
+          <div className="adm-form-actions" style={{ justifyContent: "center", flexWrap: "wrap" }}>
+            <Link className="adm-btn adm-btn-primary" href="/admin/menu/ice-aktar">
+              <AdminIcon name="sparkle" size={16} />
+              Menüyü fotoğraftan aktar
+            </Link>
+            <Link className="adm-btn" href="/admin/menu/kategori">
+              <AdminIcon name="plus" size={16} />
+              Elle kategori oluştur
+            </Link>
+          </div>
         </div>
       ) : (
         <>
