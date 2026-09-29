@@ -85,9 +85,16 @@ function toGeminiSchema(schema: unknown): unknown {
   return result;
 }
 
+// Yoğunlukta (500/503) ya da kota dolunca (429) sıradaki modele geçilir.
+const GEMINI_FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function callGemini<T>({ system, content, toolDescription, inputSchema, maxTokens = 8000 }: AiRequest) {
   const apiKey = process.env.GEMINI_API_KEY!.trim();
-  const model = process.env.GEMINI_MODEL?.trim() || GEMINI_DEFAULT_MODEL;
+  const models = [
+    ...new Set([process.env.GEMINI_MODEL?.trim() || GEMINI_DEFAULT_MODEL, ...GEMINI_FALLBACK_MODELS]),
+  ];
 
   const parts = content.map((block) =>
     block.type === "text"
@@ -95,42 +102,72 @@ async function callGemini<T>({ system, content, toolDescription, inputSchema, ma
       : { inline_data: { mime_type: block.source.media_type, data: block.source.data } }
   );
 
-  const response = await send(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: `${system}\n\n${toolDescription}` }] },
-        contents: [{ role: "user", parts }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: toGeminiSchema(inputSchema),
-          // Düşünen modellerde düşünme de bu sınıra dahildir; pay bırakılır.
-          maxOutputTokens: Math.min(65536, maxTokens * 3),
-          temperature: 0.2,
-        },
-      }),
-    }
-  );
+  const body = JSON.stringify({
+    system_instruction: { parts: [{ text: `${system}\n\n${toolDescription}` }] },
+    contents: [{ role: "user", parts }],
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: toGeminiSchema(inputSchema),
+      // Düşünen modellerde düşünme de bu sınıra dahildir; pay bırakılır.
+      maxOutputTokens: Math.min(65536, maxTokens * 3),
+      temperature: 0.2,
+    },
+  });
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    console.error("Gemini hatası:", response.status, detail.slice(0, 800));
+  let response: Response | null = null;
+  let lastStatus = 0;
+  let lastDetail = "";
 
-    if (response.status === 429) {
-      throw new AiError("Yapay zekâ kullanım sınırına ulaşıldı. Birkaç dakika sonra tekrar deneyin.");
+  outer: for (const model of models) {
+    // Aynı modelde yoğunluk için bir kez daha denenir.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const current = await send(
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+          body,
+        }
+      );
+
+      if (current.ok) {
+        response = current;
+        break outer;
+      }
+
+      lastStatus = current.status;
+      lastDetail = await current.text().catch(() => "");
+      console.error(`Gemini hatası (${model}, deneme ${attempt + 1}):`, lastStatus, lastDetail.slice(0, 800));
+
+      if (/API_KEY_INVALID|API key not valid/i.test(lastDetail) || lastStatus === 401) {
+        throw new AiError(AI_NOT_CONFIGURED_MESSAGE);
+      }
+
+      const busy = lastStatus === 500 || lastStatus === 503 || lastStatus === 504;
+      if (busy && attempt === 0) {
+        await wait(2000);
+        continue;
+      }
+      // 404 (model yok), 429 (kota) ve süregelen yoğunlukta sıradaki model.
+      if (busy || lastStatus === 404 || lastStatus === 429) continue outer;
+
+      break outer;
     }
-    if (response.status === 503 || response.status === 500) {
-      throw new AiError("Yapay zekâ servisi şu an yoğun. Bir dakika sonra tekrar deneyin.");
+  }
+
+  if (!response) {
+    if (lastStatus === 429) {
+      throw new AiError(
+        "Yapay zekâ kullanım sınırına ulaşıldı (429). Birkaç dakika sonra tekrar deneyin."
+      );
     }
-    if (/API_KEY_INVALID|API key not valid|PERMISSION_DENIED/i.test(detail) || response.status === 403) {
-      throw new AiError(AI_NOT_CONFIGURED_MESSAGE);
+    if (lastStatus === 500 || lastStatus === 503 || lastStatus === 504) {
+      throw new AiError(`Yapay zekâ servisi şu an yoğun (${lastStatus}). Bir dakika sonra tekrar deneyin.`);
     }
-    if (response.status === 404) {
-      throw new AiError("Yapay zekâ modeli bulunamadı. Lütfen OZT Digital ile iletişime geçin.");
+    if (lastStatus === 403 || /PERMISSION_DENIED/i.test(lastDetail)) {
+      throw new AiError(`${AI_NOT_CONFIGURED_MESSAGE} (403)`);
     }
-    throw new AiError("Yapay zekâ isteği tamamlanamadı. Tekrar deneyin.");
+    throw new AiError(`Yapay zekâ isteği tamamlanamadı (${lastStatus}). Tekrar deneyin.`);
   }
 
   const data = (await response.json()) as {
