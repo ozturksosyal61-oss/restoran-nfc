@@ -21,9 +21,9 @@ const MISSING_COLUMN =
 
 // Bir tıklamada en fazla bu kadar yapay zekâ isteği; sayfa zaman aşımına
 // uğramasın diye kalanlar bir sonraki tıklamaya bırakılır.
-const CHUNK_SIZE = 40;
-const MAX_REQUESTS_PER_RUN = 8;
-const PARALLEL = 4;
+const CHUNK_SIZE = 20;
+const MAX_REQUESTS_PER_RUN = 6;
+const PARALLEL = 2;
 
 type Row = {
   id: number;

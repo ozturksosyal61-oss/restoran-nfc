@@ -85,16 +85,61 @@ function toGeminiSchema(schema: unknown): unknown {
   return result;
 }
 
-// Yoğunlukta (500/503) ya da kota dolunca (429) sıradaki modele geçilir.
-const GEMINI_FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
-
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Yoğunlukta (500/503), kota dolunca (429) ya da model yoksa (404) sıradaki
+// modele geçilir. Yedek modeller sabit yazılmaz; Google'dan bu anahtarla
+// kullanılabilen "flash" modelleri sorulur (model adları zamanla değişir).
+let cachedFallbacks: { at: number; models: string[] } | null = null;
+
+async function geminiFallbackModels(apiKey: string): Promise<string[]> {
+  if (cachedFallbacks && Date.now() - cachedFallbacks.at < 60 * 60 * 1000) {
+    return cachedFallbacks.models;
+  }
+
+  const aliases = ["gemini-flash-latest", "gemini-flash-lite-latest"];
+
+  try {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", {
+      headers: { "x-goog-api-key": apiKey },
+    });
+    if (!response.ok) throw new Error(`ListModels ${response.status}`);
+
+    const data = (await response.json()) as {
+      models?: { name?: string; supportedGenerationMethods?: string[] }[];
+    };
+
+    const listed = (data.models ?? [])
+      .filter((model) => model.supportedGenerationMethods?.includes("generateContent"))
+      .map((model) => String(model.name ?? "").replace(/^models\//, ""))
+      .filter(
+        (name) =>
+          /^gemini-[\d.]+-flash/.test(name) &&
+          !/(preview|exp|image|tts|audio|live|thinking|embedding|\d{3}$)/i.test(name)
+      )
+      // Yeni sürüm önce; aynı sürümde tam model "lite"tan önce.
+      .sort((a, b) => {
+        const version = (name: string) => Number(name.match(/^gemini-([\d.]+)/)?.[1] ?? 0);
+        return version(b) - version(a) || Number(a.includes("lite")) - Number(b.includes("lite"));
+      });
+
+    cachedFallbacks = { at: Date.now(), models: [...new Set([...aliases, ...listed])] };
+  } catch (error) {
+    console.error("Gemini model listesi alınamadı:", error);
+    cachedFallbacks = { at: Date.now(), models: aliases };
+  }
+
+  return cachedFallbacks.models;
+}
 
 async function callGemini<T>({ system, content, toolDescription, inputSchema, maxTokens = 8000 }: AiRequest) {
   const apiKey = process.env.GEMINI_API_KEY!.trim();
   const models = [
-    ...new Set([process.env.GEMINI_MODEL?.trim() || GEMINI_DEFAULT_MODEL, ...GEMINI_FALLBACK_MODELS]),
-  ];
+    ...new Set([
+      process.env.GEMINI_MODEL?.trim() || GEMINI_DEFAULT_MODEL,
+      ...(await geminiFallbackModels(apiKey)),
+    ]),
+  ].slice(0, 5);
 
   const parts = content.map((block) =>
     block.type === "text"
@@ -117,6 +162,8 @@ async function callGemini<T>({ system, content, toolDescription, inputSchema, ma
   let response: Response | null = null;
   let lastStatus = 0;
   let lastDetail = "";
+  let sawBusy = false;
+  let sawQuota = false;
 
   outer: for (const model of models) {
     // Aynı modelde yoğunluk için bir kez daha denenir.
@@ -144,6 +191,8 @@ async function callGemini<T>({ system, content, toolDescription, inputSchema, ma
       }
 
       const busy = lastStatus === 500 || lastStatus === 503 || lastStatus === 504;
+      if (busy) sawBusy = true;
+      if (lastStatus === 429) sawQuota = true;
       if (busy && attempt === 0) {
         await wait(2000);
         continue;
@@ -156,13 +205,14 @@ async function callGemini<T>({ system, content, toolDescription, inputSchema, ma
   }
 
   if (!response) {
-    if (lastStatus === 429) {
+    // Son denenen modelin 404'ü değil, asıl sebep gösterilir.
+    if (sawQuota) {
       throw new AiError(
         "Yapay zekâ kullanım sınırına ulaşıldı (429). Birkaç dakika sonra tekrar deneyin."
       );
     }
-    if (lastStatus === 500 || lastStatus === 503 || lastStatus === 504) {
-      throw new AiError(`Yapay zekâ servisi şu an yoğun (${lastStatus}). Bir dakika sonra tekrar deneyin.`);
+    if (sawBusy) {
+      throw new AiError("Yapay zekâ servisi şu an yoğun (503). Bir dakika sonra tekrar deneyin.");
     }
     if (lastStatus === 403 || /PERMISSION_DENIED/i.test(lastDetail)) {
       throw new AiError(`${AI_NOT_CONFIGURED_MESSAGE} (403)`);
