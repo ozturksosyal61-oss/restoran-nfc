@@ -1,1381 +1,446 @@
 "use client";
 
-import {
-  useMemo,
-  useState,
-} from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import AdminIcon from "../../admin/AdminIcon";
+import { ResultNote } from "../SystemUi";
+import { SUBSCRIPTION_STATUS, formatDate, formatLira, subscriptionEnd } from "../format";
+import type { SystemPlan, SystemSubscription } from "../data";
+import { deleteSubscription, saveSubscription, type SubscriptionResult } from "./actions";
 
 type Restaurant = {
   id: number;
   name: string;
   slug: string;
+  menuOnly: boolean;
+  isActive: boolean;
 };
 
-type Plan = {
-  id: string;
-  name: string;
-  slug: string;
-  monthly_price: number;
-  yearly_price: number;
+type Filter = "all" | "active" | "trial" | "expired" | "cancelled" | "none";
+
+type Editing = {
+  restaurant: Restaurant;
+  subscription: SystemSubscription | null;
 };
 
-type Subscription = {
-  id: string;
-  restaurant_id: number;
-  plan_id: string;
-  status: string;
-  billing_interval: string;
-  trial_started_at: string | null;
-  trial_ends_at: string | null;
-  current_period_start: string | null;
-  current_period_end: string | null;
-  cancelled_at: string | null;
-  subscription_plans?: {
-    id: string;
-    name: string;
-    slug: string;
-    monthly_price: number;
-    yearly_price: number;
-  } | null;
-};
-
-type Props = {
-  restaurants: Restaurant[];
-  plans: Plan[];
-  subscriptions: Subscription[];
-  updateSubscription: (
-    formData: FormData
-  ) => Promise<void>;
-  createSubscription: (
-    formData: FormData
-  ) => Promise<void>;
-  deleteSubscription: (
-    formData: FormData
-  ) => Promise<void>;
-};
-
-const statusLabels: Record<
-  string,
-  string
-> = {
-  trial: "Ücretsiz Deneme",
-  active: "Aktif",
-  cancelled: "İptal Edildi",
-  expired: "Süresi Doldu",
-};
-
-const statusClass: Record<
-  string,
-  string
-> = {
-  trial: "trial",
-  active: "active",
-  cancelled: "cancelled",
-  expired: "expired",
-};
-
-function formatDate(
-  value: string | null
-) {
-  if (!value) return "—";
-
-  return new Date(
-    value
-  ).toLocaleDateString(
-    "tr-TR"
-  );
-}
-
-function getEndDate(
-  subscription: Subscription
-) {
-  if (
-    subscription.status ===
-    "trial"
-  ) {
-    return subscription.trial_ends_at;
-  }
-
-  return subscription.current_period_end;
-}
-
-function getRemainingDays(
-  subscription: Subscription
-) {
-  const end =
-    getEndDate(subscription);
-
-  if (!end) return null;
-
-  const diff =
-    new Date(end).getTime() -
-    Date.now();
-
-  return Math.max(
-    0,
-    Math.ceil(
-      diff /
-        (1000 * 60 * 60 * 24)
-    )
-  );
-}
+const FILTERS: { value: Filter; label: string }[] = [
+  { value: "all", label: "Tümü" },
+  { value: "active", label: "Aktif" },
+  { value: "trial", label: "Deneme" },
+  { value: "expired", label: "Süresi doldu" },
+  { value: "cancelled", label: "İptal" },
+  { value: "none", label: "Aboneliksiz" },
+];
 
 export default function AbonelikYonetim({
   restaurants,
   plans,
   subscriptions,
-  updateSubscription,
-  createSubscription,
-  deleteSubscription,
-}: Props) {
-  const [
-    selectedSubscription,
-    setSelectedSubscription,
-  ] =
-    useState<Subscription | null>(
-      null
-    );
+  now,
+}: {
+  restaurants: Restaurant[];
+  plans: SystemPlan[];
+  subscriptions: SystemSubscription[];
+  now: number;
+}) {
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
+  const [editing, setEditing] = useState<Editing | null>(null);
+  const [notice, setNotice] = useState("");
 
-  const [
-    showCreate,
-    setShowCreate,
-  ] = useState(false);
-  const [
-  search,
-  setSearch,
-] = useState("");
+  // Her restoranın geçerli aboneliği: önce deneme / aktif, yoksa en yenisi.
+  const current = useMemo(() => {
+    const map = new Map<number, SystemSubscription>();
+    subscriptions.forEach((item) => {
+      const existing = map.get(item.restaurant_id);
+      const isLive = item.status === "active" || item.status === "trial";
+      const existingLive = existing && (existing.status === "active" || existing.status === "trial");
+      if (!existing || (isLive && !existingLive)) map.set(item.restaurant_id, item);
+    });
+    return map;
+  }, [subscriptions]);
 
-const [
-  filter,
-  setFilter,
-] =
-  useState("all");
+  const statusOf = (restaurantId: number): Filter => current.get(restaurantId)?.status as Filter ?? "none";
 
-  const activeCount =
-    subscriptions.filter(
-      (item) =>
-        item.status ===
-        "active"
-    ).length;
+  const counts = useMemo(() => {
+    const result: Record<Filter, number> = { all: restaurants.length, active: 0, trial: 0, expired: 0, cancelled: 0, none: 0 };
+    restaurants.forEach((restaurant) => {
+      const status = (current.get(restaurant.id)?.status ?? "none") as Filter;
+      if (status in result) result[status] += 1;
+    });
+    return result;
+  }, [restaurants, current]);
 
-  const trialCount =
-    subscriptions.filter(
-      (item) =>
-        item.status ===
-        "trial"
-    ).length;
+  const monthlyRevenue = useMemo(
+    () =>
+      Array.from(current.values())
+        .filter((item) => item.status === "active")
+        .reduce((sum, item) => {
+          const plan = item.subscription_plans;
+          if (!plan) return sum;
+          return sum + (item.billing_interval === "yearly" ? Number(plan.yearly_price) / 12 : Number(plan.monthly_price));
+        }, 0),
+    [current]
+  );
 
-  const expiredCount =
-    subscriptions.filter(
-      (item) =>
-        item.status ===
-        "expired"
-    ).length;
+  const query = search.trim().toLocaleLowerCase("tr-TR");
+  const visible = restaurants.filter(
+    (restaurant) =>
+      (filter === "all" || statusOf(restaurant.id) === filter) &&
+      (!query || restaurant.name.toLocaleLowerCase("tr-TR").includes(query))
+  );
 
-  const cancelledCount =
-    subscriptions.filter(
-      (item) =>
-        item.status ===
-        "cancelled"
-    ).length;
-
-  const currentRestaurantIds =
-    new Set(
-      subscriptions.map(
-        (item) =>
-          item.restaurant_id
-      )
-    );
-    const filteredRestaurants =
-  useMemo(() => {
-    const query =
-      search
-        .trim()
-        .toLocaleLowerCase(
-          "tr-TR"
-        );
-
-    return restaurants.filter(
-      (restaurant) => {
-        const subscription =
-          subscriptions.find(
-            (item) =>
-              item.restaurant_id ===
-              restaurant.id
-          );
-
-        const matchesSearch =
-          !query ||
-          restaurant.name
-            .toLocaleLowerCase(
-              "tr-TR"
-            )
-            .includes(query);
-
-        let matchesFilter =
-          true;
-
-        if (
-          filter !== "all"
-        ) {
-          if (
-            filter ===
-            "none"
-          ) {
-            matchesFilter =
-              !subscription;
-          } else {
-            matchesFilter =
-              subscription?.status ===
-              filter;
-          }
-        }
-
-        return (
-          matchesSearch &&
-          matchesFilter
-        );
-      }
-    );
-  }, [
-    restaurants,
-    subscriptions,
-    search,
-    filter,
-  ]);
+  // Bildirim birkaç saniye sonra kaybolur.
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(""), 3200);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   return (
-    <main className="subscription-admin">
-      <div className="subscription-container">
+    <main className="adm-page">
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">Yönetim</span>
+          <h1>Abonelikler</h1>
+          <p>Restoranların paketleri, deneme süreleri ve yenileme tarihleri.</p>
+        </div>
+      </header>
 
-        {/* HEADER */}
+      {notice && (
+        <p className="adm-alert adm-alert-ok" role="status" style={{ margin: 0 }}>
+          <AdminIcon name="check" size={16} />
+          {notice}
+        </p>
+      )}
 
-        <header className="subscription-header">
-          <div>
-            <div className="eyebrow">
-              OZT DIGITAL MENU
-            </div>
-
-            <h1>
-              Abonelik Yönetimi
-            </h1>
-
-            <p>
-              Tüm restoranların
-              aboneliklerini merkezi
-              olarak yönetin.
-            </p>
+      <section className="adm-stats" aria-label="Abonelik özeti">
+        <div className="adm-stat is-highlight">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Aylık gelir</span>
+            <span className="adm-stat-icon"><AdminIcon name="lira" size={16} /></span>
           </div>
-
-          <button
-            type="button"
-            className="create-button"
-            onClick={() =>
-              setShowCreate(
-                true
-              )
-            }
-          >
-            ＋ Yeni Abonelik
-          </button>
-        </header>
-
-        {/* STATS */}
-
-        <section className="stats">
-
-          <div className="stat">
-            <span>TOPLAM</span>
-            <strong>
-              {
-                subscriptions.length
-              }
-            </strong>
-            <small>
-              abonelik kaydı
-            </small>
+          <span className="adm-stat-value">{formatLira(monthlyRevenue)}</span>
+          <span className="adm-stat-hint">Aktif aboneliklerden · yıllıklar 12&apos;ye bölünür</span>
+        </div>
+        <div className="adm-stat tone-ok">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Aktif</span>
+            <span className="adm-stat-icon"><AdminIcon name="check" size={16} /></span>
           </div>
-
-          <div className="stat active-stat">
-            <span>AKTİF</span>
-            <strong>
-              {activeCount}
-            </strong>
-            <small>
-              ücretli abonelik
-            </small>
+          <span className="adm-stat-value">{counts.active}</span>
+          <span className="adm-stat-hint">{counts.trial} restoran denemede</span>
+        </div>
+        <div className={`adm-stat ${counts.expired > 0 ? "tone-danger" : ""}`}>
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Süresi doldu</span>
+            <span className="adm-stat-icon"><AdminIcon name="clock" size={16} /></span>
           </div>
-
-          <div className="stat trial-stat">
-            <span>TRIAL</span>
-            <strong>
-              {trialCount}
-            </strong>
-            <small>
-              ücretsiz deneme
-            </small>
+          <span className="adm-stat-value">{counts.expired}</span>
+          <span className="adm-stat-hint">{counts.cancelled} iptal edildi</span>
+        </div>
+        <div className={`adm-stat ${counts.none > 0 ? "tone-new" : ""}`}>
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Aboneliksiz</span>
+            <span className="adm-stat-icon"><AdminIcon name="store" size={16} /></span>
           </div>
-
-          <div className="stat danger-stat">
-            <span>SÜRESİ DOLAN</span>
-            <strong>
-              {expiredCount}
-            </strong>
-            <small>
-              abonelik
-            </small>
-          </div>
-
-          <div className="stat">
-            <span>İPTAL</span>
-            <strong>
-              {cancelledCount}
-            </strong>
-            <small>
-              abonelik
-            </small>
-          </div>
-
-        </section>
-
-        {/* RESTAURANT LIST */}
-
-        <section className="list-section">
-
-          <div className="section-title">
-            <div className="filters">
-  <input
-    value={search}
-    onChange={(event) =>
-      setSearch(
-        event.target.value
-      )
-    }
-    placeholder="Restoran ara..."
-  />
-
-  <select
-    value={filter}
-    onChange={(event) =>
-      setFilter(
-        event.target.value
-      )
-    }
-  >
-    <option value="all">
-      Tümü
-    </option>
-
-    <option value="trial">
-      Ücretsiz Deneme
-    </option>
-
-    <option value="active">
-      Aktif
-    </option>
-
-    <option value="expired">
-      Süresi Doldu
-    </option>
-
-    <option value="cancelled">
-      İptal Edildi
-    </option>
-
-    <option value="none">
-      Aboneliksiz
-    </option>
-  </select>
-</div>
-            <div>
-              <span>
-                RESTORANLAR
-              </span>
-
-              <h2>
-                Abonelikler
-              </h2>
-            </div>
-
-            <div className="count">
-              {
-                restaurants.length
-              } restoran
-            </div>
-          </div>
-
-          <div className="subscription-list">
-
-            {filteredRestaurants.map(
-              (restaurant) => {
-
-                const restaurantSubscriptions =
-                  subscriptions.filter(
-                    (item) =>
-                      item.restaurant_id ===
-                      restaurant.id
-                  );
-
-                const subscription =
-                  restaurantSubscriptions[0];
-
-                return (
-                  <article
-                    key={
-                      restaurant.id
-                    }
-                    className="subscription-card"
-                  >
-
-                    <div className="restaurant-info">
-
-                      <div className="restaurant-icon">
-                        🏪
-                      </div>
-
-                      <div>
-                        <h3>
-                          {
-                            restaurant.name
-                          }
-                        </h3>
-
-                        <p>
-                          /restoran/
-                          {
-                            restaurant.slug
-                          }
-                        </p>
-                      </div>
-
-                    </div>
-
-                    {!subscription ? (
-
-                      <div className="no-subscription">
-                        <span>
-                          ⚪
-                        </span>
-
-                        <div>
-                          <strong>
-                            Abonelik yok
-                          </strong>
-
-                          <small>
-                            Bu restoranın
-                            henüz aktif
-                            aboneliği
-                            bulunmuyor.
-                          </small>
-                        </div>
-                      </div>
-
-                    ) : (
-
-                      <>
-                        <div className="subscription-status">
-
-                          <span
-                            className={`status-badge ${
-                              statusClass[
-                                subscription.status
-                              ] || ""
-                            }`}
-                          >
-                            ●{" "}
-                            {
-                              statusLabels[
-                                subscription.status
-                              ] ||
-                              subscription.status
-                            }
-                          </span>
-
-                          <strong>
-                            {
-                              subscription
-                                .subscription_plans
-                                ?.name ||
-                              "Paket"
-                            }
-                          </strong>
-
-                        </div>
-
-                        <div className="subscription-details">
-
-                          <div>
-                            <span>
-                              PERİYOT
-                            </span>
-
-                            <strong>
-                              {subscription.billing_interval ===
-                              "yearly"
-                                ? "Yıllık"
-                                : "Aylık"}
-                            </strong>
-                          </div>
-
-                          <div>
-                            <span>
-                              BİTİŞ
-                            </span>
-
-                            <strong>
-                              {formatDate(
-                                getEndDate(
-                                  subscription
-                                )
-                              )}
-                            </strong>
-                          </div>
-
-                          <div>
-                            <span>
-                              KALAN
-                            </span>
-
-                            <strong>
-                              {getRemainingDays(
-                                subscription
-                              ) !==
-                              null
-                                ? `${getRemainingDays(
-                                    subscription
-                                  )} gün`
-                                : "—"}
-                            </strong>
-                          </div>
-
-                        </div>
-
-                        <div className="card-actions">
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedSubscription(
-                                subscription
-                              )
-                            }
-                            className="manage-button"
-                          >
-                            ⚙️ Yönet
-                          </button>
-
-                        </div>
-                      </>
-                    )}
-
-                  </article>
-                );
-              }
-            )}
-
-          </div>
-        </section>
-
-        {/* CREATE MODAL */}
-
-        {showCreate && (
-          <div className="modal-backdrop">
-
-            <div className="modal">
-
-              <div className="modal-header">
-
-                <div>
-                  <span>
-                    YENİ KAYIT
-                  </span>
-
-                  <h2>
-                    Abonelik Oluştur
-                  </h2>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowCreate(
-                      false
-                    )
-                  }
-                  className="close-button"
-                >
-                  ×
-                </button>
-
-              </div>
-
-              <form
-                action={
-                  createSubscription
-                }
-                className="form"
-              >
-
-                <label>
-                  Restoran
-
-                  <select
-                    name="restaurant_id"
-                    required
-                  >
-                    <option value="">
-                      Restoran seçin
-                    </option>
-
-                    {restaurants.map(
-                      (restaurant) => (
-                        <option
-                          key={
-                            restaurant.id
-                          }
-                          value={
-                            restaurant.id
-                          }
-                        >
-                          {
-                            restaurant.name
-                          }
-                          {
-                            currentRestaurantIds.has(
-                              restaurant.id
-                            )
-                              ? " — mevcut abonelik var"
-                              : ""
-                          }
-                        </option>
-                      )
-                    )}
-                  </select>
-                </label>
-
-                <label>
-                  Paket
-
-                  <select
-                    name="plan_id"
-                    required
-                    defaultValue={
-                      plans[0]?.id
-                    }
-                  >
-                    {plans.map(
-                      (plan) => (
-                        <option
-                          key={plan.id}
-                          value={plan.id}
-                        >
-                          {
-                            plan.name
-                          }
-                        </option>
-                      )
-                    )}
-                  </select>
-                </label>
-
-                <label>
-                  Durum
-
-                  <select
-                    name="status"
-                    defaultValue="trial"
-                  >
-                    <option value="trial">
-                      Ücretsiz Deneme
-                    </option>
-
-                    <option value="active">
-                      Aktif
-                    </option>
-
-                    <option value="cancelled">
-                      İptal Edildi
-                    </option>
-
-                    <option value="expired">
-                      Süresi Doldu
-                    </option>
-                  </select>
-                </label>
-
-                <label>
-                  Ödeme Periyodu
-
-                  <select
-                    name="billing_interval"
-                    defaultValue="monthly"
-                  >
-                    <option value="monthly">
-                      Aylık
-                    </option>
-
-                    <option value="yearly">
-                      Yıllık
-                    </option>
-                  </select>
-                </label>
-
-                <button
-                  type="submit"
-                  className="save-button"
-                >
-                  Aboneliği Oluştur
-                </button>
-
-              </form>
-
-            </div>
-          </div>
-        )}
-
-        {/* EDIT MODAL */}
-
-        {selectedSubscription && (
-          <div className="modal-backdrop">
-
-            <div className="modal">
-
-              <div className="modal-header">
-
-                <div>
-                  <span>
-                    ABONELİK YÖNETİMİ
-                  </span>
-
-                  <h2>
-                    {
-                      restaurants.find(
-                        (r) =>
-                          r.id ===
-                          selectedSubscription.restaurant_id
-                      )?.name
-                    }
-                  </h2>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelectedSubscription(
-                      null
-                    )
-                  }
-                  className="close-button"
-                >
-                  ×
-                </button>
-
-              </div>
-
-              <div className="current-box">
-
-                <span>
-                  MEVCUT DURUM
-                </span>
-
-                <strong>
-                  {
-                    statusLabels[
-                      selectedSubscription
-                        .status
-                    ]
-                  }
-                </strong>
-
-                <small>
-                  {
-                    selectedSubscription
-                      .subscription_plans
-                      ?.name
-                  }
-                </small>
-
-              </div>
-
-              <form
-                action={
-                  updateSubscription
-                }
-                className="form"
-              >
-
-                <input
-                  type="hidden"
-                  name="subscription_id"
-                  value={
-                    selectedSubscription.id
-                  }
-                />
-
-                <input
-                  type="hidden"
-                  name="restaurant_id"
-                  value={
-                    selectedSubscription.restaurant_id
-                  }
-                />
-
-                <label>
-                  Paket
-
-                  <select
-                    name="plan_id"
-                    defaultValue={
-                      selectedSubscription.plan_id
-                    }
-                  >
-                    {plans.map(
-                      (plan) => (
-                        <option
-                          key={plan.id}
-                          value={plan.id}
-                        >
-                          {
-                            plan.name
-                          }
-                        </option>
-                      )
-                    )}
-                  </select>
-                </label>
-
-                <label>
-                  Durum
-
-                  <select
-                    name="status"
-                    defaultValue={
-                      selectedSubscription.status
-                    }
-                  >
-                    <option value="trial">
-                      Ücretsiz Deneme
-                    </option>
-
-                    <option value="active">
-                      Aktif
-                    </option>
-
-                    <option value="cancelled">
-                      İptal Edildi
-                    </option>
-
-                    <option value="expired">
-                      Süresi Doldu
-                    </option>
-                  </select>
-                </label>
-
-                <label>
-                  Ödeme Periyodu
-
-                  <select
-                    name="billing_interval"
-                    defaultValue={
-                      selectedSubscription.billing_interval
-                    }
-                  >
-                    <option value="monthly">
-                      Aylık
-                    </option>
-
-                    <option value="yearly">
-                      Yıllık
-                    </option>
-                  </select>
-                </label>
-
-                <button
-                  type="submit"
-                  className="save-button"
-                >
-                  Değişiklikleri Kaydet
-                </button>
-
-              </form>
-
-              <form
-                action={
-                  deleteSubscription
-                }
-                onSubmit={(event) => {
-                  if (
-                    !window.confirm(
-                      "Bu abonelik kaydı kalıcı olarak silinsin mi?"
-                    )
-                  ) {
-                    event.preventDefault();
-                  }
-                }}
-              >
-                <input
-                  type="hidden"
-                  name="subscription_id"
-                  value={
-                    selectedSubscription.id
-                  }
-                />
-
-                <button
-                  type="submit"
-                  className="delete-button"
-                >
-                  🗑 Abonelik Kaydını Sil
-                </button>
-              </form>
-
-            </div>
-          </div>
-        )}
-
+          <span className="adm-stat-value">{counts.none}</span>
+          <span className="adm-stat-hint">Paket tanımlanmamış restoran</span>
+        </div>
+      </section>
+
+      <div className="adm-toolbar-row">
+        <nav className="adm-chips" aria-label="Abonelik durumuna göre filtrele">
+          {FILTERS.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              className={`adm-chip ${filter === item.value ? "is-active" : ""}`}
+              aria-pressed={filter === item.value}
+              onClick={() => setFilter(item.value)}
+            >
+              {item.label}
+              <b>{counts[item.value]}</b>
+            </button>
+          ))}
+        </nav>
+        <label className="adm-input-group sys-search">
+          <AdminIcon name="search" size={16} />
+          <input
+            id="abonelik-ara"
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Restoran ara"
+            aria-label="Restoran ara"
+            autoComplete="off"
+          />
+        </label>
       </div>
 
-      <style jsx>{`
-        * {
-          box-sizing: border-box;
-        }
-
-        .subscription-admin {
-          min-height: 100vh;
-          background: #f4f2ed;
-          color: #171717;
-          padding: 40px 20px 80px;
-          font-family:
-            Arial,
-            Helvetica,
-            sans-serif;
-        }
-
-        .subscription-container {
-          width: min(1200px, 100%);
-          margin: auto;
-        }
-
-        .subscription-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          gap: 20px;
-          margin-bottom: 30px;
-        }
-
-        .eyebrow {
-          color: #ad7b12;
-          font-size: 11px;
-          font-weight: 900;
-          letter-spacing: 2px;
-          margin-bottom: 8px;
-        }
-
-        .subscription-header h1 {
-          margin: 0;
-          font-size: 34px;
-          letter-spacing: -1px;
-        }
-
-        .subscription-header p {
-          margin: 10px 0 0;
-          color: #777;
-          font-size: 14px;
-        }
-
-        button {
-          font-family: inherit;
-        }
-
-        .create-button {
-          border: 0;
-          border-radius: 12px;
-          padding: 13px 18px;
-          background: #171717;
-          color: white;
-          font-weight: 800;
-          cursor: pointer;
-        }
-
-        .stats {
-          display: grid;
-          grid-template-columns:
-            repeat(5, minmax(0, 1fr));
-          gap: 14px;
-          margin-bottom: 40px;
-        }
-
-        .stat {
-          background: white;
-          border: 1px solid #e5dfd5;
-          border-radius: 18px;
-          padding: 20px;
-        }
-
-        .stat span {
-          display: block;
-          color: #888;
-          font-size: 10px;
-          font-weight: 900;
-          letter-spacing: 1px;
-        }
-
-        .stat strong {
-          display: block;
-          font-size: 28px;
-          margin-top: 7px;
-        }
-
-        .stat small {
-          display: block;
-          margin-top: 4px;
-          color: #999;
-        }
-
-        .active-stat {
-          background: #f1faf3;
-        }
-
-        .trial-stat {
-          background: #fff8e6;
-        }
-
-        .danger-stat {
-          background: #fff1ef;
-        }
-
-        .section-title {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          margin-bottom: 18px;
-        }
-
-        .section-title span {
-          color: #ad7b12;
-          font-size: 10px;
-          font-weight: 900;
-          letter-spacing: 1.8px;
-        }
-
-        .section-title h2 {
-          margin: 5px 0 0;
-          font-size: 25px;
-        }
-
-        .count {
-          background: white;
-          border: 1px solid #e4ded5;
-          border-radius: 10px;
-          padding: 8px 12px;
-          font-size: 12px;
-          font-weight: 800;
-        }
-
-        .subscription-list {
-          display: grid;
-          grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-          gap: 16px;
-        }
-
-        .subscription-card {
-          background: white;
-          border: 1px solid #e3ddd4;
-          border-radius: 20px;
-          padding: 20px;
-          box-shadow:
-            0 10px 30px
-              rgba(0, 0, 0, 0.04);
-        }
-
-        .restaurant-info {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .restaurant-icon {
-          width: 46px;
-          height: 46px;
-          border-radius: 13px;
-          background: #fff5d9;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-        }
-
-        .restaurant-info h3 {
-          margin: 0;
-          font-size: 19px;
-        }
-
-        .restaurant-info p {
-          margin: 4px 0 0;
-          color: #999;
-          font-size: 11px;
-        }
-
-        .subscription-status {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-          margin-top: 18px;
-          padding-top: 16px;
-          border-top: 1px solid #eee9e1;
-        }
-
-        .subscription-status strong {
-          font-size: 15px;
-        }
-
-        .status-badge {
-          border-radius: 999px;
-          padding: 7px 10px;
-          font-size: 10px;
-          font-weight: 900;
-        }
-
-        .status-badge.active {
-          background: #e9f8ed;
-          color: #23753a;
-        }
-
-        .status-badge.trial {
-          background: #fff4d5;
-          color: #956c00;
-        }
-
-        .status-badge.cancelled {
-          background: #f1eeee;
-          color: #777;
-        }
-
-        .status-badge.expired {
-          background: #ffeceb;
-          color: #a52e27;
-        }
-
-        .subscription-details {
-          display: grid;
-          grid-template-columns:
-            repeat(3, 1fr);
-          gap: 10px;
-          margin-top: 15px;
-        }
-
-        .subscription-details div {
-          background: #f8f6f2;
-          border-radius: 11px;
-          padding: 11px;
-        }
-
-        .subscription-details span {
-          display: block;
-          color: #999;
-          font-size: 9px;
-          font-weight: 800;
-        }
-
-        .subscription-details strong {
-          display: block;
-          margin-top: 5px;
-          font-size: 12px;
-        }
-
-        .card-actions {
-          margin-top: 14px;
-        }
-
-        .manage-button {
-          width: 100%;
-          border: 0;
-          border-radius: 11px;
-          padding: 12px;
-          background: #171717;
-          color: white;
-          font-weight: 800;
-          cursor: pointer;
-        }
-
-        .no-subscription {
-          display: flex;
-          gap: 10px;
-          margin-top: 18px;
-          padding-top: 16px;
-          border-top: 1px solid #eee9e1;
-        }
-
-        .no-subscription strong {
-          display: block;
-        }
-
-        .no-subscription small {
-          display: block;
-          margin-top: 4px;
-          color: #999;
-        }
-
-        .modal-backdrop {
-          position: fixed;
-          inset: 0;
-          z-index: 1000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          background:
-            rgba(20, 18, 14, 0.55);
-        }
-
-        .modal {
-          width: min(520px, 100%);
-          max-height: 90vh;
-          overflow-y: auto;
-          background: white;
-          border-radius: 22px;
-          padding: 25px;
-          box-shadow:
-            0 30px 80px
-              rgba(0, 0, 0, 0.2);
-        }
-
-        .modal-header {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          margin-bottom: 22px;
-        }
-
-        .modal-header span {
-          color: #ad7b12;
-          font-size: 10px;
-          font-weight: 900;
-          letter-spacing: 1.5px;
-        }
-
-        .modal-header h2 {
-          margin: 6px 0 0;
-          font-size: 23px;
-        }
-
-        .close-button {
-          width: 36px;
-          height: 36px;
-          border: 0;
-          border-radius: 10px;
-          background: #f2f0ec;
-          font-size: 23px;
-          cursor: pointer;
-        }
-
-        .current-box {
-          background: #f7f4ed;
-          border-radius: 14px;
-          padding: 15px;
-          margin-bottom: 18px;
-        }
-
-        .current-box span {
-          display: block;
-          color: #999;
-          font-size: 9px;
-          font-weight: 900;
-        }
-
-        .current-box strong {
-          display: block;
-          margin-top: 5px;
-        }
-
-        .current-box small {
-          display: block;
-          margin-top: 3px;
-          color: #888;
-        }
-
-        .form {
-          display: grid;
-          gap: 15px;
-        }
-
-        .form label {
-          display: grid;
-          gap: 7px;
-          color: #555;
-          font-size: 11px;
-          font-weight: 800;
-        }
-
-        .form select {
-          width: 100%;
-          padding: 13px;
-          border: 1px solid #ddd7ce;
-          border-radius: 11px;
-          background: white;
-          font-size: 14px;
-        }
-
-        .save-button {
-          border: 0;
-          border-radius: 12px;
-          padding: 14px;
-          background: #171717;
-          color: white;
-          font-weight: 900;
-          cursor: pointer;
-        }
-
-        .delete-button {
-          width: 100%;
-          margin-top: 12px;
-          border: 1px solid #efc4c1;
-          border-radius: 12px;
-          padding: 13px;
-          background: #fff4f3;
-          color: #a52e27;
-          font-weight: 900;
-          cursor: pointer;
-        }
-
-        @media (max-width: 900px) {
-          .stats {
-            grid-template-columns:
-              repeat(2, 1fr);
-          }
-
-          .subscription-list {
-            grid-template-columns: 1fr;
-          }
-        }
-
-        @media (max-width: 600px) {
-          .subscription-admin {
-            padding: 20px 14px 50px;
-          }
-
-          .subscription-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-
-          .create-button {
-            width: 100%;
-          }
-
-          .stats {
-            grid-template-columns: 1fr;
-          }
-
-          .subscription-details {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
+      {visible.length === 0 ? (
+        <div className="adm-empty">
+          <span className="adm-empty-icon"><AdminIcon name="card" /></span>
+          <strong>Gösterilecek restoran yok</strong>
+          <p>Filtreyi ya da aramayı değiştirin.</p>
+        </div>
+      ) : (
+        <div className="adm-table-wrap">
+          <table className="adm-table">
+            <thead>
+              <tr>
+                <th>Restoran</th>
+                <th>Paket</th>
+                <th>Durum</th>
+                <th>Dönem</th>
+                <th>Bitiş</th>
+                <th aria-label="İşlem" />
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((restaurant) => {
+                const subscription = current.get(restaurant.id) ?? null;
+                const status = subscription ? SUBSCRIPTION_STATUS[subscription.status] : null;
+                const { end, daysLeft } = subscription
+                  ? subscriptionEnd(subscription, now)
+                  : { end: null, daysLeft: null };
+                const live = subscription?.status === "active" || subscription?.status === "trial";
+
+                return (
+                  <tr key={restaurant.id}>
+                    <td>
+                      <Link href={`/sistem/restoran/${restaurant.id}`} className="sys-link">
+                        <strong>{restaurant.name}</strong>
+                      </Link>
+                      <div className="adm-muted" style={{ fontSize: 12 }}>
+                        {restaurant.menuOnly ? "Sadece menü" : "Premium"}
+                        {!restaurant.isActive && " · kapalı"}
+                      </div>
+                    </td>
+                    <td>{subscription?.subscription_plans?.name ?? <span className="adm-muted">—</span>}</td>
+                    <td>
+                      {status ? (
+                        <span className={`adm-badge is-dot ${status.tone}`}>{status.label}</span>
+                      ) : (
+                        <span className="adm-badge">Abonelik yok</span>
+                      )}
+                    </td>
+                    <td className="adm-muted">
+                      {subscription ? (subscription.billing_interval === "yearly" ? "Yıllık" : "Aylık") : "—"}
+                    </td>
+                    <td>
+                      {end ? (
+                        <>
+                          {formatDate(end)}
+                          {live && daysLeft !== null && (
+                            <span className={`sys-days ${daysLeft <= 7 ? "is-soon" : ""}`}>{daysLeft} gün</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="adm-muted">—</span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <button
+                        type="button"
+                        className={`adm-btn adm-btn-sm ${subscription ? "" : "adm-btn-primary"}`}
+                        onClick={() => setEditing({ restaurant, subscription })}
+                        disabled={plans.length === 0}
+                      >
+                        <AdminIcon name={subscription ? "edit" : "plus"} size={14} />
+                        {subscription ? "Düzenle" : "Abonelik başlat"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {plans.length === 0 && (
+        <p className="adm-alert adm-alert-info" style={{ margin: 0 }}>
+          <AdminIcon name="info" size={16} />
+          Veritabanında paket (subscription_plans) tanımlı değil; abonelik oluşturmak için önce paket ekleyin.
+        </p>
+      )}
+
+      {editing && (
+        <SubscriptionDialog
+          key={`${editing.restaurant.id}-${editing.subscription?.id ?? "yeni"}`}
+          editing={editing}
+          plans={plans}
+          onClose={() => setEditing(null)}
+          onDone={(message) => {
+            setEditing(null);
+            setNotice(message);
+          }}
+        />
+      )}
     </main>
+  );
+}
+
+function SubscriptionDialog({
+  editing,
+  plans,
+  onClose,
+  onDone,
+}: {
+  editing: Editing;
+  plans: SystemPlan[];
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  const { restaurant, subscription } = editing;
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const [saveResult, saveAction, saving] = useActionState(
+    async (prev: SubscriptionResult, formData: FormData) => {
+      const result = await saveSubscription(prev, formData);
+      if (result?.ok) onDone(result.message);
+      return result;
+    },
+    null
+  );
+
+  const [deleteResult, deleteAction, deleting] = useActionState(
+    async (prev: SubscriptionResult, formData: FormData) => {
+      const result = await deleteSubscription(prev, formData);
+      if (result?.ok) onDone(result.message);
+      return result;
+    },
+    null
+  );
+
+  // Kapatma işlevi her çizimde yeniden oluşur; odak yalnızca açılışta alınsın.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
+  useEffect(() => {
+    panelRef.current?.focus();
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onCloseRef.current();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div className="adm-modal-root" role="dialog" aria-modal="true" aria-labelledby="abonelik-pencere">
+      <button type="button" className="adm-modal-backdrop" aria-label="Kapat" tabIndex={-1} onClick={onClose} />
+      <div className="adm-modal" ref={panelRef} tabIndex={-1}>
+        <div className="adm-card-head">
+          <div>
+            <span className="adm-eyebrow">{subscription ? "Aboneliği düzenle" : "Yeni abonelik"}</span>
+            <h2 id="abonelik-pencere">{restaurant.name}</h2>
+          </div>
+          <button type="button" className="adm-btn adm-btn-icon adm-btn-ghost" onClick={onClose} aria-label="Kapat">
+            <AdminIcon name="close" />
+          </button>
+        </div>
+
+        {subscription && (
+          <p className="adm-alert adm-alert-info" style={{ margin: 0 }}>
+            <AdminIcon name="info" size={16} />
+            Aktif ya da deneme olarak kaydettiğinizde dönem bugünden yeniden başlar.
+          </p>
+        )}
+
+        <form action={saveAction} className="adm-form">
+          <input type="hidden" name="restaurant_id" value={restaurant.id} />
+          {subscription && <input type="hidden" name="subscription_id" value={subscription.id} />}
+
+          <div className="adm-field">
+            <label className="adm-label" htmlFor="abonelik-paket">Paket</label>
+            <select
+              id="abonelik-paket"
+              name="plan_id"
+              className="adm-select"
+              defaultValue={subscription?.plan_id ?? plans[0]?.id}
+            >
+              {plans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.name} · {formatLira(plan.monthly_price)}/ay · {formatLira(plan.yearly_price)}/yıl
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="adm-form-grid">
+            <div className="adm-field">
+              <label className="adm-label" htmlFor="abonelik-durum">Durum</label>
+              <select
+                id="abonelik-durum"
+                name="status"
+                className="adm-select"
+                defaultValue={subscription?.status ?? "trial"}
+              >
+                <option value="trial">Deneme (14 gün)</option>
+                <option value="active">Aktif</option>
+                <option value="cancelled">İptal</option>
+                <option value="expired">Süresi doldu</option>
+              </select>
+            </div>
+            <div className="adm-field">
+              <label className="adm-label" htmlFor="abonelik-donem">Ödeme dönemi</label>
+              <select
+                id="abonelik-donem"
+                name="billing_interval"
+                className="adm-select"
+                defaultValue={subscription?.billing_interval ?? "monthly"}
+              >
+                <option value="monthly">Aylık</option>
+                <option value="yearly">Yıllık</option>
+              </select>
+            </div>
+          </div>
+
+          <ResultNote result={saveResult?.ok ? null : saveResult} />
+
+          <button type="submit" className="adm-btn adm-btn-primary adm-btn-lg adm-btn-block" disabled={saving}>
+            <AdminIcon name="save" size={16} />
+            {saving ? "Kaydediliyor…" : subscription ? "Değişiklikleri kaydet" : "Aboneliği başlat"}
+          </button>
+        </form>
+
+        {subscription && (
+          <>
+            <div className="adm-divider" />
+            {!confirmDelete ? (
+              <button
+                type="button"
+                className="adm-btn adm-btn-ghost adm-text-danger adm-btn-block"
+                onClick={() => setConfirmDelete(true)}
+              >
+                <AdminIcon name="trash" size={15} />
+                Abonelik kaydını sil
+              </button>
+            ) : (
+              <form action={deleteAction} className="sys-delete">
+                <input type="hidden" name="subscription_id" value={subscription.id} />
+                <p>
+                  Kayıt kalıcı olarak silinir. Ödeme kaydı olan abonelikler silinemez; onları
+                  &ldquo;İptal&rdquo; durumuna alın.
+                </p>
+                <div className="sys-inline">
+                  <button type="button" className="adm-btn" onClick={() => setConfirmDelete(false)}>
+                    Vazgeç
+                  </button>
+                  <button type="submit" className="adm-btn adm-btn-danger" disabled={deleting}>
+                    {deleting ? "Siliniyor…" : "Kalıcı olarak sil"}
+                  </button>
+                </div>
+                <ResultNote result={deleteResult?.ok ? null : deleteResult} />
+              </form>
+            )}
+          </>
+        )}
+      </div>
+    </div>
   );
 }

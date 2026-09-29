@@ -1,883 +1,260 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "../../../lib/supabase-server";
+import { requireSystemAdmin } from "../../../lib/system-admin";
 
-const VALID_STATUSES = [
-  "trial",
-  "active",
-  "cancelled",
-  "expired",
-];
+// Abonelik işlemleri. Mantık önceki sürümle aynı: deneme 14 gün, aktif
+// abonelik aylık / yıllık dönem; restoranın başka deneme / aktif aboneliği
+// varsa iptal edilir ve restaurants.plan en güncel aboneliğe göre eşitlenir.
+// Fark: her işlem artık başarı / hata mesajı döndürür.
 
-const VALID_INTERVALS = [
-  "monthly",
-  "yearly",
-];
+export type SubscriptionResult = { ok: boolean; message: string } | null;
 
-async function getSystemAdmin() {
-  const supabase =
-    await createSupabaseServerClient();
+const VALID_STATUSES = ["trial", "active", "cancelled", "expired"];
+const VALID_INTERVALS = ["monthly", "yearly"];
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+/* ---------------- restaurants.plan eşitleme ---------------- */
 
-  if (!user) {
-    redirect("/sistem/login");
-  }
-
-  const { data: systemAdmin } =
-    await supabase
-      .from("system_admins")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-  if (!systemAdmin) {
-    redirect("/admin");
-  }
-
-  return supabase;
-}
-
-/*
-=====================================================
-RESTAURANTS.PLAN SENKRONİZASYONU
-=====================================================
-*/
-
-async function syncRestaurantPlan(
-  supabase: any,
-  restaurantId: number
-) {
-  /*
-    Önce halen geçerli bir trial / active abonelik
-    var mı kontrol ediyoruz.
-  */
-
-  const { data: activeSubscription } =
-    await supabase
-      .from("subscriptions")
-      .select(`
-        id,
-        status,
-        plan_id,
-        subscription_plans (
-          slug
-        )
-      `)
-      .eq(
-        "restaurant_id",
-        restaurantId
-      )
-      .in(
-        "status",
-        ["trial", "active"]
-      )
-      .order(
-        "current_period_start",
-        {
-          ascending: false,
-          nullsFirst: false,
-        }
-      )
-      .limit(1)
-      .maybeSingle();
+async function syncRestaurantPlan(supabase: SupabaseClient, restaurantId: number) {
+  const { data: activeSubscription } = await supabase
+    .from("subscriptions")
+    .select("id, status, plan_id, subscription_plans ( slug )")
+    .eq("restaurant_id", restaurantId)
+    .in("status", ["trial", "active"])
+    .order("current_period_start", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
 
   let restaurantPlan = "starter";
 
   if (activeSubscription) {
-    const plan =
-      Array.isArray(
-        activeSubscription.subscription_plans
-      )
-        ? activeSubscription
-            .subscription_plans[0]
-        : activeSubscription
-            .subscription_plans;
+    const related = activeSubscription.subscription_plans as
+      | { slug: string }
+      | { slug: string }[]
+      | null;
+    const plan = Array.isArray(related) ? related[0] : related;
 
-    if (
-      plan?.slug === "pro" ||
-      plan?.slug === "profesyonel"
-    ) {
-      restaurantPlan = "pro";
-    }
-
-    if (
-      plan?.slug === "premium"
-    ) {
-      restaurantPlan = "premium";
-    }
+    if (plan?.slug === "pro" || plan?.slug === "profesyonel") restaurantPlan = "pro";
+    if (plan?.slug === "premium") restaurantPlan = "premium";
   }
 
-  await supabase
-    .from("restaurants")
-    .update({
-      plan: restaurantPlan,
-    })
-    .eq(
-      "id",
-      restaurantId
-    );
-
+  await supabase.from("restaurants").update({ plan: restaurantPlan }).eq("id", restaurantId);
   return restaurantPlan;
 }
 
-/*
-=====================================================
-DİĞER AKTİF ABONELİKLERİ KAPAT
-=====================================================
-*/
-
 async function closeOtherActiveSubscriptions(
-  supabase: any,
+  supabase: SupabaseClient,
   restaurantId: number,
   exceptSubscriptionId?: string
 ) {
   let query = supabase
     .from("subscriptions")
-    .update({
-      status: "cancelled",
-      cancelled_at:
-        new Date().toISOString(),
-    })
-    .eq(
-      "restaurant_id",
-      restaurantId
-    )
-    .in(
-      "status",
-      ["trial", "active"]
-    );
+    .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
+    .eq("restaurant_id", restaurantId)
+    .in("status", ["trial", "active"]);
 
-  if (exceptSubscriptionId) {
-    query = query.neq(
-      "id",
-      exceptSubscriptionId
-    );
-  }
+  if (exceptSubscriptionId) query = query.neq("id", exceptSubscriptionId);
 
   await query;
 }
 
-/*
-=====================================================
-ABONELİK GÜNCELLE
-=====================================================
-*/
+// Duruma göre dönem tarihleri.
+function periodFields(status: string, billingInterval: string) {
+  const now = new Date();
+  const fields: Record<string, string | null> = {
+    trial_started_at: null,
+    trial_ends_at: null,
+    current_period_start: null,
+    current_period_end: null,
+    cancelled_at: null,
+  };
 
-export async function updateSubscription(
-  formData: FormData
-) {
-  const subscriptionId =
-    String(
-      formData.get(
-        "subscription_id"
-      ) || ""
-    );
-
-  const restaurantId =
-    Number(
-      formData.get(
-        "restaurant_id"
-      )
-    );
-
-  const planId =
-    String(
-      formData.get(
-        "plan_id"
-      ) || ""
-    );
-
-  const status =
-    String(
-      formData.get(
-        "status"
-      ) || ""
-    ).toLowerCase();
-
-  const billingInterval =
-    String(
-      formData.get(
-        "billing_interval"
-      ) || "monthly"
-    ).toLowerCase();
-
-  if (!subscriptionId) {
-    return;
+  if (status === "trial") {
+    const end = new Date(now);
+    end.setDate(end.getDate() + 14);
+    fields.trial_started_at = now.toISOString();
+    fields.trial_ends_at = end.toISOString();
   }
 
-  if (
-    !Number.isInteger(
-      restaurantId
-    ) ||
-    restaurantId <= 0
-  ) {
-    return;
+  if (status === "active") {
+    const end = new Date(now);
+    if (billingInterval === "yearly") end.setFullYear(end.getFullYear() + 1);
+    else end.setMonth(end.getMonth() + 1);
+    fields.current_period_start = now.toISOString();
+    fields.current_period_end = end.toISOString();
   }
 
-  if (
-    !VALID_STATUSES.includes(
-      status
-    )
-  ) {
-    return;
-  }
+  if (status === "cancelled") fields.cancelled_at = now.toISOString();
 
-  if (
-    !VALID_INTERVALS.includes(
-      billingInterval
-    )
-  ) {
-    return;
-  }
-
-  if (!planId) {
-    return;
-  }
-
-  const supabase =
-    await getSystemAdmin();
-
-  /*
-  ---------------------------------------------------
-  RESTORAN
-  ---------------------------------------------------
-  */
-
-  const { data: restaurant } =
-    await supabase
-      .from("restaurants")
-      .select("id")
-      .eq(
-        "id",
-        restaurantId
-      )
-      .maybeSingle();
-
-  if (!restaurant) {
-    return;
-  }
-
-  /*
-  ---------------------------------------------------
-  PLAN
-  ---------------------------------------------------
-  */
-
-  const { data: plan } =
-    await supabase
-      .from(
-        "subscription_plans"
-      )
-      .select(
-        "id, slug"
-      )
-      .eq(
-        "id",
-        planId
-      )
-      .maybeSingle();
-
-  if (!plan) {
-    return;
-  }
-
-  const now =
-    new Date();
-
-  const updateData:
-    Record<
-      string,
-      string | null
-    > = {
-      plan_id:
-        planId,
-
-      status,
-
-      billing_interval:
-        billingInterval,
-    };
-
-  /*
-  ---------------------------------------------------
-  BAŞKA AKTİF/TRIAL VARSA KAPAT
-  ---------------------------------------------------
-  */
-
-  if (
-    status === "trial" ||
-    status === "active"
-  ) {
-    await closeOtherActiveSubscriptions(
-      supabase,
-      restaurantId,
-      subscriptionId
-    );
-  }
-
-  /*
-  ---------------------------------------------------
-  TRIAL
-  ---------------------------------------------------
-  */
-
-  if (
-    status === "trial"
-  ) {
-    const trialEnds =
-      new Date(now);
-
-    trialEnds.setDate(
-      trialEnds.getDate() +
-        14
-    );
-
-    updateData.trial_started_at =
-      now.toISOString();
-
-    updateData.trial_ends_at =
-      trialEnds.toISOString();
-
-    updateData.current_period_start =
-      null;
-
-    updateData.current_period_end =
-      null;
-
-    updateData.cancelled_at =
-      null;
-  }
-
-  /*
-  ---------------------------------------------------
-  ACTIVE
-  ---------------------------------------------------
-  */
-
-  if (
-    status === "active"
-  ) {
-    const periodEnd =
-      new Date(now);
-
-    if (
-      billingInterval ===
-      "yearly"
-    ) {
-      periodEnd.setFullYear(
-        periodEnd.getFullYear() +
-          1
-      );
-    } else {
-      periodEnd.setMonth(
-        periodEnd.getMonth() +
-          1
-      );
-    }
-
-    updateData.trial_started_at =
-      null;
-
-    updateData.trial_ends_at =
-      null;
-
-    updateData.current_period_start =
-      now.toISOString();
-
-    updateData.current_period_end =
-      periodEnd.toISOString();
-
-    updateData.cancelled_at =
-      null;
-  }
-
-  /*
-  ---------------------------------------------------
-  CANCELLED
-  ---------------------------------------------------
-  */
-
-  if (
-    status === "cancelled"
-  ) {
-    updateData.cancelled_at =
-      now.toISOString();
-  }
-
-  /*
-  ---------------------------------------------------
-  EXPIRED
-  ---------------------------------------------------
-  */
-
-  if (
-    status === "expired"
-  ) {
-    updateData.cancelled_at =
-      null;
-  }
-
-  /*
-  ---------------------------------------------------
-  GÜNCELLE
-  ---------------------------------------------------
-  */
-
-  const { error } =
-    await supabase
-      .from("subscriptions")
-      .update(
-        updateData
-      )
-      .eq(
-        "id",
-        subscriptionId
-      )
-      .eq(
-        "restaurant_id",
-        restaurantId
-      );
-
-  if (error) {
-    console.error(
-      "SUBSCRIPTION UPDATE ERROR:",
-      error
-    );
-
-    return;
-  }
-
-  /*
-  ---------------------------------------------------
-  RESTAURANT PLAN SENKRONİZASYONU
-  ---------------------------------------------------
-  */
-
-  await syncRestaurantPlan(
-    supabase,
-    restaurantId
-  );
-
-  revalidatePath(
-    "/sistem"
-  );
-
-  revalidatePath(
-    "/sistem/abonelikler"
-  );
-
-  revalidatePath(
-    "/abonelik"
-  );
+  return fields;
 }
 
-/*
-=====================================================
-YENİ ABONELİK OLUŞTUR
-=====================================================
-*/
-
-export async function createSubscription(
-  formData: FormData
-) {
-  const restaurantId =
-    Number(
-      formData.get(
-        "restaurant_id"
-      )
-    );
-
-  const planId =
-    String(
-      formData.get(
-        "plan_id"
-      ) || ""
-    );
-
-  const status =
-    String(
-      formData.get(
-        "status"
-      ) || "trial"
-    ).toLowerCase();
-
-  const billingInterval =
-    String(
-      formData.get(
-        "billing_interval"
-      ) || "monthly"
-    ).toLowerCase();
-
-  if (
-    !Number.isInteger(
-      restaurantId
-    ) ||
-    restaurantId <= 0
-  ) {
-    return;
-  }
-
-  if (!planId) {
-    return;
-  }
-
-  if (
-    !VALID_STATUSES.includes(
-      status
-    )
-  ) {
-    return;
-  }
-
-  if (
-    !VALID_INTERVALS.includes(
-      billingInterval
-    )
-  ) {
-    return;
-  }
-
-  const supabase =
-    await getSystemAdmin();
-
-  /*
-  ---------------------------------------------------
-  RESTORAN
-  ---------------------------------------------------
-  */
-
-  const { data: restaurant } =
-    await supabase
-      .from("restaurants")
-      .select("id")
-      .eq(
-        "id",
-        restaurantId
-      )
-      .maybeSingle();
-
-  if (!restaurant) {
-    return;
-  }
-
-  /*
-  ---------------------------------------------------
-  PLAN
-  ---------------------------------------------------
-  */
-
-  const { data: plan } =
-    await supabase
-      .from(
-        "subscription_plans"
-      )
-      .select(
-        "id, slug"
-      )
-      .eq(
-        "id",
-        planId
-      )
-      .maybeSingle();
-
-  if (!plan) {
-    return;
-  }
-
-  /*
-  ---------------------------------------------------
-  MEVCUT AKTİF/TRIAL ABONELİĞİ KAPAT
-  ---------------------------------------------------
-  */
-
-  await closeOtherActiveSubscriptions(
-    supabase,
-    restaurantId
-  );
-
-  /*
-  ---------------------------------------------------
-  TARİHLER
-  ---------------------------------------------------
-  */
-
-  const now =
-    new Date();
-
-  let trialStartedAt:
-    | string
-    | null = null;
-
-  let trialEndsAt:
-    | string
-    | null = null;
-
-  let currentPeriodStart:
-    | string
-    | null = null;
-
-  let currentPeriodEnd:
-    | string
-    | null = null;
-
-  let cancelledAt:
-    | string
-    | null = null;
-
-  if (
-    status === "trial"
-  ) {
-    const end =
-      new Date(now);
-
-    end.setDate(
-      end.getDate() +
-        14
-    );
-
-    trialStartedAt =
-      now.toISOString();
-
-    trialEndsAt =
-      end.toISOString();
-  }
-
-  if (
-    status === "active"
-  ) {
-    const end =
-      new Date(now);
-
-    if (
-      billingInterval ===
-      "yearly"
-    ) {
-      end.setFullYear(
-        end.getFullYear() +
-          1
-      );
-    } else {
-      end.setMonth(
-        end.getMonth() +
-          1
-      );
-    }
-
-    currentPeriodStart =
-      now.toISOString();
-
-    currentPeriodEnd =
-      end.toISOString();
-  }
-
-  if (
-    status === "cancelled"
-  ) {
-    cancelledAt =
-      now.toISOString();
-  }
-
-  /*
-  ---------------------------------------------------
-  ABONELİK OLUŞTUR
-  ---------------------------------------------------
-  */
-
-  const { error } =
-    await supabase
-      .from("subscriptions")
-      .insert({
-        restaurant_id:
-          restaurantId,
-
-        plan_id:
-          planId,
-
-        status,
-
-        billing_interval:
-          billingInterval,
-
-        trial_started_at:
-          trialStartedAt,
-
-        trial_ends_at:
-          trialEndsAt,
-
-        current_period_start:
-          currentPeriodStart,
-
-        current_period_end:
-          currentPeriodEnd,
-
-        cancelled_at:
-          cancelledAt,
-      });
-
-  if (error) {
-    console.error(
-      "SUBSCRIPTION CREATE ERROR:",
-      error
-    );
-
-    return;
-  }
-
-  /*
-  ---------------------------------------------------
-  PLAN SENKRONİZASYONU
-  ---------------------------------------------------
-  */
-
-  await syncRestaurantPlan(
-    supabase,
-    restaurantId
-  );
-
-  revalidatePath(
-    "/sistem"
-  );
-
-  revalidatePath(
-    "/sistem/abonelikler"
-  );
-
-  revalidatePath(
-    "/abonelik"
-  );
+function refresh() {
+  revalidatePath("/sistem", "layout");
+  revalidatePath("/abonelik");
+  revalidatePath("/admin", "layout");
 }
 
-/*
-=====================================================
-ABONELİK SİL
-=====================================================
-*/
+function readForm(formData: FormData) {
+  return {
+    subscriptionId: String(formData.get("subscription_id") || ""),
+    restaurantId: Number(formData.get("restaurant_id")),
+    planId: String(formData.get("plan_id") || ""),
+    status: String(formData.get("status") || "trial").toLowerCase(),
+    billingInterval: String(formData.get("billing_interval") || "monthly").toLowerCase(),
+  };
+}
+
+function validate(form: ReturnType<typeof readForm>) {
+  if (!Number.isInteger(form.restaurantId) || form.restaurantId <= 0) return "Restoran seçin.";
+  if (!form.planId) return "Paket seçin.";
+  if (!VALID_STATUSES.includes(form.status)) return "Geçersiz abonelik durumu.";
+  if (!VALID_INTERVALS.includes(form.billingInterval)) return "Geçersiz ödeme dönemi.";
+  return null;
+}
+
+async function checkTargets(supabase: SupabaseClient, restaurantId: number, planId: string) {
+  const { data: restaurant } = await supabase
+    .from("restaurants")
+    .select("id")
+    .eq("id", restaurantId)
+    .maybeSingle();
+  if (!restaurant) return "Restoran bulunamadı.";
+
+  const { data: plan } = await supabase
+    .from("subscription_plans")
+    .select("id")
+    .eq("id", planId)
+    .maybeSingle();
+  if (!plan) return "Paket bulunamadı.";
+
+  return null;
+}
+
+/* ---------------- Güncelle ---------------- */
+
+export async function updateSubscription(formData: FormData): Promise<SubscriptionResult> {
+  const form = readForm(formData);
+  const invalid = !form.subscriptionId ? "Abonelik bulunamadı." : validate(form);
+  if (invalid) return { ok: false, message: invalid };
+
+  const { supabase } = await requireSystemAdmin();
+  const missing = await checkTargets(supabase, form.restaurantId, form.planId);
+  if (missing) return { ok: false, message: missing };
+
+  if (form.status === "trial" || form.status === "active") {
+    await closeOtherActiveSubscriptions(supabase, form.restaurantId, form.subscriptionId);
+  }
+
+  const fields = periodFields(form.status, form.billingInterval);
+
+  // İptal ve süresi dolmuş aboneliklerde eski dönem tarihleri korunur.
+  const updateData: Record<string, string | null> =
+    form.status === "trial" || form.status === "active"
+      ? fields
+      : { cancelled_at: fields.cancelled_at };
+
+  const { error } = await supabase
+    .from("subscriptions")
+    .update({
+      plan_id: form.planId,
+      status: form.status,
+      billing_interval: form.billingInterval,
+      ...updateData,
+    })
+    .eq("id", form.subscriptionId)
+    .eq("restaurant_id", form.restaurantId);
+
+  if (error) {
+    console.error("SUBSCRIPTION UPDATE ERROR:", error);
+    return { ok: false, message: `Abonelik güncellenemedi: ${error.message}` };
+  }
+
+  await syncRestaurantPlan(supabase, form.restaurantId);
+  refresh();
+  return { ok: true, message: "Abonelik güncellendi." };
+}
+
+/* ---------------- Oluştur ---------------- */
+
+export async function createSubscription(formData: FormData): Promise<SubscriptionResult> {
+  const form = readForm(formData);
+  const invalid = validate(form);
+  if (invalid) return { ok: false, message: invalid };
+
+  const { supabase } = await requireSystemAdmin();
+  const missing = await checkTargets(supabase, form.restaurantId, form.planId);
+  if (missing) return { ok: false, message: missing };
+
+  await closeOtherActiveSubscriptions(supabase, form.restaurantId);
+
+  const { error } = await supabase.from("subscriptions").insert({
+    restaurant_id: form.restaurantId,
+    plan_id: form.planId,
+    status: form.status,
+    billing_interval: form.billingInterval,
+    ...periodFields(form.status, form.billingInterval),
+  });
+
+  if (error) {
+    console.error("SUBSCRIPTION CREATE ERROR:", error);
+    return { ok: false, message: `Abonelik oluşturulamadı: ${error.message}` };
+  }
+
+  await syncRestaurantPlan(supabase, form.restaurantId);
+  refresh();
+  return { ok: true, message: "Abonelik oluşturuldu." };
+}
+
+/* ---------------- Formlar için (useActionState) ---------------- */
+
+export async function saveSubscription(
+  _prev: SubscriptionResult,
+  formData: FormData
+): Promise<SubscriptionResult> {
+  return formData.get("subscription_id")
+    ? updateSubscription(formData)
+    : createSubscription(formData);
+}
 
 export async function deleteSubscription(
+  _prev: SubscriptionResult,
   formData: FormData
-) {
-  const subscriptionId =
-    String(
-      formData.get(
-        "subscription_id"
-      ) || ""
-    );
+): Promise<SubscriptionResult> {
+  const subscriptionId = String(formData.get("subscription_id") || "");
+  if (!subscriptionId) return { ok: false, message: "Abonelik bulunamadı." };
 
-  if (!subscriptionId) {
-    return;
+  const { supabase } = await requireSystemAdmin();
+
+  const { data: subscription } = await supabase
+    .from("subscriptions")
+    .select("id, restaurant_id")
+    .eq("id", subscriptionId)
+    .maybeSingle();
+
+  if (!subscription) return { ok: false, message: "Abonelik bulunamadı." };
+
+  const { count } = await supabase
+    .from("payment_transactions")
+    .select("id", { count: "exact", head: true })
+    .eq("subscription_id", subscriptionId);
+
+  if (count && count > 0) {
+    return {
+      ok: false,
+      message: "Bu aboneliğe bağlı ödeme kayıtları var; silinemez. Durumunu “İptal” yapabilirsiniz.",
+    };
   }
 
-  const supabase =
-    await getSystemAdmin();
-
-  /*
-  ---------------------------------------------------
-  ABONELİK RESTORANINI BUL
-  ---------------------------------------------------
-  */
-
-  const { data: subscription } =
-    await supabase
-      .from("subscriptions")
-      .select(
-        "id, restaurant_id"
-      )
-      .eq(
-        "id",
-        subscriptionId
-      )
-      .maybeSingle();
-
-  if (!subscription) {
-    return;
-  }
-
-  const restaurantId =
-    subscription.restaurant_id;
-
-  /*
-  ---------------------------------------------------
-  ÖDEME BAĞLANTISI
-  ---------------------------------------------------
-  */
-
-  const { count } =
-    await supabase
-      .from(
-        "payment_transactions"
-      )
-      .select(
-        "id",
-        {
-          count: "exact",
-          head: true,
-        }
-      )
-      .eq(
-        "subscription_id",
-        subscriptionId
-      );
-
-  if (
-    count &&
-    count > 0
-  ) {
-    console.error(
-      "Bu abonelik ödeme kayıtlarına bağlı olduğu için silinemez."
-    );
-
-    return;
-  }
-
-  /*
-  ---------------------------------------------------
-  SİL
-  ---------------------------------------------------
-  */
-
-  const { error } =
-    await supabase
-      .from("subscriptions")
-      .delete()
-      .eq(
-        "id",
-        subscriptionId
-      );
+  const { error } = await supabase.from("subscriptions").delete().eq("id", subscriptionId);
 
   if (error) {
-    console.error(
-      "SUBSCRIPTION DELETE ERROR:",
-      error
-    );
-
-    return;
+    console.error("SUBSCRIPTION DELETE ERROR:", error);
+    return { ok: false, message: `Abonelik silinemedi: ${error.message}` };
   }
 
-  /*
-  ---------------------------------------------------
-  PLAN SENKRONİZASYONU
-  ---------------------------------------------------
-  */
-
-  await syncRestaurantPlan(
-    supabase,
-    restaurantId
-  );
-
-  revalidatePath(
-    "/sistem"
-  );
-
-  revalidatePath(
-    "/sistem/abonelikler"
-  );
-
-  revalidatePath(
-    "/abonelik"
-  );
+  await syncRestaurantPlan(supabase, Number(subscription.restaurant_id));
+  refresh();
+  return { ok: true, message: "Abonelik kaydı silindi." };
 }

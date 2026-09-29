@@ -7,6 +7,7 @@ import {
   isAuroraTheme,
   normalizeRestaurantTheme,
 } from "../../../../lib/themes";
+import { generatePassword } from "../../../../lib/system-admin";
 
 export async function POST(request: Request) {
   let restaurantId: number | null = null;
@@ -16,24 +17,43 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     const {
-      name,
-      slug,
       description,
       instagram_url,
       google_review_url,
-      manager_email,
-      manager_password,
       table_count,
       theme,
       restaurant_type,
     } = body;
 
+    const name = String(body.name ?? "").trim();
+    const slug = String(body.slug ?? "").trim().toLowerCase();
+    const manager_email = String(body.manager_email ?? "").trim().toLowerCase();
+
+    // Şifre boş bırakılırsa güçlü bir şifre oluşturulur; yanıtta bir kez
+    // döndürülür ve sistem sahibine gösterilir.
+    const manager_password =
+      String(body.manager_password ?? "").trim() || generatePassword();
+
     // "menu": sadece menü restoranı (masa yok, sipariş yok, tek QR).
     const menuOnly = restaurant_type === "menu";
 
-    if (!name || !slug || !manager_email || !manager_password) {
+    if (!name || !slug || !manager_email) {
       return NextResponse.json(
-        { error: "Restoran adı, slug, yönetici e-posta ve şifre zorunludur." },
+        { error: "Restoran adı, adres (slug) ve yönetici e-postası zorunludur." },
+        { status: 400 }
+      );
+    }
+
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+      return NextResponse.json(
+        { error: "Adres yalnızca küçük harf, rakam ve tire içerebilir (örn. ozt-kafe)." },
+        { status: 400 }
+      );
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(manager_email)) {
+      return NextResponse.json(
+        { error: "Geçerli bir yönetici e-postası girin." },
         { status: 400 }
       );
     }
@@ -210,8 +230,9 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         {
-          error:
-            authError?.message || "Yönetici hesabı oluşturulamadı.",
+          error: /already|registered|exists/i.test(authError?.message ?? "")
+            ? "Bu e-posta ile bir hesap zaten var. Yönetici için farklı bir e-posta kullanın."
+            : authError?.message || "Yönetici hesabı oluşturulamadı.",
         },
         { status: 500 }
       );
@@ -294,6 +315,9 @@ export async function POST(request: Request) {
       table_count: tableCount,
       theme: normalizeRestaurantTheme(restaurantTheme),
       menu_only: menuOnly,
+      // Yalnızca oluşturan sistem sahibine bir kez gösterilir.
+      manager_email,
+      manager_password,
     });
   } catch (error) {
     console.error("Yeni restoran API hatası:", error);

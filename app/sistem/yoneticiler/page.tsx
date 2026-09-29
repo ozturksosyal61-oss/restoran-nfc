@@ -1,513 +1,99 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "../../../lib/supabase-server";
-import RemoveManagerButton from "./RemoveManagerButton";
+import { requireSystemAdmin } from "../../../lib/system-admin";
+import AdminIcon from "../../admin/AdminIcon";
+import { loadManagers, loadRestaurants } from "../data";
+import { formatDateTime } from "../format";
+import ManagerSearch from "./ManagerSearch";
 
+export const dynamic = "force-dynamic";
+
+// Tüm restoran yöneticileri ve giriş e-postaları. Şifre değiştirme, e-posta
+// güncelleme ve erişim kaldırma restoranın kendi sayfasında yapılır.
 export default async function YoneticilerPage() {
-  const supabase = await createSupabaseServerClient();
+  const { supabase } = await requireSystemAdmin();
 
-  // =====================================================
-  // GİRİŞ YAPAN KULLANICI
-  // =====================================================
+  const [managers, restaurants] = await Promise.all([
+    loadManagers(supabase),
+    loadRestaurants(supabase),
+  ]);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const restaurantById = new Map(restaurants.map((restaurant) => [restaurant.id, restaurant]));
+  const neverLoggedIn = managers.filter((manager) => !manager.last_sign_in_at).length;
+  const withoutManager = restaurants.filter(
+    (restaurant) => !managers.some((manager) => manager.restaurant_id === restaurant.id)
+  );
 
-  if (!user) {
-    redirect("/sistem/login");
-  }
-
-  // =====================================================
-  // SİSTEM SAHİBİ KONTROLÜ
-  // =====================================================
-
-  const { data: systemAdmin } = await supabase
-    .from("system_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!systemAdmin) {
-    redirect("/admin");
-  }
-
-  // =====================================================
-  // RESTORAN YÖNETİCİLERİ
-  // =====================================================
-
-  const { data: managers, error } = await supabase
-    .from("restaurant_users")
-    .select(`
-      id,
-      user_id,
-      restaurant_id,
-      role,
-      created_at,
-      restaurants (
-        id,
-        name,
-        slug
-      )
-    `)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw new Error(
-      "Yöneticiler yüklenemedi: " + error.message
-    );
-  }
-
-  const managerList = managers ?? [];
-
-  const connectedRestaurantCount = new Set(
-    managerList.map((manager) => manager.restaurant_id)
-  ).size;
-
-  const activeManagerCount = managerList.filter(
-    (manager) => manager.role === "manager"
-  ).length;
+  const rows = managers.map((manager) => {
+    const restaurant = restaurantById.get(manager.restaurant_id);
+    return {
+      key: `${manager.restaurant_id}-${manager.user_id}`,
+      email: manager.email ?? "E-posta okunamadı",
+      restaurantId: manager.restaurant_id,
+      restaurantName: restaurant?.name ?? "Silinmiş restoran",
+      restaurantActive: restaurant?.is_active ?? false,
+      lastLogin: formatDateTime(manager.last_sign_in_at),
+      linkedAt: formatDateTime(manager.created_at),
+    };
+  });
 
   return (
-    <main className="system-owner-page">
-
-      {/* =================================================
-          ÜST BAR
-      ================================================= */}
-
-      <div className="system-owner-topbar">
-
-        <div>
-          <span className="system-owner-brand">
-            OZT DIGITAL MENU
-          </span>
-
-          <span className="system-owner-divider">
-            /
-          </span>
-
-          <span className="system-owner-label">
-            Sistem Sahibi
-          </span>
-        </div>
-
-        <Link
-          href="/sistem"
-          className="system-view-button"
-        >
-          ← Sistem Paneli
-        </Link>
-
-      </div>
-
-
-      {/* =================================================
-          HERO
-      ================================================= */}
-
-      <section className="system-owner-hero">
-
-        <div>
-
-          <span className="system-owner-eyebrow">
-            YÖNETİCİ YÖNETİMİ
-          </span>
-
-          <h1>
-            Restoran Yöneticileri
-          </h1>
-
-          <h2>
-            Yönetici hesaplarını yönetin
-          </h2>
-
+    <main className="adm-page">
+      <header className="adm-head">
+        <div className="adm-head-text">
+          <span className="adm-eyebrow">Yönetim</span>
+          <h1>Yönetici hesapları</h1>
           <p>
-            Sistemdeki restoran yöneticilerini görüntüleyin,
-            yönetin ve gerektiğinde sistemden kaldırın.
+            Restoranların işletme paneline giriş yapan hesaplar. Şifreler okunamaz; yeni şifreyi
+            restoranın sayfasından belirlersiniz.
           </p>
-
         </div>
+      </header>
 
-
-        <div className="system-owner-user">
-
-          <span>
-            SİSTEM SAHİBİ
-          </span>
-
-          <strong>
-            {user.email}
-          </strong>
-
-          <small>
-            Yetkili hesap
-          </small>
-
+      <section className="adm-stats" aria-label="Özet">
+        <div className="adm-stat is-highlight">
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Yönetici hesabı</span>
+            <span className="adm-stat-icon"><AdminIcon name="user" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{managers.length}</span>
+          <span className="adm-stat-hint">{restaurants.length - withoutManager.length} restorana bağlı</span>
         </div>
-
+        <div className={`adm-stat ${neverLoggedIn > 0 ? "tone-new" : ""}`}>
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Hiç giriş yapmadı</span>
+            <span className="adm-stat-icon"><AdminIcon name="clock" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{neverLoggedIn}</span>
+          <span className="adm-stat-hint">Giriş bilgisi iletilmemiş olabilir</span>
+        </div>
+        <div className={`adm-stat ${withoutManager.length > 0 ? "tone-danger" : ""}`}>
+          <div className="adm-stat-top">
+            <span className="adm-stat-label">Yöneticisiz restoran</span>
+            <span className="adm-stat-icon"><AdminIcon name="store" size={16} /></span>
+          </div>
+          <span className="adm-stat-value">{withoutManager.length}</span>
+          <span className="adm-stat-hint">Paneline kimse giremiyor</span>
+        </div>
       </section>
 
-
-      {/* =================================================
-          İSTATİSTİKLER
-      ================================================= */}
-
-      <section
-        className="system-owner-stats"
-        style={{
-          gridTemplateColumns:
-            "repeat(3, minmax(0, 1fr))",
-        }}
-      >
-
-        <div className="system-stat-card">
-
-          <div className="system-stat-icon">
-            👤
-          </div>
-
+      {withoutManager.length > 0 && (
+        <div className="adm-alert adm-alert-info sys-missing">
+          <AdminIcon name="info" size={16} />
           <span>
-            Toplam Yönetici
-          </span>
-
-          <strong>
-            {managerList.length}
-          </strong>
-
-          <small>
-            Sistemde kayıtlı yönetici
-          </small>
-
-        </div>
-
-
-        <div className="system-stat-card">
-
-          <div className="system-stat-icon">
-            🏪
-          </div>
-
-          <span>
-            Bağlı Restoran
-          </span>
-
-          <strong>
-            {connectedRestaurantCount}
-          </strong>
-
-          <small>
-            Yönetici bağlantısı bulunan işletme
-          </small>
-
-        </div>
-
-
-        <div className="system-stat-card">
-
-          <div className="system-stat-icon">
-            ✓
-          </div>
-
-          <span>
-            Aktif Yönetici
-          </span>
-
-          <strong>
-            {activeManagerCount}
-          </strong>
-
-          <small>
-            Manager yetkisine sahip hesap
-          </small>
-
-        </div>
-
-      </section>
-
-
-      {/* =================================================
-          YÖNETİCİLER
-      ================================================= */}
-
-      <section className="system-owner-section">
-
-        <div className="system-owner-section-heading">
-
-          <div>
-
-            <span>
-              YÖNETİCİ HESAPLARI
-            </span>
-
-            <h2>
-              Restoran yöneticileri
-            </h2>
-
-          </div>
-
-          <Link
-            href="/sistem/yeni-restoran"
-            className="system-add-button"
-          >
-            ＋ Yeni Yönetici
-          </Link>
-
-        </div>
-
-
-        {/* =================================================
-            YÖNETİCİ LİSTESİ
-        ================================================= */}
-
-        <div
-          style={{
-            display: "grid",
-            gap: "12px",
-          }}
-        >
-
-          {managerList.map((manager) => {
-
-            const restaurant = Array.isArray(
-              manager.restaurants
-            )
-              ? manager.restaurants[0]
-              : manager.restaurants;
-
-            return (
-              <article
-                key={manager.id}
-                className="system-restaurant-card"
-              >
-
-                {/* =================================================
-                    ÜST BİLGİ
-                ================================================= */}
-
-                <div className="system-restaurant-main">
-
-                  <div className="system-restaurant-icon">
-                    👤
-                  </div>
-
-
-                  <div>
-
-                    <div className="system-restaurant-title">
-
-                      <h3>
-                        Restoran Yöneticisi
-                      </h3>
-
-                      <span className="system-status active">
-                        AKTİF
-                      </span>
-
-                    </div>
-
-                    <span className="system-restaurant-slug">
-                      User ID: {manager.user_id}
-                    </span>
-
-                  </div>
-
-                </div>
-
-
-                {/* =================================================
-                    DETAYLAR
-                ================================================= */}
-
-                <div className="system-restaurant-details">
-
-                  <div>
-
-                    <span>
-                      RESTORAN
-                    </span>
-
-                    <strong>
-                      {restaurant?.name ??
-                        "Restoran bulunamadı"}
-                    </strong>
-
-                  </div>
-
-
-                  <div>
-
-                    <span>
-                      ROL
-                    </span>
-
-                    <strong>
-                      {manager.role ?? "manager"}
-                    </strong>
-
-                  </div>
-
-
-                  <div>
-
-                    <span>
-                      RESTORAN URL
-                    </span>
-
-                    <strong>
-                      {restaurant?.slug
-                        ? `/restoran/${restaurant.slug}`
-                        : "-"}
-                    </strong>
-
-                  </div>
-
-                </div>
-
-
-                {/* =================================================
-                    YÖNETİCİ BİLGİSİ
-                ================================================= */}
-
-                <div className="system-managers">
-
-                  <div className="system-managers-title">
-                    Yönetici bilgisi
-                  </div>
-
-                  <div className="system-manager-list">
-
-                    <span className="system-manager">
-                      👤 Yönetici hesabı
-                    </span>
-
-                    <span className="system-manager">
-                      🔐 {manager.role ?? "manager"}
-                    </span>
-
-                    <span className="system-manager">
-                      ID: {manager.id}
-                    </span>
-
-                  </div>
-
-                </div>
-
-
-                {/* =================================================
-                    AKSİYONLAR
-                ================================================= */}
-
-                <div className="system-restaurant-actions">
-
-                  <Link
-                    href={`/sistem/yoneticiler/${manager.id}`}
-                    className="system-manage-button"
-                  >
-                    ⚙️ Yönet
-                  </Link>
-
-                  <Link
-                    href={
-                      restaurant?.slug
-                        ? `/restoran/${restaurant.slug}`
-                        : "/sistem"
-                    }
-                    className="system-view-button"
-                  >
-                    👁 Menüyü Gör
-                  </Link>
-
-                  <RemoveManagerButton
-                    managerId={manager.id}
-                  />
-
-                </div>
-
-              </article>
-            );
-          })}
-
-
-          {/* =================================================
-              BOŞ DURUM
-          ================================================= */}
-
-          {managerList.length === 0 && (
-
-            <div className="system-restaurant-card">
-
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "35px 20px",
-                }}
-              >
-
-                <div
-                  style={{
-                    fontSize: "40px",
-                    marginBottom: "12px",
-                  }}
-                >
-                  👤
-                </div>
-
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: "18px",
-                  }}
-                >
-                  Henüz yönetici yok
-                </h3>
-
-                <p
-                  style={{
-                    margin:
-                      "8px auto 18px",
-                    maxWidth: "450px",
-                    color: "#888",
-                    fontSize: "13px",
-                  }}
-                >
-                  Sisteme ilk restoran yöneticisini
-                  ekleyerek başlayabilirsiniz.
-                </p>
-
-                <Link
-                  href="/sistem/yeni-restoran"
-                  className="system-add-button"
-                >
-                  ＋ İlk Yöneticiyi Ekle
+            Yöneticisi olmayan restoranlar:{" "}
+            {withoutManager.map((restaurant, index) => (
+              <span key={restaurant.id}>
+                {index > 0 && ", "}
+                <Link href={`/sistem/restoran/${restaurant.id}`} className="sys-link">
+                  {restaurant.name}
                 </Link>
-
-              </div>
-
-            </div>
-
-          )}
-
+              </span>
+            ))}
+          </span>
         </div>
+      )}
 
-      </section>
-
-
-      {/* =================================================
-          FOOTER
-      ================================================= */}
-
-      <footer className="system-owner-footer">
-
-        <span>
-          OZT DIGITAL MENU
-        </span>
-
-        <span>
-          Sistem Sahibi Paneli
-        </span>
-
-      </footer>
-
+      <ManagerSearch rows={rows} />
     </main>
   );
 }

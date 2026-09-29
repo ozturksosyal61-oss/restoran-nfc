@@ -1,0 +1,903 @@
+/* =========================================================
+   OZT DIGITAL — SİSTEM SAHİBİ PANELİ
+   admin.css tasarım sistemini kullanır. .sys kökü kenar menüyü
+   gece mavisine çevirir; böylece sistem panelinde olduğunuz
+   restoran panelinden ilk bakışta ayrılır. Vurgu pirinç kalır.
+   ========================================================= */
+
+.adm.sys {
+  --a-bg: #f2f3f6;
+  --a-sunken: #f6f7f9;
+  --a-line: #e3e5ec;
+  --a-line-strong: #d0d4de;
+  --a-muted: #5f6474;
+  --a-faint: #9aa0b0;
+  --a-primary: #141a2b;
+
+  --a-side: #0f1422;
+  --a-side-2: #182036;
+  --a-side-ink: #e8ebf3;
+  --a-side-muted: #8a92a8;
+  --a-side-line: rgba(232, 235, 243, 0.08);
+}
+
+/* Izgara elemanları içerikleri kadar genişlemesin; aksi hâlde yatay
+   kayan filtre çipleri dar ekranda sayfayı ekrandan taşırır. */
+.sys .adm-page > *,
+.sys .adm-section > * {
+  min-width: 0;
+}
+
+/* Filtre çipleri dar ekranda arama kutusunun yanında sıkışmasın; kendi
+   satırına geçip yatay kaysın. */
+.sys .adm-toolbar-row .adm-chips {
+  flex: 1 1 360px;
+}
+
+/* Alt kaydet çubuğunda açıklama solda, düğmeler sağda toplansın. */
+.sys .adm-sticky-actions > span:first-child {
+  margin-right: auto;
+}
+
+.sys .adm-nav-item {
+  color: #c3c9d8;
+}
+
+.sys-side-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 34px;
+  padding: 0 10px;
+  color: var(--a-side-muted);
+  font-size: 12px;
+}
+
+.sys-side-user span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sys-stack {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  align-content: start;
+}
+
+.sys-link {
+  color: var(--a-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--a-line-strong);
+  text-underline-offset: 3px;
+}
+
+.sys-link:hover {
+  text-decoration-color: var(--a-accent);
+}
+
+.sys-search {
+  width: min(340px, 100%);
+}
+
+.sys-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sys-inline .adm-input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.sys-dot {
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid;
+  vertical-align: -1px;
+}
+
+.sys-days {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--a-sunken);
+  color: var(--a-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.sys-days.is-soon {
+  background: var(--a-new-bg);
+  color: var(--a-new);
+}
+
+/* ---------- Logo ---------- */
+
+.sys-logo {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--a-side);
+  color: var(--a-gold);
+  font-family: var(--a-display);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.sys-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #fff;
+}
+
+.sys-logo-lg {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  font-size: 32px;
+}
+
+.sys-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.sys-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* =========================================================
+   RESTORAN LİSTESİ
+   ========================================================= */
+
+.sys-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--a-radius);
+  border: 1px solid var(--a-line);
+  background: var(--a-surface);
+  list-style: none;
+}
+
+.sys-list > li + li {
+  border-top: 1px solid var(--a-line);
+}
+
+.sys-row {
+  display: grid;
+  grid-template-columns: 42px minmax(170px, 1.6fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(170px, 1.3fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  transition: background 0.15s ease;
+}
+
+.sys-row:hover {
+  background: #fafbfc;
+}
+
+.sys-row.is-off .sys-row-name,
+.sys-row.is-off .sys-logo {
+  opacity: 0.55;
+}
+
+.sys-row-name,
+.sys-row-type,
+.sys-row-plan {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  justify-items: start;
+}
+
+.sys-row-name strong {
+  overflow: hidden;
+  font-size: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sys-row-name small {
+  overflow: hidden;
+  color: var(--a-faint);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sys-row-theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--a-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sys-row-plan small {
+  color: var(--a-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sys-row-plan small.is-soon {
+  color: var(--a-new);
+  font-weight: 700;
+}
+
+.sys-row-manager {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: var(--a-muted);
+  font-size: 13px;
+}
+
+.sys-row-manager > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sys-row-manager em {
+  color: var(--a-faint);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.sys-row-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  color: var(--a-faint);
+}
+
+.sys-row:hover .sys-row-status svg {
+  color: var(--a-ink);
+}
+
+/* =========================================================
+   RESTORAN DETAYI
+   ========================================================= */
+
+.sys-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sys-facts {
+  display: grid;
+  margin: 0;
+}
+
+.sys-facts > div {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--a-line);
+}
+
+.sys-facts > div:last-child {
+  border-bottom: 0;
+}
+
+.sys-facts dt {
+  color: var(--a-muted);
+  font-size: 12.5px;
+}
+
+.sys-facts dd {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Yöneticiler ---------- */
+
+.sys-managers {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sys-manager {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--a-line);
+  background: var(--a-sunken);
+}
+
+.sys-manager-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sys-manager-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--a-side);
+  color: var(--a-gold);
+}
+
+.sys-manager-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.sys-manager-text strong {
+  overflow: hidden;
+  font-size: 14.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sys-manager-text small {
+  color: var(--a-muted);
+  font-size: 12.5px;
+}
+
+.sys-manager-actions {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+
+.sys-manager-actions .adm-btn.is-on {
+  border-color: var(--a-primary);
+  background: var(--a-primary);
+  color: var(--a-primary-ink);
+}
+
+.sys-manager-actions .adm-btn.adm-text-danger.is-on {
+  border-color: var(--a-danger);
+  background: var(--a-danger-bg);
+  color: var(--a-danger);
+}
+
+.sys-manager-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--a-line);
+  background: var(--a-surface);
+}
+
+.sys-manager-panel.is-danger {
+  border-color: #f3c4bf;
+  background: #fff8f7;
+}
+
+.sys-manager-panel p {
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.sys-panel-title {
+  font-size: 14.5px;
+}
+
+/* ---------- Tek seferlik giriş bilgileri ---------- */
+
+.sys-cred {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--a-side);
+  color: var(--a-side-ink);
+}
+
+.sys-cred-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sys-cred-head > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--a-gold);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.sys-cred-head .adm-btn {
+  border-color: rgba(232, 235, 243, 0.2);
+  color: var(--a-side-ink);
+}
+
+.sys-cred-head .adm-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sys-cred dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.sys-cred dl > div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+}
+
+.sys-cred dt {
+  color: var(--a-side-muted);
+  font-size: 12.5px;
+}
+
+.sys-cred dd {
+  margin: 0;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.sys-cred-secret {
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.sys-cred p {
+  margin: 0;
+  color: var(--a-side-muted);
+  font-size: 12px;
+}
+
+/* ---------- Ayar blokları ---------- */
+
+.sys-setting {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--a-line);
+}
+
+.sys-setting-label {
+  display: grid;
+  gap: 2px;
+}
+
+.sys-setting-label strong {
+  font-size: 14.5px;
+}
+
+.sys-setting-label small {
+  color: var(--a-muted);
+  font-size: 12.5px;
+}
+
+.sys-setting-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sys-setting-foot .adm-alert {
+  flex: 1 1 240px;
+}
+
+.sys-type-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sys-type-toggle label {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--a-line-strong);
+  background: var(--a-surface);
+  cursor: pointer;
+}
+
+.sys-type-toggle label:focus-within {
+  outline: 2px solid var(--a-gold);
+  outline-offset: 2px;
+}
+
+.sys-type-toggle label.is-on {
+  border-color: var(--a-primary);
+  box-shadow: inset 0 0 0 1px var(--a-primary);
+}
+
+.sys-type-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sys-type-toggle strong {
+  font-size: 14px;
+}
+
+.sys-type-toggle small {
+  color: var(--a-muted);
+  font-size: 12px;
+}
+
+/* ---------- Tema seçici ---------- */
+
+.sys-themes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+  gap: 8px;
+}
+
+.sys-theme {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--a-line);
+  background: var(--a-surface);
+  color: var(--a-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sys-theme:hover {
+  border-color: var(--a-line-strong);
+}
+
+.sys-theme.is-on {
+  border-color: var(--a-primary);
+  box-shadow: inset 0 0 0 1px var(--a-primary);
+}
+
+.sys-theme-swatch {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  font-family: var(--a-display);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sys-theme-name {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* ---------- Durum / silme ---------- */
+
+.sys-danger .adm-divider {
+  margin: 0;
+}
+
+.sys-delete {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #f3c4bf;
+  background: #fff8f7;
+}
+
+.sys-delete p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* =========================================================
+   YENİ RESTORAN
+   ========================================================= */
+
+.sys-step-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.sys-step-head h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.sys-step-head p {
+  margin: 2px 0 0;
+  color: var(--a-muted);
+  font-size: 13px;
+}
+
+.sys-step {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--a-side);
+  color: var(--a-gold);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.sys-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 12px;
+}
+
+.sys-type-card {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid var(--a-line-strong);
+  background: var(--a-surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sys-type-card:hover {
+  border-color: var(--a-faint);
+}
+
+.sys-type-card.is-on {
+  border-color: var(--a-primary);
+  box-shadow: inset 0 0 0 1px var(--a-primary), var(--a-shadow);
+}
+
+.sys-type-card:focus-within {
+  outline: 2px solid var(--a-gold);
+  outline-offset: 2px;
+}
+
+.sys-type-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sys-type-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sys-type-card-head strong {
+  font-family: var(--a-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.sys-radio {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--a-line-strong);
+  background: var(--a-surface);
+}
+
+.sys-type-card.is-on .sys-radio {
+  border: 5px solid var(--a-primary);
+}
+
+.sys-type-card-desc {
+  color: var(--a-muted);
+  font-size: 13px;
+}
+
+.sys-type-card ul {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sys-type-card li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.sys-type-card li svg {
+  color: var(--a-ok);
+}
+
+.sys-prefix {
+  color: var(--a-faint);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.sys-note {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1px dashed var(--a-line-strong);
+  background: var(--a-sunken);
+  color: var(--a-muted);
+  font-size: 13px;
+}
+
+.sys-note b {
+  color: var(--a-ink);
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   YÖNETİCİ HESAPLARI
+   ========================================================= */
+
+.sys-cell-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--a-muted);
+}
+
+.sys-cell-email strong {
+  color: var(--a-ink);
+}
+
+.sys-missing {
+  margin: 0;
+}
+
+/* =========================================================
+   DAR EKRAN
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .sys-row {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "logo name status"
+      "logo type status"
+      "logo plan status"
+      "logo manager status";
+    row-gap: 6px;
+  }
+
+  .sys-row .sys-logo {
+    grid-area: logo;
+    align-self: start;
+  }
+
+  .sys-row-name {
+    grid-area: name;
+  }
+
+  .sys-row-type {
+    grid-area: type;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sys-row-plan {
+    grid-area: plan;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sys-row-manager {
+    grid-area: manager;
+  }
+
+  .sys-row-status {
+    grid-area: status;
+    align-self: start;
+  }
+}
+
+@media (max-width: 560px) {
+  .sys-row {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .sys-row-status .adm-badge {
+    display: none;
+  }
+
+  .sys-manager-main {
+    flex-wrap: wrap;
+  }
+
+  .sys-manager-actions {
+    width: 100%;
+  }
+
+  .sys-type-toggle {
+    grid-template-columns: 1fr;
+  }
+
+  .sys-title {
+    align-items: flex-start;
+  }
+
+  .sys-logo-lg {
+    width: 52px;
+    height: 52px;
+    font-size: 26px;
+  }
+
+  .sys-cred dl > div,
+  .sys-facts > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

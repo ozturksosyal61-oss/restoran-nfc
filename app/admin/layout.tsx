@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { unstable_rethrow } from "next/navigation";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
 import { getPlanLabel, hasPlanFeature } from "../../lib/plan";
@@ -53,6 +54,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       }
     }
   } catch (error) {
+    // Next.js'in "dinamik sayfa" sinyali yutulmasın.
+    unstable_rethrow(error);
     console.error("Admin kabuğu için restoran bilgisi alınamadı:", error);
   }
 
