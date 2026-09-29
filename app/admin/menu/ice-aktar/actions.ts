@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getAdminRestaurant } from "../../../../lib/admin-restaurant";
-import { AiError, aiConfigured, AI_NOT_CONFIGURED_MESSAGE, callClaudeTool, type AiContent } from "../../../../lib/ai";
+import { AiError, aiConfigured, AI_NOT_CONFIGURED_MESSAGE, callAiTool, type AiContent } from "../../../../lib/ai";
 
 export type DraftProduct = {
   name: string;
@@ -79,7 +79,7 @@ export async function analyzeMenu(formData: FormData): Promise<AnalyzeResult> {
   });
 
   try {
-    const result = await callClaudeTool<{ categories: DraftCategory[] }>({
+    const result = await callAiTool<{ categories: DraftCategory[] }>({
       system:
         "Sen Türk restoran menülerini dijitale aktaran bir asistansın. Görsellerdeki ya da PDF'teki menüyü " +
         "olduğu gibi aktar; bilgi uydurma. Metni Türkçe bırak, yalnızca bariz yazım/okuma hatalarını düzelt. " +

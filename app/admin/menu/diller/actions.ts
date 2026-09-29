@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminRestaurant } from "../../../../lib/admin-restaurant";
-import { AiError, aiConfigured, AI_NOT_CONFIGURED_MESSAGE, callClaudeTool } from "../../../../lib/ai";
+import { AiError, aiConfigured, AI_NOT_CONFIGURED_MESSAGE, callAiTool } from "../../../../lib/ai";
 import {
   isMenuLanguage,
   languageMeta,
@@ -119,7 +119,7 @@ async function translateChunk(language: MenuLanguage, jobs: Job[]) {
 
   const meta = languageMeta(language);
 
-  const result = await callClaudeTool<{ items: TranslatedItem[] }>({
+  const result = await callAiTool<{ items: TranslatedItem[] }>({
     system:
       `You translate Turkish restaurant menus into ${meta.label} (${language}) for tourists. ` +
       "Keep it natural and appetising, the way a good local menu in that language would read. " +
