@@ -1,0 +1,97 @@
+.page {
+  min-height: 100vh;
+  padding: 45px 18px 70px;
+  background:
+    radial-gradient(circle at top, rgba(212, 175, 55, 0.1), transparent 36%),
+    #080808;
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.shell {
+  box-sizing: border-box;
+  width: min(620px, 100%);
+  margin: 0 auto;
+  padding: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.018));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.brand {
+  color: #d4af37;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  text-align: center;
+}
+
+.eyebrow {
+  margin-top: 30px;
+  color: #d4af37;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-align: center;
+}
+
+.title {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: clamp(32px, 6vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -1.5px;
+  text-wrap: balance;
+}
+
+.subtitle {
+  max-width: 520px;
+  margin: 17px auto 30px;
+  color: rgba(255, 255, 255, 0.58);
+  text-align: center;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.primary,
+.secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.primary {
+  background: #d4af37;
+  color: #080808;
+  box-shadow: 0 12px 30px rgba(212, 175, 55, 0.15);
+}
+
+.secondary {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 2px solid #d4af37;
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .shell {
+    padding: 28px 18px;
+    border-radius: 22px;
+  }
+}

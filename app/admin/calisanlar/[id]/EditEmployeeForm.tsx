@@ -133,7 +133,7 @@ export default function EditEmployeeForm({
           membership.restaurant_id
         )
         .select(
-          "id, restaurant_id, name, role, phone, is_active"
+          "id, restaurant_id, name, role, is_active"
         )
         .maybeSingle();
 
@@ -164,7 +164,7 @@ export default function EditEmployeeForm({
       );
 
       setName(updatedEmployee.name);
-      setPhone(updatedEmployee.phone || "");
+      setPhone(cleanPhone);
       setRole(updatedEmployee.role);
       setIsActive(updatedEmployee.is_active);
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "../../../lib/supabase-server";
+import { loadEmployeePhones } from "../../../lib/employee-phones";
 import AdminIcon from "../AdminIcon";
 
 type Employee = {
@@ -99,17 +100,21 @@ export default async function CalisanlarPage() {
   // ÇALIŞANLAR
   // =====================================================
 
-  const { data: employeesData, error } = await supabase
-    .from("employees")
-    .select(
-      "id, name, role, phone, is_active, created_at"
-    )
-    .eq("restaurant_id", restaurantId)
-    .order("created_at", {
-      ascending: false,
-    });
+  const [{ data: employeesData, error }, phones] = await Promise.all([
+    supabase
+      .from("employees")
+      .select("id, name, role, is_active, created_at")
+      .eq("restaurant_id", restaurantId)
+      .order("created_at", {
+        ascending: false,
+      }),
+    loadEmployeePhones(supabase, Number(restaurantId)),
+  ]);
 
-  const employees = (employeesData || []) as Employee[];
+  const employees: Employee[] = (employeesData || []).map((employee) => ({
+    ...employee,
+    phone: phones.get(Number(employee.id)) ?? null,
+  }));
 
   // =====================================================
   // İSTATİSTİKLER

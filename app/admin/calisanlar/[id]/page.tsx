@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "../../../../lib/supabase-server";
+import { loadEmployeePhones } from "../../../../lib/employee-phones";
 import EditEmployeeForm from "./EditEmployeeForm";
 
 type Props = {
@@ -65,15 +66,16 @@ export default async function EditEmployeePage({
   // restoranın çalışanını açamaz.
   // =====================================================
 
-  const { data: employee, error: employeeError } =
-    await supabase
-      .from("employees")
-      .select(
-        "id, restaurant_id, name, role, phone, is_active"
-      )
-      .eq("id", employeeId)
-      .eq("restaurant_id", restaurantId)
-      .single();
+  const [{ data: employee, error: employeeError }, phones] =
+    await Promise.all([
+      supabase
+        .from("employees")
+        .select("id, restaurant_id, name, role, is_active")
+        .eq("id", employeeId)
+        .eq("restaurant_id", restaurantId)
+        .single(),
+      loadEmployeePhones(supabase, Number(restaurantId)),
+    ]);
 
   if (employeeError || !employee) {
     notFound();
@@ -81,7 +83,10 @@ export default async function EditEmployeePage({
 
   return (
     <EditEmployeeForm
-      employee={employee}
+      employee={{
+        ...employee,
+        phone: phones.get(employeeId) ?? null,
+      }}
     />
   );
 }
