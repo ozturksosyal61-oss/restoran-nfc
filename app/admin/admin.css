@@ -3705,3 +3705,54 @@ button.adm-chip {
     justify-self: start;
   }
 }
+
+/* =========================================================
+   DEMO PANELİ ŞERİDİ
+   ========================================================= */
+
+.adm-demo-bar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 4px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #ecd9ad;
+  background: #fbf3df;
+  color: var(--a-ink);
+}
+
+.adm-demo-bar-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--a-gold);
+  color: #fff;
+}
+
+.adm-demo-bar-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.adm-demo-bar-text small {
+  color: var(--a-muted);
+  font-size: 12.5px;
+}
+
+@media (max-width: 640px) {
+  .adm-demo-bar {
+    flex-wrap: wrap;
+  }
+
+  .adm-demo-bar-text small {
+    display: none;
+  }
+}

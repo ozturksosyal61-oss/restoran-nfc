@@ -63,6 +63,7 @@ export default function AdminShell({
   canUseStaff,
   canUseReports = false,
   menuOnly = false,
+  demoMode = false,
   children,
 }: {
   restaurant: AdminShellRestaurant | null;
@@ -71,6 +72,8 @@ export default function AdminShell({
   canUseStaff: boolean;
   canUseReports?: boolean;
   menuOnly?: boolean;
+  // Salt okunur demo hesabı: üstte uyarı şeridi, çıkışta demo sayfasına dönülür.
+  demoMode?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname() || "/admin";
@@ -106,7 +109,7 @@ export default function AdminShell({
 
   async function logout() {
     await createClient().auth.signOut();
-    router.push("/admin/login");
+    router.push(demoMode ? "/demo" : "/admin/login");
     router.refresh();
   }
 
@@ -257,6 +260,24 @@ export default function AdminShell({
           <strong>{restaurant.name}</strong>
           <span className="adm-badge s-accent">{planLabel}</span>
         </header>
+
+        {demoMode && (
+          <div className="adm-demo-bar" role="status">
+            <span className="adm-demo-bar-icon">
+              <AdminIcon name="eye" size={16} />
+            </span>
+            <span className="adm-demo-bar-text">
+              <strong>Demo paneli · inceleme modu</strong>
+              <small>
+                Her ekranı gezebilir, müşteri menüsünden verdiğiniz siparişi burada görebilirsiniz. Değişiklikler
+                kaydedilmez.
+              </small>
+            </span>
+            <button type="button" className="adm-btn adm-btn-sm" onClick={logout}>
+              Demodan çık
+            </button>
+          </div>
+        )}
 
         {/* Sadece menü restoranında izin verilmeyen sayfa yönlenene kadar boş kalır. */}
         <MenuOnlyContext.Provider value={menuOnly}>

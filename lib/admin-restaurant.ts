@@ -1,3 +1,4 @@
+import { isDemoSession } from "./demo";
 import { createSupabaseServerClient } from "./supabase-server";
 
 // İşletme paneli işlemleri için: oturumdaki kullanıcı ve bağlı olduğu
@@ -20,5 +21,8 @@ export async function getAdminRestaurant() {
   const restaurantId = Number(membership?.restaurant_id);
   if (!Number.isInteger(restaurantId) || restaurantId <= 0) return null;
 
-  return { supabase, user, restaurantId };
+  // Salt okunur demo hesabı (yapay zekâ gibi maliyetli işlemler kapatılır).
+  const isDemo = await isDemoSession(supabase);
+
+  return { supabase, user, restaurantId, isDemo };
 }

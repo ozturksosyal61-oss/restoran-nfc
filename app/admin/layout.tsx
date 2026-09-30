@@ -4,6 +4,7 @@ import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
 import { getPlanLabel, hasPlanFeature } from "../../lib/plan";
 import { readMenuOnly } from "../../lib/restaurant-type";
+import { isDemoSession } from "../../lib/demo";
 import AdminShell, { type AdminShellRestaurant } from "./AdminShell";
 import "./admin.css";
 
@@ -25,6 +26,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   let restaurant: AdminShellRestaurant | null = null;
   let plan: string | null = null;
   let menuOnly = false;
+  let demoMode = false;
 
   try {
     const supabase = await createSupabaseServerClient();
@@ -50,6 +52,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           restaurant = { name: data.name, slug: data.slug, logo_url: data.logo_url ?? null };
           plan = data.plan ?? null;
           menuOnly = await readMenuOnly(supabase, Number(membership.restaurant_id));
+          demoMode = await isDemoSession(supabase);
         }
       }
     }
@@ -68,6 +71,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         canUseStaff={hasPlanFeature(plan, "multi_user")}
         canUseReports={hasPlanFeature(plan, "analytics")}
         menuOnly={menuOnly}
+        demoMode={demoMode}
       >
         {children}
       </AdminShell>

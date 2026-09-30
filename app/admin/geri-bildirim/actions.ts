@@ -5,7 +5,7 @@ import { getAdminRestaurant } from "../../../lib/admin-restaurant";
 
 export async function setFeedbackResolved(formData: FormData) {
   const admin = await getAdminRestaurant();
-  if (!admin) return;
+  if (!admin || admin.isDemo) return;
 
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id) || id <= 0) return;

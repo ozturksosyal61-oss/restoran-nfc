@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminRestaurant } from "../../../../lib/admin-restaurant";
+import { DEMO_BLOCKED_MESSAGE } from "../../../../lib/demo";
 import { AiError, aiConfigured, AI_NOT_CONFIGURED_MESSAGE, callAiTool } from "../../../../lib/ai";
 import {
   isMenuLanguage,
@@ -48,6 +49,7 @@ function refresh() {
 export async function saveMenuLanguages(_prev: LanguageResult, formData: FormData): Promise<LanguageResult> {
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı. Lütfen tekrar giriş yapın." };
+  if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
 
   const languages = normalizeLanguages(formData.getAll("languages").map(String));
 
@@ -188,6 +190,7 @@ async function saveTranslation(
 export async function translateMenu(_prev: LanguageResult, formData: FormData): Promise<LanguageResult> {
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı. Lütfen tekrar giriş yapın." };
+  if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
   if (!aiConfigured()) return { ok: false, message: AI_NOT_CONFIGURED_MESSAGE };
 
   const redo = formData.get("mode") === "all";
@@ -312,6 +315,7 @@ export async function translateMenu(_prev: LanguageResult, formData: FormData): 
 export async function saveManualTranslation(_prev: LanguageResult, formData: FormData): Promise<LanguageResult> {
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı. Lütfen tekrar giriş yapın." };
+  if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
 
   const kind = formData.get("kind") === "category" ? "category" : "product";
   const id = Number(formData.get("id"));

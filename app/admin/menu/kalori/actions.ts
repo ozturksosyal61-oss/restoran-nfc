@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminRestaurant } from "../../../../lib/admin-restaurant";
+import { DEMO_BLOCKED_MESSAGE } from "../../../../lib/demo";
 import { AiError, aiConfigured, AI_NOT_CONFIGURED_MESSAGE, callAiTool } from "../../../../lib/ai";
 
 export type CalorieResult = { ok: boolean; message: string } | null;
@@ -101,6 +102,7 @@ async function estimateChunk(rows: Row[]) {
 export async function estimateCalories(_prev: CalorieResult, formData: FormData): Promise<CalorieResult> {
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı. Lütfen tekrar giriş yapın." };
+  if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
   if (!aiConfigured()) return { ok: false, message: AI_NOT_CONFIGURED_MESSAGE };
 
   // "Tümü" modunda bile işletmenin elle girdiği değerlere dokunulmaz.
@@ -178,6 +180,7 @@ export async function estimateCalories(_prev: CalorieResult, formData: FormData)
 export async function saveCalories(_prev: CalorieResult, formData: FormData): Promise<CalorieResult> {
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı." };
+  if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
 
   const id = Number(formData.get("id"));
   const raw = String(formData.get("calories") ?? "").trim();

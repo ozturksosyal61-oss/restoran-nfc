@@ -1,3 +1,4 @@
+import { isDemoSession } from "./demo";
 import { createSupabaseServerClient } from "./supabase-server";
 
 type AccessResult =
@@ -17,6 +18,11 @@ export async function checkRestaurantAccess(
 
   if (!user) {
     return { ok: false, status: 401, error: "Oturum bulunamadı." };
+  }
+
+  // Salt okunur demo hesabı abonelik ve ödeme işlemi başlatamaz.
+  if (await isDemoSession(supabase)) {
+    return { ok: false, status: 403, error: "Demo panelinde bu işlem yapılamaz." };
   }
 
   const { data: membership } = await supabase

@@ -378,3 +378,25 @@
 .ctaSpace {
   padding-top: clamp(64px, 9vw, 112px);
 }
+
+.panelActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  margin-top: 28px;
+}
+
+.panelHint {
+  color: var(--muted-dark);
+  font-size: 14px;
+}
+
+.panelError {
+  margin-top: 18px !important;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  background: #fdecea;
+  color: #b42318;
+  font-size: 14px;
+}

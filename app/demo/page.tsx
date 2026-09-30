@@ -132,8 +132,22 @@ async function demoQrSvg() {
   });
 }
 
-export default async function DemoPage() {
+// Demo panele giriş bağlantısı. Next Link kullanılmaz: önceden yükleme
+// (prefetch) giriş yapmasın diye düz <a>.
+const PANEL_PATH = "/demo/panel";
+
+const PANEL_ERRORS: Record<string, string> = {
+  kapali: "Demo paneli şu an hazırlanıyor. Lütfen biraz sonra tekrar deneyin.",
+  hata: "Demo paneli açılamadı. Lütfen tekrar deneyin.",
+};
+
+export default async function DemoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ panel?: string }>;
+}) {
   const qrSvg = await demoQrSvg();
+  const panelError = PANEL_ERRORS[(await searchParams).panel ?? ""];
 
   return (
     <main className={`${home.page} ${display.variable} ${sans.variable}`}>
@@ -147,7 +161,7 @@ export default async function DemoPage() {
 
           <nav className={home.navLinks} aria-label="Demo bölümleri">
             <a href="#deneyin">Neler denenir</a>
-            <a href="#panel">İşletme paneli</a>
+            <a href="#panel">Demo panel</a>
             <Link href="/urunler">Ürünler</Link>
             <Link href="/#paketler">Paketler</Link>
           </nav>
@@ -186,10 +200,16 @@ export default async function DemoPage() {
               Demoyu bu cihazda aç
               <Icon name="arrow" className={home.btnIcon} />
             </TrackedLink>
-            <a href="#deneyin" className={home.btnSecondary}>
-              Neler deneyebilirim?
+            <a href={PANEL_PATH} className={home.btnSecondary} rel="nofollow">
+              Yönetim panelini gör
             </a>
           </div>
+
+          {panelError && (
+            <p className={styles.panelError} role="alert">
+              {panelError}
+            </p>
+          )}
 
           <p className={styles.heroNote}>
             <Icon name="check" className={styles.noteIcon} />
@@ -265,9 +285,16 @@ export default async function DemoPage() {
               Siz de arka planda <em>her şeyi görürsünüz.</em>
             </h2>
             <p>
-              Demoda verdiğiniz sipariş, restoranın panelinde bu ekranlara düşer. Paneli telefondan ya da
-              kasadaki bilgisayardan kullanabilirsiniz.
+              Demoda verdiğiniz sipariş, restoranın panelinde bu ekranlara düşer. Demo paneline girip hepsini
+              kendiniz gezebilirsiniz; inceleme modunda olduğu için hiçbir şey değişmez.
             </p>
+            <div className={styles.panelActions}>
+              <a href={PANEL_PATH} className={home.btnGold} rel="nofollow">
+                Demo paneline girin
+                <Icon name="arrow" className={home.btnIcon} />
+              </a>
+              <span className={styles.panelHint}>Şifre gerekmez · salt okunur</span>
+            </div>
           </div>
 
           <ul className={styles.features}>
