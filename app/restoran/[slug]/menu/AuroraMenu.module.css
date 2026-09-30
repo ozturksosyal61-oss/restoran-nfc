@@ -1511,3 +1511,19 @@
 .page[dir="rtl"] .sideBack svg {
   transform: scaleX(-1);
 }
+
+/* ---------- Kalori ---------- */
+
+.kcal {
+  margin-inline-start: 8px;
+  color: var(--au-muted);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.productBody .kcalLine {
+  margin: 0;
+  color: var(--au-muted);
+  font-size: 13px;
+}

@@ -172,6 +172,9 @@ const tr = {
   backToMenu: "Menüye dön",
   language: "Dil",
   rateUs: "Bizi değerlendirin",
+  approxCalories: (value: string) => `Yaklaşık ${value} kcal · porsiyon başına`,
+  // Sayı biçimi (kalori gibi)
+  locale: "tr-TR",
 };
 
 export type MenuStrings = typeof tr;
@@ -252,6 +255,8 @@ const en: MenuStrings = {
   backToMenu: "Back to menu",
   language: "Language",
   rateUs: "Rate us",
+  approxCalories: (value) => `About ${value} kcal per serving`,
+  locale: "en-GB",
 };
 
 const de: MenuStrings = {
@@ -331,6 +336,8 @@ const de: MenuStrings = {
   backToMenu: "Zurück zur Speisekarte",
   language: "Sprache",
   rateUs: "Bewerten Sie uns",
+  approxCalories: (value) => `Ca. ${value} kcal pro Portion`,
+  locale: "de-DE",
 };
 
 const ru: MenuStrings = {
@@ -409,6 +416,8 @@ const ru: MenuStrings = {
   backToMenu: "Вернуться в меню",
   language: "Язык",
   rateUs: "Оцените нас",
+  approxCalories: (value) => `Около ${value} ккал на порцию`,
+  locale: "ru-RU",
 };
 
 const ar: MenuStrings = {
@@ -486,6 +495,8 @@ const ar: MenuStrings = {
   backToMenu: "العودة إلى القائمة",
   language: "اللغة",
   rateUs: "قيّمنا",
+  approxCalories: (value) => `حوالي ${value} سعرة حرارية للحصة`,
+  locale: "ar-u-nu-latn",
 };
 
 const fr: MenuStrings = {
@@ -564,6 +575,8 @@ const fr: MenuStrings = {
   backToMenu: "Retour au menu",
   language: "Langue",
   rateUs: "Donnez votre avis",
+  approxCalories: (value) => `Environ ${value} kcal par portion`,
+  locale: "fr-FR",
 };
 
 const STRINGS: Record<DisplayLanguage, MenuStrings> = { tr, en, de, ru, ar, fr };

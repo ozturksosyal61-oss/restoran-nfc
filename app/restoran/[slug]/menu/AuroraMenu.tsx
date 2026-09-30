@@ -80,6 +80,7 @@ type Product = {
   ingredients: string | null;
   allergens: string | null;
   translations?: unknown;
+  calories?: number | null;
 };
 
 type Restaurant = {
@@ -186,11 +187,24 @@ export default function AuroraMenu({
         }
 
         // Çok dilli menü: sütunlar henüz yoksa her şey Türkçe kalır.
-        const [languageResult, categoryTranslations, productTranslations] = await Promise.all([
+        const [languageResult, categoryTranslations, productTranslations, calorieResult] = await Promise.all([
           supabase.from("restaurants").select("menu_languages").eq("id", restaurantData.id).maybeSingle(),
           loadTranslations(supabase, "categories", safeCategories.map((category) => category.id)),
           loadTranslations(supabase, "products", safeProducts.map((product) => product.id)),
+          // Kalori sütunu henüz yoksa sessizce atlanır.
+          safeProducts.length > 0
+            ? supabase.from("products").select("id, calories").in("id", safeProducts.map((product) => product.id))
+            : Promise.resolve({ data: [], error: null }),
         ]);
+
+        const calories = calorieResult.error
+          ? new Map<number, number | null>()
+          : new Map(
+              ((calorieResult.data ?? []) as { id: number; calories: number | null }[]).map((row) => [
+                Number(row.id),
+                row.calories,
+              ])
+            );
 
         const availableLanguages = languageResult.error
           ? []
@@ -201,6 +215,7 @@ export default function AuroraMenu({
         });
         safeProducts.forEach((product) => {
           product.translations = productTranslations.get(product.id);
+          product.calories = calories.get(product.id) ?? null;
         });
 
         // Masa yalnızca QR/NFC kodu bu restoranla eşleşirse kabul edilir.
@@ -1005,7 +1020,12 @@ function ProductRow({
           {product.description?.trim() && (
             <span className={styles.productDesc}>{product.description}</span>
           )}
-          <span className={styles.productPrice}>{formatLira(Number(product.price))}</span>
+          <span className={styles.productPrice}>
+            {formatLira(Number(product.price))}
+            {product.calories != null && (
+              <small className={styles.kcal}>{product.calories.toLocaleString(t.locale)} kcal</small>
+            )}
+          </span>
         </span>
         {product.image_url && (
           <span className={styles.productImage}>
@@ -1119,6 +1139,10 @@ function ProductDialog({
           </div>
 
           {product.description?.trim() && <p>{product.description}</p>}
+
+          {product.calories != null && (
+            <p className={styles.kcalLine}>{t.approxCalories(product.calories.toLocaleString(t.locale))}</p>
+          )}
 
           {ingredients.length > 0 && (
             <div>

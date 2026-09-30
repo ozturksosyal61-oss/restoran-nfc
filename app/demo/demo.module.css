@@ -1,0 +1,380 @@
+/* =========================================================
+   CANLI DEMO
+   Renk ve yazı tipi token'ları ana sayfanın .page sınıfından gelir
+   (app/page.module.css). Burada yalnızca demoya özel parçalar var.
+   ========================================================= */
+
+/* ---------- Hero ---------- */
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: center;
+  gap: clamp(40px, 6vw, 88px);
+  max-width: calc(var(--container) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: clamp(48px, 7vw, 88px) var(--gutter) clamp(24px, 4vw, 40px);
+}
+
+.heroCopy {
+  min-width: 0;
+}
+
+.heroTitle {
+  margin: 22px 0 22px !important;
+  font-size: clamp(40px, 5.6vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -0.035em !important;
+}
+
+.heroText {
+  max-width: 540px;
+  color: var(--muted);
+  font-size: clamp(16px, 1.4vw, 18px);
+  line-height: 1.7;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.heroNote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px !important;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.noteIcon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--green);
+}
+
+/* ---------- Masa standı ---------- */
+
+.stand {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  margin: 0;
+}
+
+.standCard {
+  position: relative;
+  display: grid;
+  gap: 20px;
+  width: min(100%, 360px);
+  padding: 22px 22px 20px;
+  border-radius: 26px 26px 18px 18px;
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgba(201, 162, 74, 0.22), transparent 70%),
+    var(--ink);
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Standın masaya oturan ayağı */
+.standCard::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  width: 62%;
+  height: 14px;
+  border-radius: 0 0 14px 14px;
+  background: var(--ink-3);
+  transform: translateX(-50%);
+}
+
+.standTop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.standTop > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.standTop strong {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.standTop small {
+  color: var(--muted-dark);
+  font-size: 12.5px;
+}
+
+.standLogo {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(227, 198, 125, 0.4);
+  color: var(--gold-soft);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 20px;
+}
+
+.standTable {
+  flex: none;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(227, 198, 125, 0.14);
+  color: var(--gold-soft);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.qr {
+  padding: 22px;
+  border-radius: 18px;
+  background: var(--paper);
+}
+
+.qr span {
+  display: block;
+}
+
+.qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.standFoot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.standFoot > span {
+  display: grid;
+}
+
+.standFoot strong {
+  font-size: 14px;
+}
+
+.standFoot small {
+  color: var(--muted-dark);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.standNfc {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  padding: 7px;
+  border-radius: 10px;
+  background: rgba(227, 198, 125, 0.14);
+  color: var(--gold-soft);
+}
+
+.standCaption {
+  max-width: 340px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+/* ---------- Neler denenir ---------- */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.step {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 22px 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.stepNo {
+  color: var(--gold-deep);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 40px;
+  font-style: italic;
+  line-height: 1;
+}
+
+.step h3 {
+  font-size: 21px;
+  line-height: 1.15;
+}
+
+.step p {
+  color: var(--muted);
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.menuOnlyNote {
+  display: flex;
+  align-items: center;
+  gap: 16px 22px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+  padding: 18px 22px;
+  border: 1px dashed rgba(127, 95, 22, 0.35);
+  border-radius: var(--radius);
+}
+
+.menuOnlyNote p {
+  flex: 1 1 320px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.menuOnlyTag {
+  flex: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(201, 162, 74, 0.16);
+  color: var(--gold-deep);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---------- İşletme paneli ---------- */
+
+.panelBand {
+  padding: clamp(72px, 10vw, 120px) var(--gutter);
+  background:
+    radial-gradient(50% 60% at 100% 0%, rgba(201, 162, 74, 0.14), transparent 70%),
+    var(--ink);
+  color: #fff;
+}
+
+.panelInner {
+  max-width: var(--container);
+  margin: 0 auto;
+}
+
+.panelHeading h2 em,
+.panelHeading span {
+  color: var(--gold-soft) !important;
+}
+
+.panelHeading p {
+  color: var(--muted-dark) !important;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-dark);
+  border-radius: var(--radius-lg);
+  background: var(--line-dark);
+  list-style: none;
+}
+
+.feature {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 28px 26px 30px;
+  background: var(--ink-2);
+}
+
+.featureIcon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 6px;
+  border-radius: 12px;
+  background: rgba(227, 198, 125, 0.12);
+  color: var(--gold-soft);
+}
+
+.featureIcon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.feature h3 {
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.feature p {
+  color: var(--muted-dark);
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+/* ---------- Duyarlı ---------- */
+
+@media (max-width: 1100px) {
+  .steps {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .heroActions > * {
+    flex: 1 1 100%;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+  }
+
+  /* Telefonda QR'ı okutmak yerine düğmeye basılır; stand daha küçük durur. */
+  .standCard {
+    width: min(100%, 300px);
+  }
+
+  .standCaption {
+    display: none;
+  }
+}
+
+/* Koyu panel bandı ile koyu çağrı kutusu arasında nefes payı */
+.ctaSpace {
+  padding-top: clamp(64px, 9vw, 112px);
+}
