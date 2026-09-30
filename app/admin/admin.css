@@ -3447,3 +3447,171 @@ button.adm-chip {
     width: 100%;
   }
 }
+
+/* =========================================================
+   RAPORLAR · MENÜ İSTATİSTİKLERİ
+   ========================================================= */
+
+.adm-rep-period {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.adm-rep-period .adm-chips {
+  flex: 1 1 520px;
+  min-width: 0;
+}
+
+.adm-rep-custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  color: var(--a-faint);
+}
+
+.adm-rep-custom .adm-input {
+  width: auto;
+  min-height: 36px;
+  padding-block: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-rep-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+}
+
+.adm-rep-note svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.adm-rep-stats .adm-stat-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-rep-change {
+  color: var(--a-muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-rep-change.is-up {
+  color: var(--a-ok);
+}
+
+.adm-rep-change.is-down {
+  color: var(--a-danger);
+}
+
+.adm-rep-share {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-rep-share li {
+  display: grid;
+  gap: 6px;
+}
+
+.adm-rep-share-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+}
+
+.adm-rep-share-head strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adm-rep-share-head span {
+  flex: none;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-rep-share-head small {
+  color: var(--a-faint);
+  font-weight: 500;
+}
+
+.adm-rep-share-sub {
+  color: var(--a-faint);
+  font-size: 12px;
+}
+
+.adm-rep-table td.adm-num,
+.adm-rep-table th.is-num {
+  text-align: right;
+}
+
+.adm-rep-table tr.is-empty td {
+  color: var(--a-faint);
+}
+
+.adm-rep-table tfoot th,
+.adm-rep-table tfoot td {
+  padding: 12px 14px;
+  border-top: 1px solid var(--a-line-strong);
+  background: var(--a-sunken);
+  font-weight: 700;
+  text-align: right;
+}
+
+.adm-rep-table tfoot th {
+  text-align: left;
+}
+
+.adm-rep-unseen {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-rep-unseen li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--a-line);
+  background: var(--a-sunken);
+  font-size: 13px;
+}
+
+.adm-rep-unseen small {
+  color: var(--a-faint);
+  font-size: 12px;
+}
+
+/* Rapor sayfaları: içerik (çipler, tablolar) sayfayı genişletmesin */
+.adm-rep > *,
+.adm-rep-grid > *,
+.adm-rep-period > * {
+  min-width: 0;
+}
+
+.adm-rep-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+}
+
+/* Seyrek etiketli yoğun grafiklerde etiket komşu sütunlara taşabilir */
+.adm-chart[data-sparse] .adm-chart-label {
+  overflow: visible;
+}

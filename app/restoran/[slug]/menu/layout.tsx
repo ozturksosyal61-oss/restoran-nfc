@@ -3,6 +3,7 @@ import { readMenuOnly } from "../../../../lib/restaurant-type";
 import { isAuroraTheme } from "../../../../lib/themes";
 import OztNovaPremiumMenu from "./OztNovaPremiumMenu";
 import AuroraMenu from "./AuroraMenu";
+import MenuViewTracker from "./MenuViewTracker";
 
 export default async function RestaurantMenuRouteLayout({
   children,
@@ -33,9 +34,22 @@ export default async function RestaurantMenuRouteLayout({
     return <AuroraMenu slug={slug} />;
   }
 
+  // Aurora menüsü açılışı kendisi sayar; diğer temalarda burada sayılır.
+  const tracker = restaurant ? <MenuViewTracker restaurantId={Number(restaurant.id)} /> : null;
+
   if (restaurant?.theme === "ozt-nova-premium") {
-    return <OztNovaPremiumMenu slug={slug} />;
+    return (
+      <>
+        {tracker}
+        <OztNovaPremiumMenu slug={slug} />
+      </>
+    );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {tracker}
+      {children}
+    </>
+  );
 }

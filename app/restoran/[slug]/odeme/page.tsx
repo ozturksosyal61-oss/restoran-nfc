@@ -5,10 +5,11 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/client";
 import { useRestaurantTheme } from "../RestaurantThemeContext";
 import AuroraBill from "./AuroraBill";
+import { orderNumber } from "../../../../lib/order-number";
 
 type Restaurant = { id: number; name: string };
 type BillItem = { id: number; product_name: string; price: number; quantity: number };
-type BillOrder = { id: number; created_at: string; customer_name: string; note: string | null; status: string; payment_status: string; payment_method: string | null; total_amount: number; items: BillItem[] };
+type BillOrder = { id: number; daily_number?: number | null; created_at: string; customer_name: string; note: string | null; status: string; payment_status: string; payment_method: string | null; total_amount: number; items: BillItem[] };
 type BillResponse = { open: boolean; session_id: number | null; restaurant_id: number; table_id: number; table_number: string; orders: BillOrder[]; order_total: number; due_total: number };
 
 function formatPrice(value: number) { return `${Number(value || 0).toLocaleString("tr-TR")} TL`; }
@@ -123,7 +124,7 @@ export default function PaymentPage() {
                 {bill.orders.map((order) => (
                   <article key={order.id} className="bill-order">
                     <div className="order-head">
-                      <div><strong>Sipariş #{order.id}</strong><span>{formatTime(order.created_at)} · {order.customer_name || "Misafir"}</span></div>
+                      <div><strong>Sipariş {orderNumber(order)}</strong><span>{formatTime(order.created_at)} · {order.customer_name || "Misafir"}</span></div>
                       <div className="order-head-right"><span className={`status ${order.payment_status === "paid" ? "paid" : "unpaid"}`}>{order.payment_status === "paid" ? "Ödendi" : orderStatusText(order.status)}</span><strong>{formatPrice(order.total_amount)}</strong></div>
                     </div>
                     <div className="item-list">

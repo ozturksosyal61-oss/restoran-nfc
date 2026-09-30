@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import AdminIcon from "../AdminIcon";
+import { orderNumber } from "../../../lib/order-number";
 
 type Order = {
   id: number;
@@ -14,6 +15,7 @@ type Order = {
   payment_method: string | null;
   payment_status: string | null;
   created_at: string;
+  daily_number?: number | null;
 };
 
 type PaymentFilter =
@@ -155,19 +157,8 @@ export default function PaymentsPage() {
         error: ordersError,
       } = await supabase
         .from("orders")
-        .select(
-          `
-            id,
-            restaurant_id,
-            customer_name,
-            table_number,
-            total_amount,
-            status,
-            payment_method,
-            payment_status,
-            created_at
-          `
-        )
+        // "*": günlük numara sütunu varsa o da gelir.
+        .select("*")
         .eq(
           "restaurant_id",
           restaurant.id
@@ -263,10 +254,12 @@ export default function PaymentsPage() {
         )
       );
 
+      const label = orderNumber(orders.find((order) => order.id === orderId) ?? { id: orderId });
+
       setMessage(
         newStatus === "paid"
-          ? `Sipariş #${orderId} ödendi olarak işaretlendi.`
-          : `Sipariş #${orderId} iade edildi olarak işaretlendi.`
+          ? `Sipariş ${label} ödendi olarak işaretlendi.`
+          : `Sipariş ${label} iade edildi olarak işaretlendi.`
       );
     } catch (err) {
       console.error(err);
@@ -514,7 +507,7 @@ export default function PaymentsPage() {
                 return (
                   <tr key={order.id}>
                     <td>
-                      <strong>#{order.id}</strong>
+                      <strong>{orderNumber(order)}</strong>
                       <div className="adm-muted" style={{ fontSize: 12 }}>{formatDate(order.created_at)}</div>
                     </td>
                     <td>{order.table_number ? `Masa ${order.table_number}` : "—"}</td>
@@ -548,7 +541,7 @@ export default function PaymentsPage() {
                           onClick={() => {
                             if (
                               window.confirm(
-                                `Sipariş #${order.id} iade olarak işaretlensin mi? Bu işlem para iadesi yapmaz, yalnızca kaydı günceller.`
+                                `Sipariş ${orderNumber(order)} iade olarak işaretlensin mi? Bu işlem para iadesi yapmaz, yalnızca kaydı günceller.`
                               )
                             ) {
                               void updatePaymentStatus(order.id, "refunded");

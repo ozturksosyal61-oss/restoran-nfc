@@ -66,6 +66,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         planLabel={menuOnly ? "MENÜ" : getPlanLabel(plan)}
         canUseOrders={hasPlanFeature(plan, "orders")}
         canUseStaff={hasPlanFeature(plan, "multi_user")}
+        canUseReports={hasPlanFeature(plan, "analytics")}
         menuOnly={menuOnly}
       >
         {children}

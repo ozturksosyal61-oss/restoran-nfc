@@ -29,7 +29,8 @@ function isActive(pathname: string, href: string) {
       !pathname.startsWith("/admin/menu/kategori") &&
       !pathname.startsWith("/admin/menu/promosyon") &&
       !pathname.startsWith("/admin/menu/ice-aktar") &&
-      !pathname.startsWith("/admin/menu/diller")
+      !pathname.startsWith("/admin/menu/diller") &&
+      !pathname.startsWith("/admin/menu/istatistik")
     );
   }
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -59,6 +60,7 @@ export default function AdminShell({
   planLabel,
   canUseOrders,
   canUseStaff,
+  canUseReports = false,
   menuOnly = false,
   children,
 }: {
@@ -66,6 +68,7 @@ export default function AdminShell({
   planLabel: string;
   canUseOrders: boolean;
   canUseStaff: boolean;
+  canUseReports?: boolean;
   menuOnly?: boolean;
   children: ReactNode;
 }) {
@@ -114,6 +117,7 @@ export default function AdminShell({
         { href: "/admin/menu/kategori", label: "Kategoriler", icon: "category" },
         { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle" },
         { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe" },
+        { href: "/admin/menu/istatistik", label: "Menü istatistikleri", icon: "eye" },
         { href: "/admin/qr", label: "QR kod", icon: "qr" },
       ],
     },
@@ -133,6 +137,7 @@ export default function AdminShell({
       items: [
         { href: "/admin", label: "Panel", icon: "dashboard" },
         { href: "/admin/orders", label: "Siparişler", icon: "orders", locked: !canUseOrders },
+        { href: "/admin/raporlar", label: "Raporlar", icon: "chart", locked: !canUseReports },
       ],
     },
     {
@@ -143,6 +148,7 @@ export default function AdminShell({
         { href: "/admin/menu/promosyon", label: "Kampanyalar", icon: "promo" },
         { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle" },
         { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe" },
+        { href: "/admin/menu/istatistik", label: "Menü istatistikleri", icon: "eye" },
       ],
     },
     {

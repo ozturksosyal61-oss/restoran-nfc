@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
 import AdminIcon from "./AdminIcon";
+import { orderNumber } from "../../lib/order-number";
 import DashboardCharts from "./DashboardCharts";
 import ServiceRequests from "./ServiceRequests";
 import { hasPlanFeature, normalizePlan } from "../../lib/plan";
@@ -10,6 +11,7 @@ type Order = {
   total_amount: number | null;
   status: string;
   created_at: string;
+  daily_number?: number | null;
 };
 
 type Review = {
@@ -158,9 +160,8 @@ export default async function AdminPage() {
   } = canUseOrders
     ? await supabase
         .from("orders")
-        .select(
-          "id, total_amount, status, created_at"
-        )
+        // "*": günlük numara sütunu varsa o da gelir.
+        .select("*")
         .eq("restaurant_id", restaurant.id)
         .gte(
           "created_at",
@@ -583,7 +584,7 @@ export default async function AdminPage() {
                 <Link key={order.id} className="adm-row" href="/admin/orders">
                   <span className="adm-row-icon"><AdminIcon name="orders" size={17} /></span>
                   <span className="adm-row-main">
-                    <strong>Sipariş #{order.id}</strong>
+                    <strong>Sipariş {orderNumber(order)}</strong>
                     <small>
                       {new Date(order.created_at).toLocaleTimeString("tr-TR", {
                         hour: "2-digit",

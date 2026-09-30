@@ -22,6 +22,7 @@ import {
   type MenuLanguage,
   type MenuStrings,
 } from "../../../../lib/menu-i18n";
+import { trackMenuView, trackProductView } from "../../../../lib/menu-tracking";
 import { useCart } from "./CartContext";
 import styles from "./AuroraMenu.module.css";
 
@@ -236,6 +237,7 @@ export default function AuroraMenu({
         const initialLanguage = preferredLanguage(availableLanguages);
 
         setRestaurant(restaurantData as Restaurant);
+        trackMenuView(Number(restaurantData.id), initialLanguage);
         setCategories(safeCategories);
         setProducts(safeProducts);
         setLanguages(availableLanguages);
@@ -773,7 +775,10 @@ export default function AuroraMenu({
                     t={t}
                     product={product}
                     quantity={quantities.get(product.id) ?? 0}
-                    onOpen={() => setOpenProduct(product)}
+                    onOpen={() => {
+                      setOpenProduct(product);
+                      trackProductView(restaurant.id, product.id, language);
+                    }}
                     onAdd={menuOnly ? undefined : () => addProduct(product)}
                   />
                 ))}

@@ -61,7 +61,7 @@ export default function SiparisTakipLink({
             🟢 Sipariş Takibine Dön
           </span>
           <span style={{ fontSize: 10, color: "#857867", fontWeight: 700 }}>
-            Son sipariş #{orderId}
+            Son siparişinizin durumu
           </span>
         </span>
 

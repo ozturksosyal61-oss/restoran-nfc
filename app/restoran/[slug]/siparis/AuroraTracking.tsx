@@ -4,12 +4,14 @@ import { useState } from "react";
 import AuroraIcon, { type AuroraIconName } from "../AuroraIcon";
 import { formatLira, sendTableRequest, type TableRequestType } from "../aurora-utils";
 import styles from "../AuroraFlow.module.css";
+import { orderNumber } from "../../../../lib/order-number";
 
 // Sipariş takibi — Aurora görünümü. Siparişin yüklenmesi, 2 saniyelik
 // yenileme ve değerlendirme gönderimi takip/[id]/page.tsx içinde kalır.
 
 type TrackingOrder = {
   id: number;
+  daily_number?: number | null;
   customer_name: string | null;
   table_number: string;
   note: string | null;
@@ -180,7 +182,7 @@ export default function AuroraTracking({
           <a className={styles.round} href={homeHref} aria-label="Ana sayfaya dön">
             <AuroraIcon name="back" />
           </a>
-          <h1>Sipariş #{order.id}</h1>
+          <h1>Sipariş {orderNumber(order)}</h1>
           {live && <span className={styles.live}>Canlı</span>}
         </header>
 

@@ -6,6 +6,7 @@ import OrdersAutoRefresh from "./OrdersAutoRefresh";
 import SessionControls from "./SessionControls";
 import AdminIcon from "../AdminIcon";
 import { hasPlanFeature, getPlanLabel } from "../../../lib/plan";
+import { orderNumber } from "../../../lib/order-number";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ type Order = {
   payment_status: string | null;
   session_id: number | null;
   created_at: string;
+  daily_number?: number | null;
 };
 
 type OrderItem = {
@@ -233,30 +235,25 @@ if (restaurantError || !restaurant) {
   // SİPARİŞLER
   // =====================================================
 
-  const {
-    data: orders,
-    error: ordersError,
-  } = await supabase
-    .from("orders")
-    .select(
-      `
-        id,
-        restaurant_id,
-        customer_name,
-        table_number,
-        note,
-        total_amount,
-        status,
-        payment_method,
-        payment_status,
-        session_id,
-        created_at
-      `
-    )
-    .eq("restaurant_id", restaurant.id)
-    .order("created_at", {
-      ascending: false,
-    });
+  const orderColumns =
+    "id, restaurant_id, customer_name, table_number, note, total_amount, status, payment_method, payment_status, session_id, created_at";
+
+  const loadOrders = async (columns: string) => {
+    const result = await supabase
+      .from("orders")
+      .select(columns)
+      .eq("restaurant_id", restaurant.id)
+      .order("created_at", {
+        ascending: false,
+      });
+    return { data: result.data as unknown as Order[] | null, error: result.error };
+  };
+
+  // Günlük numara sütunu henüz yoksa (veritabanı güncellenmemişse) onsuz okunur.
+  let { data: orders, error: ordersError } = await loadOrders(`${orderColumns}, daily_number`);
+  if (ordersError && /daily_number/.test(ordersError.message)) {
+    ({ data: orders, error: ordersError } = await loadOrders(orderColumns));
+  }
 
   if (ordersError) {
     return (
@@ -770,7 +767,7 @@ if (restaurantError || !restaurant) {
                       return (
                         <tr key={order.id}>
                           <td>
-                            <strong>#{order.id}</strong>
+                            <strong>{orderNumber(order)}</strong>
                             <div className="adm-muted" style={{ fontSize: 12 }}>
                               {formatDate(order.created_at)} · {formatTime(order.created_at)}
                             </div>
@@ -810,7 +807,7 @@ function OrderCard({ order, items }: { order: Order; items: OrderItem[] }) {
         <span>
           <strong>Masa {order.table_number}</strong>
           <small>
-            #{order.id} · {formatTime(order.created_at)}
+            {orderNumber(order)} · {formatTime(order.created_at)}
             {order.customer_name ? ` · ${order.customer_name}` : ""}
           </small>
         </span>

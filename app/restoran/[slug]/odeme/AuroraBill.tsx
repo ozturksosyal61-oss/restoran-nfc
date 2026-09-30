@@ -4,6 +4,7 @@ import { useState } from "react";
 import AuroraIcon from "../AuroraIcon";
 import { formatLira, sendTableRequest } from "../aurora-utils";
 import styles from "../AuroraFlow.module.css";
+import { orderNumber } from "../../../../lib/order-number";
 
 // Masa hesabı — Aurora görünümü. Hesabın yüklenmesi ve 10 saniyelik
 // yenileme odeme/page.tsx içinde kalır; burası yalnızca ekrandır.
@@ -12,6 +13,7 @@ type BillItem = { id: number; product_name: string; price: number; quantity: num
 
 type BillOrder = {
   id: number;
+  daily_number?: number | null;
   created_at: string;
   customer_name: string;
   note: string | null;
@@ -186,7 +188,7 @@ export default function AuroraBill({
             <section key={order.id} className={styles.block} aria-label={`Sipariş ${order.id}`}>
               <div className={styles.orderHead}>
                 <span>
-                  <strong>Sipariş #{order.id}</strong>
+                  <strong>Sipariş {orderNumber(order)}</strong>
                   <small>
                     {formatTime(order.created_at)} · {order.customer_name || "Misafir"}
                   </small>

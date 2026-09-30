@@ -9,9 +9,11 @@ import {
 } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import styles from "./AuroraRestaurantHome.module.css";
+import { orderNumber } from "../../../lib/order-number";
 
 type ActiveOrder = {
   id: number;
+  daily_number: number | null;
   status: string;
   itemCount: number;
   total: number;
@@ -92,6 +94,7 @@ export function ActiveOrderProvider({
 
       setOrder({
         id: Number(found.id),
+        daily_number: found.daily_number ?? null,
         status: String(found.status),
         itemCount: items.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
         total: Number(found.total_amount || 0),
@@ -144,7 +147,7 @@ export function ActiveOrderCard() {
         <span className={styles.orderText}>
           <strong>{stage.title}</strong>
           <small>
-            #{order.id} · {order.itemCount} ürün · ₺
+            {orderNumber(order)} · {order.itemCount} ürün · ₺
             {order.total.toLocaleString("tr-TR")}
           </small>
         </span>

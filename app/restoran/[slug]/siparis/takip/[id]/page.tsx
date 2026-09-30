@@ -5,9 +5,11 @@ import { useParams } from "next/navigation";
 import { createClient } from "../../../../../../lib/supabase/client";
 import { useRestaurantTheme } from "../../../RestaurantThemeContext";
 import AuroraTracking from "../../AuroraTracking";
+import { orderNumber } from "../../../../../../lib/order-number";
 
 type Order = {
   id: number;
+  daily_number?: number | null;
   customer_name: string | null;
   table_number: string;
   note: string | null;
@@ -794,7 +796,7 @@ export default function OrderTrackingPage() {
           </span>
 
           <h1>
-            Sipariş #{order.id}
+            Sipariş {orderNumber(order)}
           </h1>
 
           <p>
@@ -927,7 +929,7 @@ export default function OrderTrackingPage() {
           </div>
 
           <div className="tracking-order-number">
-            #{order.id}
+            {orderNumber(order)}
           </div>
         </div>
 

@@ -69,7 +69,7 @@ export default function OrdersAutoRefresh({
 
       const { data, error } = await supabase
         .from("orders")
-        .select("id")
+        .select("*")
         .eq("restaurant_id", restaurantId)
         .order("id", {
           ascending: false,
@@ -136,7 +136,7 @@ export default function OrdersAutoRefresh({
             "🔔 Yeni Sipariş!",
             {
               body:
-                `Yeni bir sipariş geldi. Sipariş No: #${currentOrderId}`,
+                `Yeni bir sipariş geldi. Sipariş No: #${data.daily_number ?? currentOrderId}`,
               icon: "/favicon.ico",
             }
           );
