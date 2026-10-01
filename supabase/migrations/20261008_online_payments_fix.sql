@@ -1,58 +1,82 @@
 -- OZT DIGITAL MENU
--- NOT: Bu dosyanın ilk sürümü "payment_transactions" adını kullanıyordu ve
--- mevcut abonelik tablosuyla çakıştı. Düzeltme: 20261008_online_payments_fix.sql
--- Online ödeme (2. ve 3. adım): masadan kartla ödeme, hesap bölüşme, bahşiş
+-- Online ödeme düzeltmesi: ayrı tablo (online_payments)
 --
--- 20261006_online_payments.sql çalıştırılmış olmalıdır.
+-- 20261006 ve 20261007 dosyaları "payment_transactions" adını kullanıyordu;
+-- veritabanında bu adla abonelik ödemeleri tablosu ZATEN vardı. Bu yüzden
+-- online ödeme tablosu oluşmadı, abonelik tablosuna ise boş sütunlar
+-- eklendi ve tarayıcı erişimi kapatıldı.
 --
--- Müşteri üç şekilde öder:
---   full  : kalan hesabın tamamı
---   items : kendi ürünleri (bir ürünün tamamı ya da paylaşılan kısmı)
---   equal : hesabı N kişiye eşit böler, kendi payını (ya da birkaç payı) öder
--- Ödeme başlarken ürünler / paylar 20 dakika için ayrılır; aynı ürünü iki
--- kişi ödeyemez. Ödeme başarısız olursa ya da süre dolarsa ayrılan kısım
--- kendiliğinden serbest kalır. Hesabın tamamı ödenince siparişler
--- "ödendi (online)" işaretlenir ve masa hesabı kapanır.
---
--- Fonksiyonlar yalnızca sunucu (service role) tarafından çağrılır; masa
--- kodu her çağrıda yeniden doğrulanır.
+-- Bu dosya:
+--   1) abonelik tablosunu (payment_transactions) eski hâline getirir,
+--   2) online ödemeleri ayrı "online_payments" tablosunda tutar,
+--   3) masa ödemesi fonksiyonlarını yeni tabloyla yeniden tanımlar.
+-- Online ödeme tablolarında henüz hiç kayıt yoktu; veri kaybı olmaz.
 
 -- ---------------------------------------------------------------
--- 1) Yeni sütunlar
+-- 1) Abonelik ödemeleri tablosunu eski hâline getir
 -- ---------------------------------------------------------------
 
-ALTER TABLE public.online_payments
-  ADD COLUMN IF NOT EXISTS session_id bigint,
-  ADD COLUMN IF NOT EXISTS table_id bigint,
-  ADD COLUMN IF NOT EXISTS split_mode text,
-  ADD COLUMN IF NOT EXISTS split_of integer,
-  ADD COLUMN IF NOT EXISTS split_parts integer,
-  ADD COLUMN IF NOT EXISTS expires_at timestamptz;
+-- Supabase'in varsayılan yetkileri; satır erişimini mevcut RLS politikaları belirler.
+GRANT ALL ON public.payment_transactions TO anon, authenticated;
 
-DO $$
-BEGIN
-  ALTER TABLE public.online_payments
-    ADD CONSTRAINT online_payments_split_mode_check
-    CHECK (split_mode IS NULL OR split_mode IN ('full', 'items', 'equal'));
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP TABLE IF EXISTS public.payment_allocations;
+
+ALTER TABLE public.payment_transactions DROP CONSTRAINT IF EXISTS payment_transactions_split_mode_check;
+DROP INDEX IF EXISTS public.payment_transactions_session_idx;
+
+ALTER TABLE public.payment_transactions
+  DROP COLUMN IF EXISTS session_id,
+  DROP COLUMN IF EXISTS table_id,
+  DROP COLUMN IF EXISTS split_mode,
+  DROP COLUMN IF EXISTS split_of,
+  DROP COLUMN IF EXISTS split_parts,
+  DROP COLUMN IF EXISTS expires_at;
+
+-- ---------------------------------------------------------------
+-- 2) Online ödemeler (test ödemeleri ve masa hesapları)
+-- ---------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.online_payments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  restaurant_id bigint NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
+  kind text NOT NULL CHECK (kind IN ('test', 'bill')),
+  provider text NOT NULL CHECK (provider IN ('iyzico', 'paytr')),
+  mode text NOT NULL CHECK (mode IN ('test', 'live')),
+  -- Sağlayıcıya gönderilen sipariş numarası (iyzico conversationId, PayTR merchant_oid).
+  reference text NOT NULL UNIQUE,
+  amount numeric(12, 2) NOT NULL CHECK (amount > 0),
+  tip_amount numeric(12, 2) NOT NULL DEFAULT 0 CHECK (tip_amount >= 0),
+  currency text NOT NULL DEFAULT 'TRY',
+  status text NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'success', 'failed', 'refunded')),
+  provider_token text,
+  provider_payment_id text,
+  card_last4 text,
+  message text,
+  created_by uuid,
+  -- Masa ödemesi
+  session_id bigint,
+  table_id bigint,
+  split_mode text CHECK (split_mode IS NULL OR split_mode IN ('full', 'items', 'equal')),
+  split_of integer,
+  split_parts integer,
+  expires_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  completed_at timestamptz
+);
+
+CREATE INDEX IF NOT EXISTS online_payments_restaurant_idx
+  ON public.online_payments (restaurant_id, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS online_payments_session_idx
   ON public.online_payments (session_id)
   WHERE session_id IS NOT NULL;
 
--- Eşit bölüşme masa hesabında tutulur; masadaki herkes aynı bölüşmeyi görür.
-ALTER TABLE public.dining_sessions
-  ADD COLUMN IF NOT EXISTS split_of integer,
-  ADD COLUMN IF NOT EXISTS split_total numeric(12, 2),
-  ADD COLUMN IF NOT EXISTS split_base numeric(12, 2),
-  ADD COLUMN IF NOT EXISTS split_set_at timestamptz;
+-- Politika yok: yalnızca sunucu (service role) okur ve yazar.
+ALTER TABLE public.online_payments ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.online_payments FROM anon, authenticated;
 
--- ---------------------------------------------------------------
--- 2) Hangi ödeme hangi ürünün ne kadarını kapsıyor
---    units: ürün adedi cinsinden; paylaşılan üründe kesirli (ör. 0.3333)
--- ---------------------------------------------------------------
-
+-- Hangi ödeme hangi ürünün ne kadarını kapsıyor (units: kesirli olabilir).
 CREATE TABLE IF NOT EXISTS public.payment_allocations (
   transaction_id uuid NOT NULL REFERENCES public.online_payments(id) ON DELETE CASCADE,
   order_item_id bigint NOT NULL REFERENCES public.order_items(id) ON DELETE CASCADE,
@@ -66,6 +90,13 @@ CREATE INDEX IF NOT EXISTS payment_allocations_item_idx
 
 ALTER TABLE public.payment_allocations ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.payment_allocations FROM anon, authenticated;
+
+-- dining_sessions.split_* sütunları 20261007 ile eklendi ve doğru tablodadır.
+ALTER TABLE public.dining_sessions
+  ADD COLUMN IF NOT EXISTS split_of integer,
+  ADD COLUMN IF NOT EXISTS split_total numeric(12, 2),
+  ADD COLUMN IF NOT EXISTS split_base numeric(12, 2),
+  ADD COLUMN IF NOT EXISTS split_set_at timestamptz;
 
 -- ---------------------------------------------------------------
 -- 3) Masa hesabının ödeme durumu

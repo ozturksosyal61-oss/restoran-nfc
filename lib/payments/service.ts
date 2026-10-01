@@ -88,7 +88,7 @@ export async function loadTransactions(restaurantId: number, kind: "test" | "bil
   const admin = createSupabaseAdminClient();
   const read = (columns: string) =>
     admin
-      .from("payment_transactions")
+      .from("online_payments")
       .select(columns)
       .eq("restaurant_id", restaurantId)
       .eq("kind", kind)
@@ -103,7 +103,7 @@ export async function loadTransaction(reference: string, restaurantId?: number) 
   if (!/^[A-Za-z0-9]{8,64}$/.test(reference)) return null;
   const admin = createSupabaseAdminClient();
   const read = (columns: string) => {
-    let query = admin.from("payment_transactions").select(columns).eq("reference", reference);
+    let query = admin.from("online_payments").select(columns).eq("reference", reference);
     if (restaurantId !== undefined) query = query.eq("restaurant_id", restaurantId);
     return query.maybeSingle();
   };
@@ -177,7 +177,7 @@ export async function openCheckout(
 
   async function fail(message: string) {
     await admin
-      .from("payment_transactions")
+      .from("online_payments")
       .update({ status: "failed", message, completed_at: new Date().toISOString() })
       .eq("reference", reference)
       .eq("status", "pending");
@@ -198,7 +198,7 @@ export async function openCheckout(
         address,
       });
       if (!result.ok) return fail(result.message);
-      await admin.from("payment_transactions").update({ provider_token: result.token }).eq("reference", reference);
+      await admin.from("online_payments").update({ provider_token: result.token }).eq("reference", reference);
       return { ok: true, redirectUrl: result.paymentUrl };
     }
 
@@ -215,7 +215,7 @@ export async function openCheckout(
       address,
     });
     if (!result.ok) return fail(result.message);
-    await admin.from("payment_transactions").update({ provider_token: result.token }).eq("reference", reference);
+    await admin.from("online_payments").update({ provider_token: result.token }).eq("reference", reference);
     return { ok: true, redirectUrl: `${request.paytrFramePath}?ref=${reference}` };
   } catch (error) {
     return fail(errorText(error));
@@ -240,7 +240,7 @@ export async function startTestPayment(
     .maybeSingle();
 
   const reference = newReference();
-  const { error: insertError } = await admin.from("payment_transactions").insert({
+  const { error: insertError } = await admin.from("online_payments").insert({
     restaurant_id: restaurantId,
     kind: "test",
     provider: settings.provider,
@@ -280,7 +280,7 @@ async function finish(
 
   if (!outcome.ok) {
     await admin
-      .from("payment_transactions")
+      .from("online_payments")
       .update({ status: "failed", message: outcome.message, completed_at: now })
       .eq("id", tx.id)
       .eq("status", "pending");
@@ -308,7 +308,7 @@ async function finish(
   }
 
   const { data: updated } = await admin
-    .from("payment_transactions")
+    .from("online_payments")
     .update({
       status,
       message,
@@ -349,7 +349,7 @@ export async function completeIyzico(reference: string, token: string, ip: strin
   const { settings } = await loadPaymentSettings(tx.restaurant_id);
   if (!settings || settings.provider !== "iyzico") {
     await createSupabaseAdminClient()
-      .from("payment_transactions")
+      .from("online_payments")
       .update({ status: "failed", message: "Ödeme ayarları bulunamadı.", completed_at: new Date().toISOString() })
       .eq("id", tx.id)
       .eq("status", "pending");

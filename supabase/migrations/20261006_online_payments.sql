@@ -1,4 +1,6 @@
 -- OZT DIGITAL MENU
+-- NOT: Bu dosyanın ilk sürümü "payment_transactions" adını kullanıyordu ve
+-- mevcut abonelik tablosuyla çakıştı. Düzeltme: 20261008_online_payments_fix.sql
 -- Online ödeme (1. adım): restoranın kendi iyzico / PayTR hesabı ve test ödemeleri
 --
 -- Her restoran kendi ödeme sağlayıcısının API bilgilerini panelden girer.
@@ -35,7 +37,7 @@ REVOKE ALL ON public.payment_settings FROM anon, authenticated;
 -- 2) Ödeme işlemleri (test ödemeleri; 2. adımda masa hesapları)
 -- ---------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS public.payment_transactions (
+CREATE TABLE IF NOT EXISTS public.online_payments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id bigint NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
   kind text NOT NULL CHECK (kind IN ('test', 'bill')),
@@ -57,8 +59,8 @@ CREATE TABLE IF NOT EXISTS public.payment_transactions (
   completed_at timestamptz
 );
 
-CREATE INDEX IF NOT EXISTS payment_transactions_restaurant_idx
-  ON public.payment_transactions (restaurant_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS online_payments_restaurant_idx
+  ON public.online_payments (restaurant_id, created_at DESC);
 
-ALTER TABLE public.payment_transactions ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON public.payment_transactions FROM anon, authenticated;
+ALTER TABLE public.online_payments ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.online_payments FROM anon, authenticated;

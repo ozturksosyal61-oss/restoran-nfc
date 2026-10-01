@@ -168,7 +168,7 @@ export async function startTablePayment(
 export async function cancelTablePayment(reference: string) {
   if (!/^[A-Za-z0-9]{8,64}$/.test(reference)) return false;
   const { data } = await createSupabaseAdminClient()
-    .from("payment_transactions")
+    .from("online_payments")
     .update({ status: "failed", message: CANCELLED_MESSAGE, completed_at: new Date().toISOString() })
     .eq("reference", reference)
     .eq("kind", "bill")

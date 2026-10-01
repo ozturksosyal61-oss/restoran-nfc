@@ -307,7 +307,7 @@ if (restaurantError || !restaurant) {
   if (safeOpenSessions.length > 0) {
     try {
       const { data: onlineRows } = await createSupabaseAdminClient()
-        .from("payment_transactions")
+        .from("online_payments")
         .select("session_id, amount, tip_amount")
         .eq("restaurant_id", restaurant.id)
         .eq("kind", "bill")
