@@ -351,6 +351,7 @@ export default function OrderTrackingPage() {
 
         setOrder({
           id: Number(orderData.id),
+          daily_number: orderData.daily_number ?? null,
           customer_name:
             orderData.customer_name,
           table_number:
@@ -430,6 +431,7 @@ export default function OrderTrackingPage() {
 
           return {
             id: Number(orderData.id),
+          daily_number: orderData.daily_number ?? null,
             customer_name:
               orderData.customer_name,
             table_number:

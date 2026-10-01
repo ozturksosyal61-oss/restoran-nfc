@@ -10,7 +10,8 @@ import { useAdminMenuOnly } from "../AdminShell";
 
 type Category = { id: number; name: string };
 
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+// Yüklemeden önce tarayıcıda küçültülür; bu sınır yalnızca çok büyük dosyaları eler.
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
 export default function ProductFormView({
   mode,
@@ -229,7 +230,7 @@ export default function ProductFormView({
                       return;
                     }
                     if (file.size > MAX_IMAGE_BYTES) {
-                      onError("Fotoğraf en fazla 5 MB olabilir.");
+                      onError("Fotoğraf en fazla 20 MB olabilir.");
                       event.target.value = "";
                       onImage(null);
                       return;
@@ -242,7 +243,7 @@ export default function ProductFormView({
               <span className="adm-hint">
                 {image
                   ? `${image.name} · kaydettiğinizde yüklenir`
-                  : "JPG, PNG veya WEBP · en fazla 5 MB · kare fotoğraf en iyi görünür"}
+                  : "JPG, PNG veya WEBP · otomatik küçültülür · kare fotoğraf en iyi görünür"}
               </span>
             </section>
 

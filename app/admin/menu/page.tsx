@@ -3,6 +3,7 @@ import ProductDeleteButton from "./ProductDeleteButton";
 import Link from "next/link";
 import ProductMoveButton from "./ProductMoveButton";
 import AdminIcon from "../AdminIcon";
+import PhotoOptimizer from "./PhotoOptimizer";
 
 export default async function AdminMenuPage() {
   const supabase = await createSupabaseServerClient();
@@ -118,6 +119,12 @@ export default async function AdminMenuPage() {
           <span className="adm-stat-value">{productList.length - publishedCount}</span>
         </div>
       </section>
+
+      <PhotoOptimizer
+        photos={productList
+          .filter((product) => typeof product.image_url === "string" && product.image_url)
+          .map((product) => ({ id: Number(product.id), image_url: String(product.image_url) }))}
+      />
 
       {!categories || categories.length === 0 ? (
         <div className="adm-empty">

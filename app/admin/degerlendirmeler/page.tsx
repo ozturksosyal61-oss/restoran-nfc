@@ -178,7 +178,7 @@ export default async function ReviewsPage({
                     <span className="adm-row-main">
                       <strong>{review.customer_name || "Misafir"}</strong>
                       <small>
-                        {new Date(review.created_at).toLocaleDateString("tr-TR", {
+                        {new Date(review.created_at).toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul",
                           day: "numeric",
                           month: "long",
                           year: "numeric",

@@ -70,7 +70,7 @@ function formatPrice(value: number) {
 function formatDate(value: string | null) {
   if (!value) return "Süresiz";
 
-  return new Date(value).toLocaleString("tr-TR", {
+  return new Date(value).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

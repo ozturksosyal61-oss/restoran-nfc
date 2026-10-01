@@ -43,7 +43,7 @@ function getTableNumber(request: ServiceRequest) {
 }
 
 function formatTime(value: string) {
-  return new Intl.DateTimeFormat("tr-TR", {
+  return new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul",
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));

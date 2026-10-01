@@ -243,13 +243,13 @@ export default async function AdminPage() {
     period: "week" | "month"
   ) {
     if (period === "week") {
-      return new Intl.DateTimeFormat("tr-TR", {
+      return new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul",
         weekday: "short",
         day: "2-digit",
       }).format(date);
     }
 
-    return new Intl.DateTimeFormat("tr-TR", {
+    return new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul",
       day: "2-digit",
       month: "2-digit",
     }).format(date);
@@ -424,7 +424,7 @@ export default async function AdminPage() {
     completed: "Tamamlandı",
   };
 
-  const todayText = new Intl.DateTimeFormat("tr-TR", {
+  const todayText = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul",
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -586,7 +586,7 @@ export default async function AdminPage() {
                   <span className="adm-row-main">
                     <strong>Sipariş {orderNumber(order)}</strong>
                     <small>
-                      {new Date(order.created_at).toLocaleTimeString("tr-TR", {
+                      {new Date(order.created_at).toLocaleTimeString("tr-TR", { timeZone: "Europe/Istanbul",
                         hour: "2-digit",
                         minute: "2-digit",
                       })}

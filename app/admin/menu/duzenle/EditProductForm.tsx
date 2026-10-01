@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/client";
+import { compressImage } from "../../../../lib/image-compress";
 import ProductFormView from "../ProductFormView";
 
 type Product = {
@@ -93,14 +94,11 @@ export default function EditProductForm({
          ===================================================== */
 
       if (image) {
-        const fileExtension =
-          image.name
-            .split(".")
-            .pop()
-            ?.toLowerCase();
+        // Fotoğraf yüklenmeden önce küçültülür (menü hızlı açılsın).
+        const compressed = await compressImage(image);
 
         const fileName =
-          `${crypto.randomUUID()}.${fileExtension}`;
+          `${crypto.randomUUID()}.${compressed.extension}`;
 
         const filePath =
           `products/${fileName}`;
@@ -111,7 +109,9 @@ export default function EditProductForm({
           .from("product-images")
           .upload(
             filePath,
-            image
+            compressed.file,
+            // Dosya adı benzersiz olduğu için tarayıcı uzun süre önbellekte tutabilir.
+            { cacheControl: "31536000", contentType: compressed.file.type }
           );
 
         if (uploadError) {

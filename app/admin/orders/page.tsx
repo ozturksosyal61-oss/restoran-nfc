@@ -49,14 +49,14 @@ type DiningSession = {
 };
 
 function formatTime(date: string) {
-  return new Date(date).toLocaleTimeString("tr-TR", {
+  return new Date(date).toLocaleTimeString("tr-TR", { timeZone: "Europe/Istanbul",
     hour: "2-digit",
     minute: "2-digit",
   });
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("tr-TR", {
+  return new Date(date).toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

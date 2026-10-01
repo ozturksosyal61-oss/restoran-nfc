@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ChangeEvent, ReactNode } from "react";
 import { createClient } from "../../../lib/supabase/client";
+import { compressImage } from "../../../lib/image-compress";
 import AdminIcon from "../AdminIcon";
 import { useAdminMenuOnly } from "../AdminShell";
 
@@ -274,8 +275,8 @@ export default function RestaurantSettingsPage() {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Görsel en fazla 5 MB olabilir.");
+    if (file.size > 20 * 1024 * 1024) {
+      setError("Görsel en fazla 20 MB olabilir.");
       return;
     }
 
@@ -286,11 +287,9 @@ export default function RestaurantSettingsPage() {
     }
 
     try {
-      const extension =
-        file.name
-          .split(".")
-          .pop()
-          ?.toLowerCase() || "jpg";
+      // Logo daha küçük, kapak fotoğrafı daha geniş tutulur.
+      const compressed = await compressImage(file, { maxSize: type === "logo" ? 600 : 1600 });
+      const extension = compressed.extension;
 
       const fileName =
         `${type}-${Date.now()}.${extension}`;
@@ -303,9 +302,11 @@ export default function RestaurantSettingsPage() {
           .from("restaurant-assets")
           .upload(
             filePath,
-            file,
+            compressed.file,
             {
-              cacheControl: "3600",
+              // Dosya adı her yüklemede değişir; uzun süre önbelleğe alınabilir.
+              cacheControl: "31536000",
+              contentType: compressed.file.type,
               upsert: false,
             }
           );
@@ -756,7 +757,7 @@ export default function RestaurantSettingsPage() {
           {/* ============ GÖRSELLER ============ */}
           <SettingsSection
             title="Logo ve kapak"
-            description="Kapak görseli restoran sayfasının üstünde, logo adınızın yanında görünür. En fazla 5 MB."
+            description="Kapak görseli restoran sayfasının üstünde, logo adınızın yanında görünür. Yüklerken otomatik küçültülür."
           >
             <div className="adm-upload-grid">
               <div className="adm-upload">

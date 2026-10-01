@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import ProductFormView from "../ProductFormView";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/client";
+import { compressImage } from "../../../../lib/image-compress";
 
 type Category = {
   id: number;
@@ -78,19 +79,20 @@ export default function NewProductPage() {
          ================================================= */
 
       if (image) {
-        const fileExtension =
-          image.name.split(".").pop()?.toLowerCase();
+        // Fotoğraf yüklenmeden önce küçültülür (menü hızlı açılsın).
+        const compressed = await compressImage(image);
 
         const fileName =
-          `${crypto.randomUUID()}.${fileExtension}`;
+          `${crypto.randomUUID()}.${compressed.extension}`;
 
         const filePath =
           `products/${fileName}`;
 
+        // Dosya adı benzersiz olduğu için tarayıcı uzun süre önbellekte tutabilir.
         const { error: uploadError } =
           await supabase.storage
             .from("product-images")
-            .upload(filePath, image);
+            .upload(filePath, compressed.file, { cacheControl: "31536000", contentType: compressed.file.type });
 
         if (uploadError) {
           setError(
