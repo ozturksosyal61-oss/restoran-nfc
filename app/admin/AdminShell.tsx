@@ -51,7 +51,7 @@ const MENU_ONLY_HOME = "/admin/menu";
 function isAllowedForMenuOnly(pathname: string) {
   if (pathname.startsWith("/admin/login")) return true;
   if (pathname.startsWith("/admin/menu/promosyon")) return false;
-  return ["/admin/menu", "/admin/qr", "/admin/ayarlar", "/admin/geri-bildirim"].some(
+  return ["/admin/menu", "/admin/qr", "/admin/ayarlar", "/admin/geri-bildirim", "/admin/ozet"].some(
     (href) => pathname === href || pathname.startsWith(`${href}/`)
   );
 }
@@ -115,6 +115,10 @@ export default function AdminShell({
 
   const menuOnlyGroups: { label: string; items: NavItem[] }[] = [
     {
+      label: "Genel",
+      items: [{ href: "/admin/ozet", label: "Dönem özeti", icon: "calendar" }],
+    },
+    {
       label: "Menü",
       items: [
         { href: "/admin/menu", label: "Ürünler", icon: "menu" },
@@ -142,6 +146,7 @@ export default function AdminShell({
       items: [
         { href: "/admin", label: "Panel", icon: "dashboard" },
         { href: "/admin/orders", label: "Siparişler", icon: "orders", locked: !canUseOrders },
+        { href: "/admin/ozet", label: "Dönem özeti", icon: "calendar" },
         { href: "/admin/raporlar", label: "Raporlar", icon: "chart", locked: !canUseReports },
       ],
     },
@@ -173,6 +178,7 @@ export default function AdminShell({
       items: [
         { href: "/admin/ayarlar", label: "İşletme ayarları", icon: "settings" },
         { href: "/admin/tema", label: "Tema", icon: "palette" },
+        { href: "/admin/online-odeme", label: "Online ödeme", icon: "wallet", locked: !canUseOrders },
       ],
     },
   ];

@@ -5,6 +5,7 @@ import AuroraIcon from "../AuroraIcon";
 import { formatLira, sendTableRequest } from "../aurora-utils";
 import styles from "../AuroraFlow.module.css";
 import { orderNumber } from "../../../../lib/order-number";
+import type { OnlinePayment } from "./pay-utils";
 
 // Masa hesabı — Aurora görünümü. Hesabın yüklenmesi ve 10 saniyelik
 // yenileme odeme/page.tsx içinde kalır; burası yalnızca ekrandır.
@@ -53,6 +54,7 @@ export default function AuroraBill({
   refreshing,
   error,
   onRetry,
+  online = null,
 }: {
   slug: string;
   restaurantId: number | null;
@@ -62,6 +64,7 @@ export default function AuroraBill({
   refreshing: boolean;
   error: string;
   onRetry: () => void;
+  online?: OnlinePayment;
 }) {
   const [requesting, setRequesting] = useState(false);
   const [requested, setRequested] = useState(false);
@@ -150,19 +153,27 @@ export default function AuroraBill({
     );
   }
 
-  const paid = Math.max(0, bill.order_total - bill.due_total);
-  const canRequest = Boolean(restaurantId && tableToken) && bill.due_total > 0;
+  // Kartla yapılan kısmi ödemeler henüz siparişe işlenmez; kalan tutardan düşülür.
+  const onlinePaid = online?.paid ?? 0;
+  const due = online ? Math.min(bill.due_total, online.due) : bill.due_total;
+  const paid = Math.max(0, bill.order_total - due);
+  const canPayOnline = Boolean(online?.enabled && tableToken) && due > 0;
+  const canRequest = Boolean(restaurantId && tableToken) && due > 0;
+  const payHref = `${base}/odeme/kart${tableQuery}`;
 
   return (
     <div className={styles.page}>
-      <div className={`${styles.column} ${canRequest ? styles.columnWithFooter : ""}`}>
+      <div
+        className={`${styles.column} ${canRequest ? styles.columnWithFooter : ""}`}
+        style={canPayOnline ? { paddingBottom: 230 } : undefined}
+      >
         {header}
 
         <section className={styles.due} aria-labelledby="odenecek-baslik">
           <span id="odenecek-baslik" className={styles.kicker}>
             Ödenecek tutar
           </span>
-          <strong className={styles.dueAmount}>{formatLira(bill.due_total)}</strong>
+          <strong className={styles.dueAmount}>{formatLira(due)}</strong>
           <div className={styles.dueMeta}>
             <span>
               Masa <b>{bill.table_number}</b>
@@ -176,6 +187,11 @@ export default function AuroraBill({
             {paid > 0 && (
               <span>
                 Ödenen <b>{formatLira(paid)}</b>
+              </span>
+            )}
+            {onlinePaid > 0 && (
+              <span>
+                Kartla <b>{formatLira(onlinePaid)}</b>
               </span>
             )}
           </div>
@@ -234,19 +250,33 @@ export default function AuroraBill({
       {canRequest && (
         <div className={styles.footer}>
           <div className={styles.footerInner}>
+            {canPayOnline && (
+              <a className={styles.cta} href={payHref}>
+                <AuroraIcon name="card" />
+                Kartla öde
+              </a>
+            )}
             <button
               type="button"
-              className={requested ? `${styles.ghost} ${styles.ghostDone}` : styles.cta}
+              className={requested || canPayOnline ? `${styles.ghost} ${requested ? styles.ghostDone : ""}` : styles.cta}
               onClick={requestBill}
               disabled={requesting}
             >
               <AuroraIcon name={requested ? "check" : "receipt"} />
-              {requesting ? "Gönderiliyor…" : requested ? "Hesap istendi" : "Hesabı iste"}
+              {requesting
+                ? "Gönderiliyor…"
+                : requested
+                  ? "Hesap istendi"
+                  : canPayOnline
+                    ? "Garsona öde"
+                    : "Hesabı iste"}
             </button>
             <p className={styles.footerNote}>
               {requested
                 ? "Garsonunuz adisyonu masanıza getirecek."
-                : "Ödemeyi masanızda garsonunuza yapabilirsiniz."}
+                : canPayOnline
+                  ? "Hesabı bölüşebilir, kendi yediğinizi ödeyebilir, bahşiş ekleyebilirsiniz."
+                  : "Ödemeyi masanızda garsonunuza yapabilirsiniz."}
             </p>
           </div>
         </div>

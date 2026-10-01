@@ -187,3 +187,99 @@ export function percentChange(current: number, previous: number) {
   if (previous === 0) return current === 0 ? 0 : null;
   return ((current - previous) / previous) * 100;
 }
+
+/* ---------------- Haftalık / aylık özet dönemleri ---------------- */
+
+export type SummaryKind = "hafta" | "ay";
+
+type Range = { firstDay: string; lastDay: string; from: Date; to: Date; label: string };
+
+export type SummaryPeriod = Range & {
+  kind: SummaryKind;
+  // Dönemin ilk günü; bağlantılarda dönemi tanımlar.
+  key: string;
+  // Dönem henüz bitmedi mi (bu hafta / bu ay)?
+  ongoing: boolean;
+  days: number;
+  previous: Range;
+};
+
+function range(firstDay: string, lastDay: string, label: string): Range {
+  return { firstDay, lastDay, from: businessDayStart(firstDay), to: businessDayStart(addDays(lastDay, 1)), label };
+}
+
+function dayCount(firstDay: string, lastDay: string) {
+  return Math.round((businessDayStart(lastDay).getTime() - businessDayStart(firstDay).getTime()) / DAY_MS) + 1;
+}
+
+function monthName(firstDay: string) {
+  return new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric", timeZone: "UTC" }).format(
+    new Date(`${firstDay}T12:00:00Z`)
+  );
+}
+
+function lastDayOfMonth(firstDay: string) {
+  const [year, month] = firstDay.split("-").map(Number);
+  return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+}
+
+function previousMonthStart(firstDay: string) {
+  const [year, month] = firstDay.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 2, 1)).toISOString().slice(0, 10);
+}
+
+function mondayOf(day: string) {
+  const weekday = (new Date(`${day}T12:00:00Z`).getUTCDay() + 6) % 7;
+  return addDays(day, -weekday);
+}
+
+function buildSummary(kind: SummaryKind, start: string, today: string): SummaryPeriod {
+  const fullLast = kind === "hafta" ? addDays(start, 6) : lastDayOfMonth(start);
+  const ongoing = fullLast >= today;
+  const lastDay = ongoing ? today : fullLast;
+  const days = dayCount(start, lastDay);
+
+  const previousStart = kind === "hafta" ? addDays(start, -7) : previousMonthStart(start);
+  const previousFullLast = kind === "hafta" ? addDays(previousStart, 6) : lastDayOfMonth(previousStart);
+  // Devam eden dönem, önceki dönemin aynı gün sayısıyla karşılaştırılır.
+  const candidate = addDays(previousStart, days - 1);
+  const previousLast = ongoing && candidate < previousFullLast ? candidate : previousFullLast;
+
+  const label =
+    kind === "ay"
+      ? `${monthName(start)}${ongoing ? " · devam ediyor" : ""}`
+      : `${formatRange(start, fullLast)}${ongoing ? " · devam ediyor" : ""}`;
+
+  const previousLabel =
+    kind === "ay" && previousLast === previousFullLast
+      ? monthName(previousStart)
+      : formatRange(previousStart, previousLast);
+
+  return {
+    ...range(start, lastDay, label),
+    kind,
+    key: start,
+    ongoing,
+    days,
+    previous: range(previousStart, previousLast, previousLabel),
+  };
+}
+
+// Seçim listesi: son 12 hafta ya da son 12 ay (yeniden eskiye).
+export function summaryOptions(kind: SummaryKind, now = new Date()) {
+  const today = businessDayOf(now);
+  let start = kind === "hafta" ? mondayOf(today) : `${today.slice(0, 7)}-01`;
+  const options: SummaryPeriod[] = [];
+
+  for (let i = 0; i < 12; i++) {
+    options.push(buildSummary(kind, start, today));
+    start = kind === "hafta" ? addDays(start, -7) : previousMonthStart(start);
+  }
+  return options;
+}
+
+// Varsayılan: son tamamlanan hafta ya da ay.
+export function resolveSummary(kind: SummaryKind, key: string | undefined, now = new Date()) {
+  const options = summaryOptions(kind, now);
+  return options.find((option) => option.key === key) ?? options[1];
+}

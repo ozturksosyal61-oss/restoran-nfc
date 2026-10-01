@@ -7,6 +7,7 @@ import SessionControls from "./SessionControls";
 import AdminIcon from "../AdminIcon";
 import { hasPlanFeature, getPlanLabel } from "../../../lib/plan";
 import { orderNumber } from "../../../lib/order-number";
+import { createSupabaseAdminClient } from "../../../lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -299,6 +300,30 @@ if (restaurantError || !restaurant) {
   const safeOpenSessions: DiningSession[] =
     (openSessions || []) as DiningSession[];
 
+  // Masadan kartla yapılan kısmi ödemeler (siparişe ancak hesap tamamen
+  // ödenince işlenir). Tablo yalnızca sunucudan okunur; restoran yukarıda
+  // oturumdaki kullanıcının üyeliğiyle bulundu.
+  const onlineBySession = new Map<number, { paid: number; tip: number }>();
+  if (safeOpenSessions.length > 0) {
+    try {
+      const { data: onlineRows } = await createSupabaseAdminClient()
+        .from("payment_transactions")
+        .select("session_id, amount, tip_amount")
+        .eq("restaurant_id", restaurant.id)
+        .eq("kind", "bill")
+        .eq("status", "success")
+        .in("session_id", safeOpenSessions.map((session) => session.id));
+      for (const row of onlineRows ?? []) {
+        const current = onlineBySession.get(Number(row.session_id)) ?? { paid: 0, tip: 0 };
+        current.paid += Number(row.amount) - Number(row.tip_amount ?? 0);
+        current.tip += Number(row.tip_amount ?? 0);
+        onlineBySession.set(Number(row.session_id), current);
+      }
+    } catch (onlineError) {
+      console.error("Online ödemeler okunamadı:", onlineError);
+    }
+  }
+
   const sessionStats = safeOpenSessions.map(
     (session) => {
       const sessionOrders =
@@ -336,12 +361,15 @@ if (restaurantError || !restaurant) {
             0
           );
 
+      const online = onlineBySession.get(session.id) ?? { paid: 0, tip: 0 };
+
       return {
         session,
         orders: sessionOrders,
         orderCount: sessionOrders.length,
         total,
-        unpaidTotal,
+        unpaidTotal: Math.max(unpaidTotal - online.paid, 0),
+        online,
       };
     }
   );
@@ -661,7 +689,7 @@ if (restaurantError || !restaurant) {
               </div>
 
               <div className="adm-grid-3">
-                {sessionStats.map(({ session, orderCount, total, unpaidTotal }) => (
+                {sessionStats.map(({ session, orderCount, total, unpaidTotal, online }) => (
                   <article key={session.id} className="adm-card adm-session">
                     <div className="adm-card-head">
                       <div>
@@ -686,6 +714,12 @@ if (restaurantError || !restaurant) {
                         </strong>
                       </span>
                     </div>
+                    {online.paid > 0 && (
+                      <p className="adm-hint" style={{ margin: 0 }}>
+                        <AdminIcon name="card" size={14} /> Kartla ödenen: {formatPrice(online.paid)} ₺
+                        {online.tip > 0 ? ` · bahşiş ${formatPrice(online.tip)} ₺` : ""}
+                      </p>
+                    )}
                     <SessionControls sessionId={session.id} />
                   </article>
                 ))}

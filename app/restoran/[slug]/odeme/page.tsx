@@ -6,6 +6,8 @@ import { createClient } from "../../../../lib/supabase/client";
 import { useRestaurantTheme } from "../RestaurantThemeContext";
 import AuroraBill from "./AuroraBill";
 import { orderNumber } from "../../../../lib/order-number";
+import type { TablePaymentInfo } from "../../../../lib/payments/table";
+import type { OnlinePayment } from "./pay-utils";
 
 type Restaurant = { id: number; name: string };
 type BillItem = { id: number; product_name: string; price: number; quantity: number };
@@ -31,6 +33,7 @@ export default function PaymentPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [online, setOnline] = useState<OnlinePayment>(null);
   const supabase = useMemo(() => createClient(), []);
 
   const loadBill = useCallback(async (silent = false) => {
@@ -47,6 +50,16 @@ export default function PaymentPage() {
       const { data: billData, error: billError } = await supabase.rpc("get_public_dining_bill", { p_restaurant_id: restaurantData.id, p_table_id: tableData.id, p_public_token: token });
       if (billError) throw new Error(billError.message || "Masa hesabı alınamadı.");
       setBill(billData as BillResponse);
+      // Kartla ödeme durumu ayrı okunur; alınamazsa hesap ekranı yine çalışır.
+      try {
+        const response = await fetch(`/api/odeme/masa?slug=${encodeURIComponent(slug)}&masa=${encodeURIComponent(token)}`, { cache: "no-store" });
+        const info = (await response.json()) as TablePaymentInfo;
+        setOnline(info.enabled && info.state?.open
+          ? { enabled: true, due: Number(info.state.due ?? 0), paid: Number(info.state.paid_total ?? 0) }
+          : null);
+      } catch {
+        setOnline(null);
+      }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Masa hesabı yüklenemedi.");
     } finally { setLoading(false); setRefreshing(false); }
@@ -92,6 +105,7 @@ export default function PaymentPage() {
         refreshing={refreshing}
         error={viewError}
         onRetry={() => void loadBill()}
+        online={online}
       />
     );
   }
@@ -138,8 +152,12 @@ export default function PaymentPage() {
               </div>
             </section>
             <section className="total-card"><div><span>MASA TOPLAMI</span><small>Bu oturumdaki siparişler</small></div><strong>{formatPrice(bill.order_total)}</strong></section>
-            <section className="due-card"><div><span>ÖDENECEK TUTAR</span><small>Ödenmiş siparişler çıkarılmıştır</small></div><strong>{formatPrice(bill.due_total)}</strong></section>
-            <button type="button" className="pay-button" disabled>💳 Hesabı Ödemeye Geç<small>Online ödeme bağlantısı bir sonraki aşamada</small></button>
+            <section className="due-card"><div><span>ÖDENECEK TUTAR</span><small>Ödenmiş siparişler çıkarılmıştır</small></div><strong>{formatPrice(online ? Math.min(bill.due_total, online.due) : bill.due_total)}</strong></section>
+            {online?.enabled && online.due > 0 ? (
+              <a className="pay-button pay-button-on" href={`/restoran/${slug}/odeme/kart?masa=${encodeURIComponent(token)}`}>💳 Kartla Öde<small>{online.paid > 0 ? `Kartla ödenen ${formatPrice(online.paid)} · Kalan ${formatPrice(online.due)}` : "Tamamını, kendi ürünlerinizi ya da eşit payınızı ödeyin"}</small></a>
+            ) : (
+              <button type="button" className="pay-button" disabled>💳 Ödemenizi garsonunuza yapabilirsiniz</button>
+            )}
             <div className="refresh-note">🔄 Hesabınız otomatik olarak güncelleniyor.</div>
           </>
         )}
@@ -167,7 +185,7 @@ export default function PaymentPage() {
         .status{padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900;} .status.unpaid{background:rgba(215,167,65,.12);color:#e7bd58;} .status.paid{background:rgba(71,174,104,.12);color:#72cf90;}
         .item-list{padding:7px 15px;} .bill-item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);} .bill-item:last-child{border-bottom:0;} .bill-item div{display:flex;flex-direction:column;gap:3px;} .bill-item span{color:#7f7f7f;font-size:11px;} .bill-item>strong{color:#ddd;white-space:nowrap;} .order-note{margin:0 15px 14px;padding:9px 10px;border-radius:10px;background:#181818;color:#a5a5a5;font-size:11px;}
         .total-card,.due-card{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:18px 20px;} .total-card div,.due-card div{display:flex;flex-direction:column;gap:5px;} .total-card small,.due-card small{color:#888;font-size:11px;} .total-card strong,.due-card strong{font-size:25px;color:#f2ca65;} .due-card{border-color:rgba(215,167,65,.42);background:linear-gradient(135deg,rgba(215,167,65,.13),#111);}
-        .pay-button{width:100%;margin-top:16px;border:1px solid rgba(215,167,65,.45);border-radius:18px;padding:15px 18px;background:#6c5523;color:#d9c084;font-size:16px;font-weight:900;cursor:not-allowed;} .pay-button small{display:block;margin-top:5px;font-size:10px;font-weight:700;color:#b9a36d;} .refresh-note{text-align:center;color:#707070;font-size:11px;margin-top:12px;}
+        .pay-button{width:100%;margin-top:16px;border:1px solid rgba(215,167,65,.45);border-radius:18px;padding:15px 18px;background:#6c5523;color:#d9c084;font-size:16px;font-weight:900;cursor:not-allowed;} .pay-button-on{display:block;text-align:center;text-decoration:none;cursor:pointer;background:#d7a741;color:#16130f;} .pay-button-on small{color:#3b2f14 !important;} .pay-button small{display:block;margin-top:5px;font-size:10px;font-weight:700;color:#b9a36d;} .refresh-note{text-align:center;color:#707070;font-size:11px;margin-top:12px;}
         @media (max-width:430px){.bill-page{padding:10px 10px 30px}.bill-hero{padding-top:18px}.order-head{padding:13px}.total-card strong,.due-card strong{font-size:21px}}
       `}</style>
     </main>

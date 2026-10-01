@@ -76,7 +76,9 @@ export function StatCard({
   tone?: string;
   lowerIsBetter?: boolean;
 }) {
-  const change = current !== undefined && previous !== undefined ? percentChange(current, previous) : undefined;
+  const raw = current !== undefined && previous !== undefined ? percentChange(current, previous) : undefined;
+  // %0'a yuvarlanan küçük değişimler nötr gösterilir.
+  const change = raw === undefined || raw === null ? raw : Math.round(raw);
   const good = change !== undefined && change !== null && (lowerIsBetter ? change < 0 : change > 0);
   const bad = change !== undefined && change !== null && (lowerIsBetter ? change > 0 : change < 0);
 
