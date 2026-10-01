@@ -332,7 +332,7 @@ export default function OrderTrackingPage() {
           );
 
           setError(
-            "Sipariş bulunamadı veya bu masa ile eşleşmiyor."
+            "Sipariş görüntülenemiyor. Masanın hesabı kapandıysa siparişler artık gösterilmez."
           );
           setLoading(false);
           return;

@@ -29,6 +29,7 @@ export default function AuroraCheckout({
   error,
   submitting,
   onSubmit,
+  onlineEnabled = false,
 }: {
   slug: string;
   loadingRestaurant: boolean;
@@ -43,6 +44,7 @@ export default function AuroraCheckout({
   error: string;
   submitting: boolean;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onlineEnabled?: boolean;
 }) {
   const tableQuery = tableToken ? `?masa=${encodeURIComponent(tableToken)}` : "";
   const menuHref = `/restoran/${encodeURIComponent(slug)}/menu${tableQuery}`;
@@ -167,11 +169,13 @@ export default function AuroraCheckout({
 
         <div className={`${styles.block} ${styles.pay}`}>
           <span className={styles.tile}>
-            <AuroraIcon name="cash" />
+            <AuroraIcon name={onlineEnabled ? "card" : "cash"} />
           </span>
           <span>
             <strong>Ödeme masada</strong>
-            Hesabı istediğinizde garsonunuza ödersiniz.
+            {onlineEnabled
+              ? "Yemeğinizden sonra garsonunuza ya da masa hesabı ekranından kartla ödersiniz."
+              : "Hesabı istediğinizde garsonunuza ödersiniz."}
           </span>
         </div>
 

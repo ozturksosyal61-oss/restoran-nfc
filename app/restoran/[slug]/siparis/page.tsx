@@ -493,6 +493,36 @@ export default function OrderPage() {
 
   /*
    * =====================================================
+   * KARTLA ÖDEME BİLGİSİ
+   * Ödeme her zaman yemekten sonra yapılır; restoranda masadan
+   * kartla ödeme açıksa müşteriye bu seçenek de hatırlatılır.
+   * =====================================================
+   */
+
+  const [onlineEnabled, setOnlineEnabled] = useState(false);
+  const paymentTableToken = table?.public_token || tableTokenFromUrl || "";
+
+  useEffect(() => {
+    if (!paymentTableToken) return;
+    let cancelled = false;
+    fetch(
+      `/api/odeme/masa?slug=${encodeURIComponent(slug)}&masa=${encodeURIComponent(paymentTableToken)}`,
+      { cache: "no-store" }
+    )
+      .then((response) => response.json())
+      .then((info: { enabled?: boolean }) => {
+        if (!cancelled) setOnlineEnabled(Boolean(info?.enabled));
+      })
+      .catch(() => {
+        // Bilgi alınamazsa yalnızca "garsona öde" yazar.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, paymentTableToken]);
+
+  /*
+   * =====================================================
    * SİPARİŞ GÖNDER
    * =====================================================
    */
@@ -700,6 +730,7 @@ export default function OrderPage() {
         error={error}
         submitting={loading}
         onSubmit={handleSubmit}
+        onlineEnabled={onlineEnabled}
       />
     );
   }
