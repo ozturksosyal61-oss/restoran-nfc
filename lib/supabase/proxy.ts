@@ -64,6 +64,23 @@ export async function updateSession(request: NextRequest) {
   }
 
   // --------------------------------------------------
+  // GARSON / MUTFAK EKRANI KORUMASI
+  // (Hesabın gerçekten personel hesabı olduğu sayfada doğrulanır.)
+  // --------------------------------------------------
+
+  if (
+    pathname.startsWith("/personel") &&
+    !pathname.startsWith("/personel/giris") &&
+    !claims
+  ) {
+    const url = request.nextUrl.clone();
+
+    url.pathname = "/personel/giris";
+
+    return NextResponse.redirect(url);
+  }
+
+  // --------------------------------------------------
   // SİSTEM SAHİBİ PANELİ KORUMASI
   // --------------------------------------------------
 

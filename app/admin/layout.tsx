@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
-import { unstable_rethrow } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
 import { getPlanLabel, hasPlanFeature } from "../../lib/plan";
 import { readMenuOnly } from "../../lib/restaurant-type";
 import { isDemoSession } from "../../lib/demo";
+import { isStaffUser } from "../../lib/staff";
 import AdminShell, { type AdminShellRestaurant } from "./AdminShell";
 import "./admin.css";
 
@@ -40,6 +41,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         .select("restaurant_id")
         .eq("user_id", user.id)
         .maybeSingle();
+
+      // Garson / mutfak hesapları yönetim paneline giremez; kendi ekranlarına gider.
+      if (!membership?.restaurant_id && (await isStaffUser(user.id))) {
+        redirect("/personel");
+      }
 
       if (membership?.restaurant_id) {
         const { data } = await supabase

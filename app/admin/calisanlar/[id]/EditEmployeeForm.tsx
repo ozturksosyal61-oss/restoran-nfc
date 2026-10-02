@@ -16,8 +16,10 @@ type Employee = {
 
 export default function EditEmployeeForm({
   employee,
+  extra,
 }: {
   employee: Employee;
+  extra?: React.ReactNode;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -302,6 +304,7 @@ export default function EditEmployeeForm({
       success={success}
       onDelete={handleDelete}
       deleting={deleting}
+      extra={extra}
     />
   );
 }

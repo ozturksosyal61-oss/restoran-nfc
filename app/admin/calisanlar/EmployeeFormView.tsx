@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import Link from "next/link";
 import AdminIcon from "../AdminIcon";
 
@@ -28,6 +28,7 @@ export default function EmployeeFormView({
   onSubmit,
   onDelete,
   deleting,
+  extra,
 }: {
   mode: "new" | "edit";
   name: string;
@@ -44,6 +45,8 @@ export default function EmployeeFormView({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onDelete?: () => void;
   deleting?: boolean;
+  // Formun altında gösterilecek ek bölüm (ör. garson / mutfak girişi).
+  extra?: ReactNode;
 }) {
   return (
     <main className="adm-page" style={{ maxWidth: 720 }}>
@@ -164,6 +167,8 @@ export default function EmployeeFormView({
           </span>
         </div>
       </form>
+
+      {extra}
     </main>
   );
 }

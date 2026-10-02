@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "../../../lib/supabase-server";
 import { loadEmployeePhones } from "../../../lib/employee-phones";
 import AdminIcon from "../AdminIcon";
+import { createSupabaseAdminClient } from "../../../lib/supabase-admin";
 
 type Employee = {
   id: number;
@@ -110,6 +111,13 @@ export default async function CalisanlarPage() {
       }),
     loadEmployeePhones(supabase, Number(restaurantId)),
   ]);
+
+  // Garson / mutfak giriş hesapları (tablo yalnızca sunucudan okunur).
+  const { data: accountRows } = await createSupabaseAdminClient()
+    .from("staff_accounts")
+    .select("employee_id, is_active")
+    .eq("restaurant_id", restaurantId);
+  const logins = new Map((accountRows ?? []).map((row) => [Number(row.employee_id), row.is_active !== false]));
 
   const employees: Employee[] = (employeesData || []).map((employee) => ({
     ...employee,
@@ -232,6 +240,15 @@ export default async function CalisanlarPage() {
                     </td>
                     <td>
                       <span className={`adm-badge ${roleBadge(employee.role)}`}>{roleLabel(employee.role)}</span>
+                      {logins.has(Number(employee.id)) && (
+                        <span
+                          className={`adm-badge ${logins.get(Number(employee.id)) ? "s-ok" : ""}`}
+                          style={{ marginLeft: 6 }}
+                          title="Kendi ekranına giriş yapabilir"
+                        >
+                          {logins.get(Number(employee.id)) ? "Giriş açık" : "Giriş kapalı"}
+                        </span>
+                      )}
                     </td>
                     <td className="adm-muted">{employee.phone || "—"}</td>
                     <td>
