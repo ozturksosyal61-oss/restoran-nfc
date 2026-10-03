@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { supabase } from "../lib/supabase";
 import TrackedLink from "./TrackedLink";
+import { FEATURE_INFO, featuresAddedIn } from "../lib/plan";
 import styles from "./page.module.css";
 
 // Restoran sayısı en fazla 5 dakikada bir güncellenir.
@@ -151,29 +152,27 @@ const products = [
   },
 ];
 
+// Paket kartları sistemdeki tek listeden (lib/plan.ts) üretilir; panelde
+// ve sitede aynı özellikler görünür.
+const featureLabels = (plan: "starter" | "pro" | "premium") =>
+  featuresAddedIn(plan).map((feature) => FEATURE_INFO[feature].label);
+
 const plans = [
   {
-    name: "Starter",
-    text: "Dijital menü ve QR ile güçlü bir başlangıç.",
-    items: ["Dijital menü", "QR menü", "Temel işletme yönetimi"],
+    name: "Başlangıç",
+    text: "Sipariş almayan kafe ve restoranlar için şık bir QR dijital menü.",
+    items: featureLabels("starter"),
   },
   {
     name: "Pro",
-    text: "Sipariş ve müşteri deneyimini büyütmek isteyen işletmeler için.",
-    items: [
-      "Starter özellikleri",
-      "NFC",
-      "Online sipariş",
-      "Garson çağırma",
-      "Analitik",
-      "Çoklu kullanıcı",
-    ],
+    text: "Masada sipariş alan işletmeler için: siparişler, garson çağrıları ve satış raporları.",
+    items: ["Başlangıç'taki her şey", ...featureLabels("pro")],
     featured: true,
   },
   {
     name: "Premium",
-    text: "İleri seviye raporlama ve tam restoran deneyimi.",
-    items: ["Pro özellikleri", "Gelişmiş raporlar"],
+    text: "Kartla ödeme, garson ve mutfak ekranları, yapay zekâ ile tam restoran sistemi.",
+    items: ["Pro'daki her şey", ...featureLabels("premium")],
   },
 ];
 
@@ -196,7 +195,7 @@ const faqs = [
   },
   {
     q: "Hangi paket bana uygun?",
-    a: "Yalnızca dijital menü istiyorsanız Starter ile başlayabilirsiniz. Masadan sipariş, NFC ve garson çağırma için Pro; gelişmiş raporlar için Premium uygundur.",
+    a: "Yalnızca dijital menü istiyorsanız Başlangıç yeterli. Masadan sipariş, garson çağırma ve satış raporları için Pro; masadan kartla ödeme, garson ve mutfak ekranları ve yapay zekâ özellikleri için Premium uygundur.",
   },
 ];
 
