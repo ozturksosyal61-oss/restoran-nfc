@@ -98,3 +98,11 @@ export async function getCurrentRestaurantPlanLabel(): Promise<string> {
 
   return getPlanLabel(plan);
 }
+// Restoranın paketi (oturumdaki yöneticinin istemcisiyle ya da service role ile).
+export async function readRestaurantPlan(
+  client: { from: (table: string) => any }, // eslint-disable-line @typescript-eslint/no-explicit-any
+  restaurantId: number
+): Promise<string | null> {
+  const { data } = await client.from("restaurants").select("plan").eq("id", restaurantId).maybeSingle();
+  return (data?.plan as string | undefined) ?? null;
+}

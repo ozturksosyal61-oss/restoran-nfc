@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
-import { getPlanLabel, hasPlanFeature } from "../../lib/plan";
+import { getPlanLabel } from "../../lib/plan";
 import { readMenuOnly } from "../../lib/restaurant-type";
 import { isDemoSession } from "../../lib/demo";
 import { isStaffUser } from "../../lib/staff";
@@ -89,10 +89,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     <div className={`${display.variable} ${sans.variable}`}>
       <AdminShell
         restaurant={restaurant}
-        planLabel={menuOnly ? "MENÜ" : getPlanLabel(plan)}
-        canUseOrders={hasPlanFeature(plan, "orders")}
-        canUseStaff={hasPlanFeature(plan, "multi_user")}
-        canUseReports={hasPlanFeature(plan, "analytics")}
+        planLabel={getPlanLabel(plan)}
+        plan={plan}
         menuOnly={menuOnly}
         demoMode={demoMode}
         billing={billing}

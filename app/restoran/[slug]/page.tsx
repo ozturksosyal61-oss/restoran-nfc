@@ -4,6 +4,7 @@ import { readMenuOnly, restaurantMenuPath } from "../../../lib/restaurant-type";
 import { isAuroraTheme } from "../../../lib/themes";
 import SiparisTakipLink from "./SiparisTakipLink";
 import NovaRestaurantHome from "./NovaRestaurantHome";
+import { hasPlanFeature } from "../../../lib/plan";
 import AuroraRestaurantHome from "./AuroraRestaurantHome";
 
 async function callWaiter(formData: FormData) {
@@ -139,7 +140,7 @@ export default async function RestaurantPage({
   const { data: restaurant, error } = await supabase
     .from("restaurants")
     .select(
-      "id, name, slug, description, phone, address, instagram_url, google_review_url, logo_url, cover_image_url, theme, is_open, opening_time, closing_time"
+      "id, name, slug, description, phone, address, instagram_url, google_review_url, logo_url, cover_image_url, theme, is_open, opening_time, closing_time, plan"
     )
     .eq("slug", slug)
     .single();
@@ -147,6 +148,9 @@ export default async function RestaurantPage({
   if (error || !restaurant) {
     notFound();
   }
+
+  // Çalışan değerlendirme Premium paketinde.
+  const staffRatings = hasPlanFeature(restaurant.plan, "staff_ratings");
 
   // Sadece menü restoranlarında ana sayfa yok; QR doğrudan menüye açılır.
   if (await readMenuOnly(supabase, Number(restaurant.id))) {
@@ -254,6 +258,7 @@ export default async function RestaurantPage({
         }}
         table={table}
         tableQuery={tableQuery}
+        staffRatings={staffRatings}
         reviews={(reviews ?? []).map((review) => ({
           id: Number(review.id),
           customer_name: review.customer_name ?? null,
@@ -858,16 +863,18 @@ export default async function RestaurantPage({
               </a>
             )}
 
-            <a
-              href={`/restoran/${restaurant.slug}/calisan${tableQuery}`}
-              className="ozt-modern-action"
-            >
-              <span className="ozt-modern-icon">💬</span>
-              <span className="ozt-modern-action-copy">
-                <span className="ozt-modern-action-title">Çalışanı Değerlendir</span>
-                <span className="ozt-modern-action-sub">Hizmet deneyiminizi paylaşın</span>
-              </span>
-            </a>
+            {staffRatings && (
+              <a
+                href={`/restoran/${restaurant.slug}/calisan${tableQuery}`}
+                className="ozt-modern-action"
+              >
+                <span className="ozt-modern-icon">💬</span>
+                <span className="ozt-modern-action-copy">
+                  <span className="ozt-modern-action-title">Çalışanı Değerlendir</span>
+                  <span className="ozt-modern-action-sub">Hizmet deneyiminizi paylaşın</span>
+                </span>
+              </a>
+            )}
 
             <a
               href={`/restoran/${restaurant.slug}/odeme${tableQuery}`}

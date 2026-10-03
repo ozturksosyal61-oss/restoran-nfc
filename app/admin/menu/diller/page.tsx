@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { hasPlanFeature } from "../../../../lib/plan";
+import { readRestaurantPlan } from "../../../../lib/plan-server";
+import PlanLock from "../../PlanLock";
 import { redirect } from "next/navigation";
 import { getAdminRestaurant } from "../../../../lib/admin-restaurant";
 import { aiConfigured } from "../../../../lib/ai";
@@ -42,6 +45,10 @@ export default async function MenuLanguagesPage({
 
   const { supabase, restaurantId } = admin;
   const { dil } = await searchParams;
+
+  if (!hasPlanFeature(await readRestaurantPlan(supabase, Number(restaurantId)), "languages")) {
+    return <PlanLock feature="languages" title="Menü dilleri" eyebrow="Menü" />;
+  }
 
   const [{ data: restaurant, error: languageError }, { data: themeRow }, menuOnly] = await Promise.all([
     supabase.from("restaurants").select("menu_languages").eq("id", restaurantId).maybeSingle(),
@@ -100,7 +107,8 @@ export default async function MenuLanguagesPage({
 
   const reviewLanguage: MenuLanguage | null = isMenuLanguage(dil) && languages.includes(dil) ? dil : languages[0] ?? null;
 
-  const ai = aiConfigured();
+  const aiInPlan = hasPlanFeature(await readRestaurantPlan(supabase, Number(restaurantId)), "ai");
+  const ai = aiConfigured() && aiInPlan;
   const auroraShown = menuOnly || isAuroraTheme(themeRow?.theme);
 
   return (
@@ -190,7 +198,9 @@ export default async function MenuLanguagesPage({
               {!ai && (
                 <p className="adm-alert adm-alert-info">
                   <AdminIcon name="info" size={16} />
-                  Otomatik çeviri şu an kapalı. Çevirileri aşağıdan elle girebilirsiniz.
+                  {aiInPlan
+                    ? "Otomatik çeviri şu an kapalı. Çevirileri aşağıdan elle girebilirsiniz."
+                    : "Otomatik çeviri (yapay zekâ) Premium paketinde. Çevirileri aşağıdan elle girebilirsiniz."}
                 </p>
               )}
 

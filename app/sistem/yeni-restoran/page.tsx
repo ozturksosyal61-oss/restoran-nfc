@@ -5,12 +5,13 @@ import Link from "next/link";
 import AdminIcon from "../../admin/AdminIcon";
 import { RESTAURANT_THEMES, isAuroraTheme, normalizeRestaurantTheme } from "../../../lib/themes";
 import { CredentialsBox } from "../SystemUi";
+import { FEATURE_INFO, featuresAddedIn, type Plan } from "../../../lib/plan";
 
 type RestaurantTheme = (typeof RESTAURANT_THEMES)[number]["value"];
 
-// full: sipariş, garson çağırma, ödeme ve masa QR'ları olan premium sürüm.
-// menu: yalnızca dijital menü; tek QR, masa yok. Aurora menüsünü kullanır.
-type RestaurantType = "full" | "menu";
+// Paket seçimi. Başlangıç "sadece menü"dür: tek QR, masa ve sipariş yok,
+// Aurora menüsünü kullanır. Özellik listesi lib/plan.ts'den gelir.
+type RestaurantType = Plan;
 
 const RESTAURANT_TYPES: {
   value: RestaurantType;
@@ -19,26 +20,22 @@ const RESTAURANT_TYPES: {
   features: string[];
 }[] = [
   {
-    value: "full",
-    title: "Premium restoran",
-    description: "Masadan sipariş ve servis isteyen işletmeler için tam sürüm.",
-    features: [
-      "Masaya özel QR / NFC",
-      "Sipariş ve sipariş takibi",
-      "Garson çağırma, hesap ve ödeme",
-      "Çalışanlar ve değerlendirmeler",
-    ],
+    value: "starter",
+    title: "Başlangıç",
+    description: "Dijital menü. Müşteri QR'ı okutup menüyü görür; sipariş yok.",
+    features: featuresAddedIn("starter").map((feature) => FEATURE_INFO[feature].label),
   },
   {
-    value: "menu",
-    title: "Sadece menü",
-    description: "Müşteri QR'ı okutup yalnızca menüyü görür.",
-    features: [
-      "Tek QR kod, masa kurulumu yok",
-      "Ürün ve kategori yönetimi",
-      "Sipariş, garson ve ödeme ekranı yok",
-      "Aurora menü tasarımı, 7 renk",
-    ],
+    value: "pro",
+    title: "Pro",
+    description: "Masada sipariş: Başlangıç'taki her şeye ek olarak",
+    features: featuresAddedIn("pro").map((feature) => FEATURE_INFO[feature].label),
+  },
+  {
+    value: "premium",
+    title: "Premium",
+    description: "Tam sistem: Pro'daki her şeye ek olarak",
+    features: featuresAddedIn("premium").map((feature) => FEATURE_INFO[feature].label),
   },
 ];
 
@@ -77,7 +74,7 @@ function createSlug(name: string) {
 }
 
 const EMPTY_FORM: Form = {
-  restaurant_type: "full",
+  restaurant_type: "pro",
   name: "",
   slug: "",
   description: "",
@@ -96,7 +93,7 @@ export default function YeniRestoranPage() {
   const [error, setError] = useState("");
   const [created, setCreated] = useState<Created | null>(null);
 
-  const isMenuOnly = form.restaurant_type === "menu";
+  const isMenuOnly = form.restaurant_type === "starter";
   const themeChoices = isMenuOnly
     ? RESTAURANT_THEMES.filter((theme) => isAuroraTheme(theme.value))
     : RESTAURANT_THEMES;
@@ -112,7 +109,7 @@ export default function YeniRestoranPage() {
       ...current,
       restaurant_type: value,
       theme:
-        value === "menu" && !isAuroraTheme(current.theme)
+        value === "starter" && !isAuroraTheme(current.theme)
           ? normalizeRestaurantTheme("aurora")
           : current.theme,
     }));
@@ -156,7 +153,8 @@ export default function YeniRestoranPage() {
           google_review_url: form.google_review_url.trim(),
           manager_email: form.manager_email.trim(),
           manager_password: form.manager_password,
-          restaurant_type: form.restaurant_type,
+          restaurant_type: isMenuOnly ? "menu" : "full",
+          plan: form.restaurant_type,
           table_count: isMenuOnly ? 0 : tableCount,
           theme: normalizeRestaurantTheme(form.theme),
         }),
@@ -250,12 +248,12 @@ export default function YeniRestoranPage() {
           <div className="sys-step-head">
             <span className="sys-step">1</span>
             <div>
-              <h2 id="adim-tur">Restoran türü</h2>
-              <p>Premium mu, yoksa sadece menü restoranı mı oluşturuyorsunuz?</p>
+              <h2 id="adim-tur">Paket</h2>
+              <p>Restoranın paketi. Başlangıç sadece menüdür; sipariş ve masa Pro ile başlar.</p>
             </div>
           </div>
 
-          <div className="sys-type-grid" role="radiogroup" aria-label="Restoran türü">
+          <div className="sys-type-grid" role="radiogroup" aria-label="Paket">
             {RESTAURANT_TYPES.map((type) => (
               <label
                 key={type.value}
@@ -486,7 +484,7 @@ export default function YeniRestoranPage() {
 
         <div className="adm-sticky-actions">
           <span>
-            {isMenuOnly ? "Sadece menü" : "Premium"} ·{" "}
+            {form.restaurant_type === "starter" ? "Başlangıç" : form.restaurant_type === "pro" ? "Pro" : "Premium"} ·{" "}
             {RESTAURANT_THEMES.find((theme) => theme.value === form.theme)?.label.replace(/^AURORA - /, "Aurora · ")}
           </span>
           <Link className="adm-btn" href="/sistem">Vazgeç</Link>

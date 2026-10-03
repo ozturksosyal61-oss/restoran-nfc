@@ -205,12 +205,14 @@ export default function FeedbackFlow({
   logoUrl,
   googleUrl,
   menuOnly,
+  staffRatings = false,
 }: {
   slug: string;
   name: string;
   logoUrl: string | null;
   googleUrl: string | null;
   menuOnly: boolean;
+  staffRatings?: boolean;
 }) {
   // Menüde seçilen dil; sunucuda bilinmediği için tarayıcıda okunur.
   const language = useSyncExternalStore(noopSubscribe, readSavedLanguage, () => "tr" as DisplayLanguage);
@@ -329,7 +331,7 @@ export default function FeedbackFlow({
               <strong>{t.thanksTitle}</strong>
               <span>{t.thanksText}</span>
             </div>
-            {!menuOnly && (
+            {!menuOnly && staffRatings && (
               <a className={styles.ghost} href={`${base}/calisan`}>
                 <AuroraIcon name="star" size={16} />
                 {t.rateStaff}

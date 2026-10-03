@@ -4150,3 +4150,29 @@ button.adm-chip {
     position: static;
   }
 }
+
+/* =========================================================
+   PAKET KİLİDİ
+   ========================================================= */
+
+.adm-plan-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 8px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-plan-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13.5px;
+}
+
+.adm-plan-list svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--a-ok);
+}

@@ -6,6 +6,7 @@ import { getAuroraPalette, normalizeRestaurantTheme } from "../../../../lib/them
 import { auroraFontVariables } from "../aurora-fonts";
 import palette from "../aurora-palette.module.css";
 import FeedbackFlow from "./FeedbackFlow";
+import { hasPlanFeature } from "../../../../lib/plan";
 
 export const metadata: Metadata = {
   robots: { index: false },
@@ -22,7 +23,7 @@ export default async function FeedbackPage({
 
   const { data: restaurant } = await supabase
     .from("restaurants")
-    .select("id, name, slug, logo_url, theme, google_review_url")
+    .select("id, name, slug, logo_url, theme, google_review_url, plan")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -47,6 +48,7 @@ export default async function FeedbackPage({
         logoUrl={restaurant.logo_url ?? null}
         googleUrl={googleUrl}
         menuOnly={menuOnly}
+        staffRatings={hasPlanFeature(restaurant.plan, "staff_ratings")}
       />
     </div>
   );

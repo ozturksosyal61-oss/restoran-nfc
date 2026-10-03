@@ -27,7 +27,7 @@ export default async function OnlinePaymentPage({
     supabase.from("restaurants").select("plan").eq("id", restaurantId).maybeSingle(),
     readMenuOnly(supabase, restaurantId),
   ]);
-  const allowed = !menuOnly && hasPlanFeature(restaurant?.plan, "orders");
+  const allowed = !menuOnly && hasPlanFeature(restaurant?.plan, "online_payment");
 
   const header = (
     <header className="adm-head">
@@ -48,7 +48,7 @@ export default async function OnlinePaymentPage({
         {header}
         <p className="adm-alert adm-alert-info" role="status">
           <AdminIcon name="lock" size={16} />
-          Online ödeme, masadan sipariş alan Pro ve Premium paketlerde kullanılabilir.
+          Masadan kartla ödeme Premium paketinde kullanılabilir.
         </p>
       </main>
     );

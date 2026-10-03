@@ -43,5 +43,12 @@ export default async function SalesReportPage({
     loadSalesReport(supabase, restaurantId, period.previous.from, period.previous.to),
   ]);
 
-  return <SalesReportView period={period} report={report} previous={previous} />;
+  return (
+    <SalesReportView
+      period={period}
+      report={report}
+      previous={previous}
+      canExport={hasPlanFeature(restaurant?.plan, "advanced_reports")}
+    />
+  );
 }

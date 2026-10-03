@@ -10,7 +10,6 @@ import {
   setRestaurantMenuLayout,
   setRestaurantPlan,
   setRestaurantTheme,
-  setRestaurantType,
 } from "../actions";
 
 type Plan = { id: string; name: string; monthly_price: number };
@@ -41,11 +40,11 @@ export function RestaurantSettings({
   plans: Plan[];
   subscription: CurrentSubscription;
 }) {
-  const [typeResult, typeAction, typePending] = useActionState(setRestaurantType, null);
   const [planResult, planAction, planPending] = useActionState(setRestaurantPlan, null);
   const [themeResult, themeAction, themePending] = useActionState(setRestaurantTheme, null);
 
-  const [type, setType] = useState(menuOnly ? "menu" : "full");
+  // Başlangıç paketi "sadece menü"dür; tür pakete göre kendiliğinden değişir.
+  const type = menuOnly ? "menu" : "full";
   const [selectedTheme, setSelectedTheme] = useState(theme);
   const [layoutResult, layoutAction, layoutPending] = useActionState(setRestaurantMenuLayout, null);
   const [selectedLayout, setSelectedLayout] = useState(menuLayout);
@@ -59,46 +58,9 @@ export function RestaurantSettings({
       <div className="adm-card-head">
         <div>
           <h2 id="ayar-baslik">Restoran ayarları</h2>
-          <p>Tür, paket, tema ve menü düzeni yalnızca sistem panelinden değişir.</p>
+          <p>Paket, tema ve menü düzeni yalnızca sistem panelinden değişir.</p>
         </div>
       </div>
-
-      {/* ---------- Tür ---------- */}
-      <form action={typeAction} className="sys-setting">
-        <input type="hidden" name="restaurant_id" value={restaurantId} />
-        <div className="sys-setting-label">
-          <strong>Restoran türü</strong>
-          <small>Sadece menüde sipariş, garson çağırma ve ödeme kapanır; tek QR menüye açılır.</small>
-        </div>
-        <div className="sys-type-toggle" role="radiogroup" aria-label="Restoran türü">
-          {[
-            { value: "full", title: "Premium", hint: "Sipariş, garson, ödeme" },
-            { value: "menu", title: "Sadece menü", hint: "Tek QR, sipariş yok" },
-          ].map((option) => (
-            <label key={option.value} className={type === option.value ? "is-on" : ""}>
-              <input
-                type="radio"
-                name="restaurant_type"
-                value={option.value}
-                checked={type === option.value}
-                onChange={() => setType(option.value)}
-              />
-              <strong>{option.title}</strong>
-              <small>{option.hint}</small>
-            </label>
-          ))}
-        </div>
-        <div className="sys-setting-foot">
-          <ResultNote result={typeResult} />
-          <button
-            type="submit"
-            className="adm-btn adm-btn-primary adm-btn-sm"
-            disabled={typePending || type === (menuOnly ? "menu" : "full")}
-          >
-            {typePending ? "Kaydediliyor…" : "Türü uygula"}
-          </button>
-        </div>
-      </form>
 
       {/* ---------- Paket ---------- */}
       <form action={planAction} className="sys-setting">
@@ -114,7 +76,8 @@ export function RestaurantSettings({
           <small>
             {subscription
               ? "Mevcut abonelik bu pakete geçer. Süre ve dönem ayarları Abonelikler sayfasında."
-              : "Restoranın aboneliği yok; seçtiğiniz paketle aktif bir abonelik başlar."}
+              : "Restoranın aboneliği yok; seçtiğiniz paketle aktif bir abonelik başlar."}{" "}
+            Başlangıç paketi sadece menüdür: tek QR, masa ve sipariş yok.
           </small>
         </div>
         <div className="adm-form-grid">

@@ -35,8 +35,8 @@ async function requireAccess(): Promise<{ admin: Admin; error?: undefined } | { 
     admin.supabase.from("restaurants").select("plan").eq("id", admin.restaurantId).maybeSingle(),
     readMenuOnly(admin.supabase, admin.restaurantId),
   ]);
-  if (menuOnly || !hasPlanFeature(restaurant?.plan, "orders")) {
-    return { error: "Online ödeme, sipariş alan Pro ve Premium paketlerde kullanılabilir." };
+  if (menuOnly || !hasPlanFeature(restaurant?.plan, "online_payment")) {
+    return { error: "Masadan kartla ödeme Premium paketinde kullanılabilir." };
   }
   if (!encryptionConfigured()) return { error: ENCRYPTION_KEY_MISSING_MESSAGE };
 

@@ -1,4 +1,5 @@
 "use server";
+import { planGate } from "../../../../lib/admin-plan";
 
 import { revalidatePath } from "next/cache";
 import { getAdminRestaurant } from "../../../../lib/admin-restaurant";
@@ -23,6 +24,10 @@ export async function analyzeMenu(formData: FormData): Promise<AnalyzeResult> {
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı. Lütfen tekrar giriş yapın." };
   if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
+  {
+    const planError = await planGate(admin, "ai");
+    if (planError) return { ok: false, message: planError };
+  }
   if (!aiConfigured()) return { ok: false, message: AI_NOT_CONFIGURED_MESSAGE };
 
   const files = formData.getAll("files").filter((item): item is File => item instanceof File && item.size > 0);
@@ -35,6 +40,10 @@ export async function importMenu(_prev: ImportResult, formData: FormData): Promi
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı. Lütfen tekrar giriş yapın." };
   if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
+  {
+    const planError = await planGate(admin, "ai");
+    if (planError) return { ok: false, message: planError };
+  }
 
   let draft: DraftCategory[];
   try {

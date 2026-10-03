@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { hasPlanFeature } from "../../../lib/plan";
+import { readRestaurantPlan } from "../../../lib/plan-server";
+import PlanLock from "../PlanLock";
 import { createSupabaseServerClient } from "../../../lib/supabase-server";
 import { loadEmployeePhones } from "../../../lib/employee-phones";
 import AdminIcon from "../AdminIcon";
@@ -73,6 +76,10 @@ export default async function CalisanlarPage() {
   }
 
   const restaurantId = membership.restaurant_id;
+
+  if (!hasPlanFeature(await readRestaurantPlan(supabase, Number(restaurantId)), "multi_user")) {
+    return <PlanLock feature="multi_user" title="Çalışanlar" eyebrow="İşletme" />;
+  }
 
   // =====================================================
   // RESTORAN

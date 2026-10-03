@@ -5,12 +5,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
 import AdminIcon, { type AdminIconName } from "./AdminIcon";
+import { featurePlan, getPlanLabel, hasPlanFeature, type PlanFeature } from "../../lib/plan";
 
 type NavItem = {
   href: string;
   label: string;
   icon: AdminIconName;
-  locked?: boolean;
+  // Pakette yoksa menüde kilitli görünür (rozet: özelliğin açıldığı paket).
+  feature?: PlanFeature;
 };
 
 export type AdminShellRestaurant = {
@@ -68,9 +70,7 @@ const BILLING_HOME = "/admin/abonelik";
 export default function AdminShell({
   restaurant,
   planLabel,
-  canUseOrders,
-  canUseStaff,
-  canUseReports = false,
+  plan,
   menuOnly = false,
   demoMode = false,
   billing = null,
@@ -78,9 +78,7 @@ export default function AdminShell({
 }: {
   restaurant: AdminShellRestaurant | null;
   planLabel: string;
-  canUseOrders: boolean;
-  canUseStaff: boolean;
-  canUseReports?: boolean;
+  plan: string | null;
   menuOnly?: boolean;
   // Salt okunur demo hesabı: üstte uyarı şeridi, çıkışta demo sayfasına dönülür.
   demoMode?: boolean;
@@ -139,9 +137,9 @@ export default function AdminShell({
       items: [
         { href: "/admin/menu", label: "Ürünler", icon: "menu" },
         { href: "/admin/menu/kategori", label: "Kategoriler", icon: "category" },
-        { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle" },
-        { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe" },
-        { href: "/admin/menu/kalori", label: "Kalori bilgileri", icon: "bolt" },
+        { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle", feature: "ai" },
+        { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe", feature: "languages" },
+        { href: "/admin/menu/kalori", label: "Kalori bilgileri", icon: "bolt", feature: "calories" },
         { href: "/admin/menu/duyuru", label: "Açılış duyurusu", icon: "bell" },
         { href: "/admin/menu/istatistik", label: "Menü istatistikleri", icon: "eye" },
         { href: "/admin/qr", label: "QR kod", icon: "qr" },
@@ -165,9 +163,9 @@ export default function AdminShell({
       label: "Genel",
       items: [
         { href: "/admin", label: "Panel", icon: "dashboard" },
-        { href: "/admin/orders", label: "Siparişler", icon: "orders", locked: !canUseOrders },
+        { href: "/admin/orders", label: "Siparişler", icon: "orders", feature: "orders" },
         { href: "/admin/ozet", label: "Dönem özeti", icon: "calendar" },
-        { href: "/admin/raporlar", label: "Raporlar", icon: "chart", locked: !canUseReports },
+        { href: "/admin/raporlar", label: "Raporlar", icon: "chart", feature: "analytics" },
       ],
     },
     {
@@ -176,9 +174,9 @@ export default function AdminShell({
         { href: "/admin/menu", label: "Ürünler", icon: "menu" },
         { href: "/admin/menu/kategori", label: "Kategoriler", icon: "category" },
         { href: "/admin/menu/promosyon", label: "Kampanyalar", icon: "promo" },
-        { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle" },
-        { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe" },
-        { href: "/admin/menu/kalori", label: "Kalori bilgileri", icon: "bolt" },
+        { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle", feature: "ai" },
+        { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe", feature: "languages" },
+        { href: "/admin/menu/kalori", label: "Kalori bilgileri", icon: "bolt", feature: "calories" },
         { href: "/admin/menu/duyuru", label: "Açılış duyurusu", icon: "bell" },
         { href: "/admin/menu/istatistik", label: "Menü istatistikleri", icon: "eye" },
       ],
@@ -188,9 +186,9 @@ export default function AdminShell({
       items: [
         { href: "/admin/tables", label: "Masalar", icon: "table" },
         { href: "/admin/qr", label: "QR / NFC", icon: "qr" },
-        { href: "/admin/calisanlar", label: "Çalışanlar", icon: "staff", locked: !canUseStaff },
+        { href: "/admin/calisanlar", label: "Çalışanlar", icon: "staff", feature: "multi_user" },
         { href: "/admin/geri-bildirim", label: "Geri bildirimler", icon: "chat" },
-        { href: "/admin/degerlendirmeler", label: "Değerlendirmeler", icon: "star" },
+        { href: "/admin/degerlendirmeler", label: "Değerlendirmeler", icon: "star", feature: "staff_ratings" },
         { href: "/admin/odemeler", label: "Ödemeler", icon: "card" },
       ],
     },
@@ -199,12 +197,13 @@ export default function AdminShell({
       items: [
         { href: "/admin/ayarlar", label: "İşletme ayarları", icon: "settings" },
         ...(billing?.managed ? [{ href: BILLING_HOME, label: "Abonelik", icon: "card" as const }] : []),
-        { href: "/admin/online-odeme", label: "Online ödeme", icon: "wallet", locked: !canUseOrders },
+        { href: "/admin/online-odeme", label: "Online ödeme", icon: "wallet", feature: "online_payment" },
       ],
     },
   ];
 
   const groups = menuOnly ? menuOnlyGroups : fullGroups;
+  const locked = (item: NavItem) => Boolean(item.feature && !hasPlanFeature(plan, item.feature));
 
   const initial = restaurant.name.trim().charAt(0).toLocaleUpperCase("tr-TR");
 
@@ -244,12 +243,12 @@ export default function AdminShell({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`adm-nav-item ${isActive(pathname, item.href) ? "is-active" : ""} ${item.locked ? "is-locked" : ""}`}
+                  className={`adm-nav-item ${isActive(pathname, item.href) ? "is-active" : ""} ${locked(item) ? "is-locked" : ""}`}
                   aria-current={isActive(pathname, item.href) ? "page" : undefined}
                 >
                   <AdminIcon name={item.icon} />
                   {item.label}
-                  {item.locked && <span className="adm-nav-lock">PRO</span>}
+                  {locked(item) && item.feature && <span className="adm-nav-lock">{getPlanLabel(featurePlan(item.feature))}</span>}
                 </Link>
               ))}
             </div>

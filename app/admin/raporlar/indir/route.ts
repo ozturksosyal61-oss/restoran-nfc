@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
     .eq("id", admin.restaurantId)
     .maybeSingle();
 
-  if (!hasPlanFeature(restaurant?.plan, "analytics")) {
-    return NextResponse.json({ error: "Satış raporları paketinizde yok." }, { status: 403 });
+  if (!hasPlanFeature(restaurant?.plan, "advanced_reports")) {
+    return NextResponse.json({ error: "Excel rapor indirme Premium paketinde." }, { status: 403 });
   }
 
   const search = request.nextUrl.searchParams;

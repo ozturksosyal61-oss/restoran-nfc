@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { hasPlanFeature } from "@/lib/plan";
 import { useRestaurantTheme } from "../RestaurantThemeContext";
 import AuroraRating from "./AuroraRating";
 
@@ -82,7 +83,7 @@ export default function EmployeeRatingPage() {
         } = await supabase
           .from("restaurants")
           .select(
-            "id, name, logo_url, description"
+            "id, name, logo_url, description, plan"
           )
           .eq("slug", slug)
           .single();
@@ -100,6 +101,15 @@ export default function EmployeeRatingPage() {
             "İşletme bulunamadı."
           );
 
+          setLoading(false);
+          return;
+        }
+
+        // Çalışan değerlendirme Premium paketinde.
+        if (!hasPlanFeature(restaurantData.plan, "staff_ratings")) {
+          setError(
+            "Bu işletmede çalışan değerlendirme kullanılmıyor."
+          );
           setLoading(false);
           return;
         }

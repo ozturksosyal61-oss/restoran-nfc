@@ -1,4 +1,5 @@
 "use server";
+import { planGate } from "../../../../lib/admin-plan";
 
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -50,6 +51,10 @@ export async function saveMenuLanguages(_prev: LanguageResult, formData: FormDat
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı. Lütfen tekrar giriş yapın." };
   if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
+  {
+    const planError = await planGate(admin, "languages");
+    if (planError) return { ok: false, message: planError };
+  }
 
   const languages = normalizeLanguages(formData.getAll("languages").map(String));
 
@@ -191,6 +196,10 @@ export async function translateMenu(_prev: LanguageResult, formData: FormData): 
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı. Lütfen tekrar giriş yapın." };
   if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
+  {
+    const planError = await planGate(admin, "ai");
+    if (planError) return { ok: false, message: planError };
+  }
   if (!aiConfigured()) return { ok: false, message: AI_NOT_CONFIGURED_MESSAGE };
 
   const redo = formData.get("mode") === "all";
@@ -316,6 +325,10 @@ export async function saveManualTranslation(_prev: LanguageResult, formData: For
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı. Lütfen tekrar giriş yapın." };
   if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
+  {
+    const planError = await planGate(admin, "languages");
+    if (planError) return { ok: false, message: planError };
+  }
 
   const kind = formData.get("kind") === "category" ? "category" : "product";
   const id = Number(formData.get("id"));

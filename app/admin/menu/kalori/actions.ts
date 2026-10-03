@@ -1,4 +1,5 @@
 "use server";
+import { planGate } from "../../../../lib/admin-plan";
 
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -103,6 +104,10 @@ export async function estimateCalories(_prev: CalorieResult, formData: FormData)
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı. Lütfen tekrar giriş yapın." };
   if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
+  {
+    const planError = await planGate(admin, "calories");
+    if (planError) return { ok: false, message: planError };
+  }
   if (!aiConfigured()) return { ok: false, message: AI_NOT_CONFIGURED_MESSAGE };
 
   // "Tümü" modunda bile işletmenin elle girdiği değerlere dokunulmaz.
@@ -180,6 +185,10 @@ export async function estimateCalories(_prev: CalorieResult, formData: FormData)
 export async function saveCalories(_prev: CalorieResult, formData: FormData): Promise<CalorieResult> {
   const admin = await getAdminRestaurant();
   if (!admin) return { ok: false, message: "Oturum bulunamadı." };
+  {
+    const planError = await planGate(admin, "calories");
+    if (planError) return { ok: false, message: planError };
+  }
   if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
 
   const id = Number(formData.get("id"));

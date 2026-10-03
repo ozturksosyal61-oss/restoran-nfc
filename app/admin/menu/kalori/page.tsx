@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { hasPlanFeature } from "../../../../lib/plan";
+import { readRestaurantPlan } from "../../../../lib/plan-server";
+import PlanLock from "../../PlanLock";
 import { redirect } from "next/navigation";
 import { getAdminRestaurant } from "../../../../lib/admin-restaurant";
 import { aiConfigured } from "../../../../lib/ai";
@@ -22,6 +25,10 @@ export default async function CaloriesPage() {
   if (!admin) redirect("/admin/login");
 
   const { supabase, restaurantId } = admin;
+
+  if (!hasPlanFeature(await readRestaurantPlan(supabase, Number(restaurantId)), "calories")) {
+    return <PlanLock feature="calories" title="Kalori bilgileri" eyebrow="Menü" />;
+  }
 
   const { data: categoryData } = await supabase
     .from("categories")

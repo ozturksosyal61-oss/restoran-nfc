@@ -1,4 +1,7 @@
 import { createSupabaseServerClient } from "../../../lib/supabase-server";
+import { hasPlanFeature } from "../../../lib/plan";
+import { readRestaurantPlan } from "../../../lib/plan-server";
+import PlanLock from "../PlanLock";
 import { notFound } from "next/navigation";
 import ReviewActions from "./ReviewActions";
 import AdminIcon from "../AdminIcon";
@@ -28,6 +31,10 @@ export default async function ReviewsPage({
 
   if (!membership?.restaurant_id) {
     notFound();
+  }
+
+  if (!hasPlanFeature(await readRestaurantPlan(supabase, Number(membership.restaurant_id)), "staff_ratings")) {
+    return <PlanLock feature="staff_ratings" title="Değerlendirmeler" eyebrow="İşletme" />;
   }
 
   // Restoran bilgisi

@@ -34,8 +34,15 @@ export async function POST(request: Request) {
     const manager_password =
       String(body.manager_password ?? "").trim() || generatePassword();
 
-    // "menu": sadece menü restoranı (masa yok, sipariş yok, tek QR).
-    const menuOnly = restaurant_type === "menu";
+    // Paket: Başlangıç "sadece menü"dür (masa yok, sipariş yok, tek QR).
+    // Eski istemciler yalnızca restaurant_type gönderebilir.
+    const plan =
+      body.plan === "starter" || body.plan === "pro" || body.plan === "premium"
+        ? body.plan
+        : restaurant_type === "menu"
+          ? "starter"
+          : "premium";
+    const menuOnly = plan === "starter";
 
     if (!name || !slug || !manager_email) {
       return NextResponse.json(
@@ -188,6 +195,7 @@ export async function POST(request: Request) {
           instagram_url: instagram_url || null,
           google_review_url: google_review_url || null,
           theme: normalizeRestaurantTheme(restaurantTheme),
+          plan,
           // Tam sürümde sütun gönderilmez (varsayılan false); böylece
           // menu_only migration'ı çalışmamış olsa da restoran açılabilir.
           ...(menuOnly ? { menu_only: true } : {}),

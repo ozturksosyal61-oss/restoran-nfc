@@ -17,6 +17,7 @@ type NovaRestaurantHomeProps = {
     public_token: string;
   } | null;
   tableQuery: string;
+  staffRatings?: boolean;
   reviews: Array<{
     id: number;
     customer_name: string | null;
@@ -42,6 +43,7 @@ export default function NovaRestaurantHome({
   restaurant,
   table,
   tableQuery,
+  staffRatings = false,
   reviews,
   averageRating,
   ratingCounts,
@@ -648,16 +650,18 @@ export default function NovaRestaurantHome({
               </a>
             ) : null}
 
-            <a
-              className="nova-reference-more-card"
-              href={`/restoran/${restaurant.slug}/calisan${tableQuery}`}
-            >
-              <span>💬</span>
-              <span>
-                <strong>Çalışanı Değerlendir</strong>
-                <small>Hizmet deneyiminizi paylaşın</small>
-              </span>
-            </a>
+            {staffRatings && (
+              <a
+                className="nova-reference-more-card"
+                href={`/restoran/${restaurant.slug}/calisan${tableQuery}`}
+              >
+                <span>💬</span>
+                <span>
+                  <strong>Çalışanı Değerlendir</strong>
+                  <small>Hizmet deneyiminizi paylaşın</small>
+                </span>
+              </a>
+            )}
 
             <a
               className="nova-reference-more-card"

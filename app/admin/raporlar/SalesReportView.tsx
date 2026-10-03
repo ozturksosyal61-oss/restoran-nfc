@@ -14,7 +14,9 @@ export default function SalesReportView({
   period,
   report,
   previous,
+  canExport = false,
 }: {
+  canExport?: boolean;
   period: Period;
   report: SalesReport | null;
   previous: SalesReport | null;
@@ -30,7 +32,7 @@ export default function SalesReportView({
         <h1>Satış raporu</h1>
         <p>{period.label}</p>
       </div>
-      {report && (
+      {report && canExport && (
         <div className="adm-head-actions">
           <a className="adm-btn" href={`/admin/raporlar/indir?${query}`}>
             <AdminIcon name="download" size={16} />

@@ -70,7 +70,7 @@ async function menuOnly(restaurantId: number) {
 // Online ödeme müşteriye açık mı: Pro/Premium, sadece menü değil, sağlayıcı
 // bağlı, test edilmiş ve restoran tarafından açılmış.
 async function activeSettings(restaurant: { id: number; plan: unknown }): Promise<PaymentSettings | null> {
-  if (!encryptionConfigured() || !hasPlanFeature(restaurant.plan, "orders")) return null;
+  if (!encryptionConfigured() || !hasPlanFeature(restaurant.plan, "online_payment")) return null;
   if (await menuOnly(Number(restaurant.id))) return null;
   const { settings } = await loadPaymentSettings(Number(restaurant.id));
   if (!settings || !settings.is_enabled || !settings.verified_at) return null;

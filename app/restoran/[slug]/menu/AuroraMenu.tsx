@@ -23,6 +23,7 @@ import {
   type MenuStrings,
 } from "../../../../lib/menu-i18n";
 import { trackMenuView, trackProductView } from "../../../../lib/menu-tracking";
+import { hasPlanFeature } from "../../../../lib/plan";
 import { useCart } from "./CartContext";
 import styles from "./AuroraMenu.module.css";
 
@@ -188,7 +189,7 @@ export default function AuroraMenu({
 
         // Çok dilli menü: sütunlar henüz yoksa her şey Türkçe kalır.
         const [languageResult, categoryTranslations, productTranslations, calorieResult] = await Promise.all([
-          supabase.from("restaurants").select("menu_languages").eq("id", restaurantData.id).maybeSingle(),
+          supabase.from("restaurants").select("menu_languages, plan").eq("id", restaurantData.id).maybeSingle(),
           loadTranslations(supabase, "categories", safeCategories.map((category) => category.id)),
           loadTranslations(supabase, "products", safeProducts.map((product) => product.id)),
           // Kalori sütunu henüz yoksa sessizce atlanır.
@@ -197,7 +198,9 @@ export default function AuroraMenu({
             : Promise.resolve({ data: [], error: null }),
         ]);
 
-        const calories = calorieResult.error
+        // Paket: çok dilli menü Pro'da, kalori Premium'da.
+        const plan = languageResult.error ? null : languageResult.data?.plan;
+        const calories = calorieResult.error || !hasPlanFeature(plan, "calories")
           ? new Map<number, number | null>()
           : new Map(
               ((calorieResult.data ?? []) as { id: number; calories: number | null }[]).map((row) => [
@@ -206,7 +209,7 @@ export default function AuroraMenu({
               ])
             );
 
-        const availableLanguages = languageResult.error
+        const availableLanguages = languageResult.error || !hasPlanFeature(plan, "languages")
           ? []
           : normalizeLanguages(languageResult.data?.menu_languages);
 
