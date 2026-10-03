@@ -4035,3 +4035,118 @@ button.adm-chip {
     flex-direction: column;
   }
 }
+
+/* =========================================================
+   ABONELİK UYARISI VE SAYFASI
+   ========================================================= */
+
+.adm-billing-bar.is-info {
+  border-bottom-color: #c9d8ff;
+  background: var(--a-accepted-bg);
+}
+
+.adm-billing-bar.is-info .adm-demo-bar-icon {
+  background: var(--a-accepted);
+}
+
+.adm-billing-bar.is-danger {
+  border-bottom-color: #f3c9c4;
+  background: var(--a-danger-bg);
+}
+
+.adm-billing-bar.is-danger .adm-demo-bar-icon {
+  background: var(--a-danger);
+}
+
+.adm-bill-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 10px;
+}
+
+.adm-bill-plan {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--a-line);
+  background: var(--a-surface);
+  cursor: pointer;
+}
+
+.adm-bill-plan input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.adm-bill-plan strong {
+  font-size: 15px;
+}
+
+.adm-bill-plan .adm-bill-price {
+  font-family: var(--a-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.adm-bill-plan small {
+  color: var(--a-muted);
+  font-size: 12.5px;
+}
+
+.adm-bill-plan.is-active {
+  border-color: var(--a-gold);
+  background: #fffaf0;
+  box-shadow: 0 0 0 3px var(--a-focus);
+}
+
+.adm-bill-plan:focus-within {
+  border-color: var(--a-gold);
+}
+
+.adm-bill-checkout {
+  min-height: 420px;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid var(--a-line);
+  background: #fff;
+}
+
+/* Abonelik uyarısının açıklaması telefonda da görünür (kalan gün önemli). */
+@media (max-width: 640px) {
+  .adm-billing-bar .adm-demo-bar-text small {
+    display: block;
+  }
+}
+
+/* =========================================================
+   MENÜ AÇILIŞ DUYURUSU
+   ========================================================= */
+
+.adm-popup-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 16px;
+  align-items: start;
+}
+
+.adm-popup-preview {
+  position: sticky;
+  top: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+@media (max-width: 960px) {
+  .adm-popup-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .adm-popup-preview {
+    position: static;
+  }
+}

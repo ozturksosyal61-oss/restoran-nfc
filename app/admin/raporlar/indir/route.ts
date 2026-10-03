@@ -11,7 +11,10 @@ function cell(value: string | number) {
   const text =
     typeof value === "number"
       ? value.toLocaleString("tr-TR", { maximumFractionDigits: 2, useGrouping: false })
-      : value;
+      : // =, +, -, @ ile başlayan metin Excel'de formül olarak çalışmasın.
+        /^[=+\-@\t\r]/.test(value)
+        ? `'${value}`
+        : value;
   return /[";\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 

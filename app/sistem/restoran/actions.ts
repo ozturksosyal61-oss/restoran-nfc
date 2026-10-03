@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseAdminClient } from "../../../lib/supabase-admin";
 import { generatePassword, requireSystemAdmin } from "../../../lib/system-admin";
-import { RESTAURANT_THEMES } from "../../../lib/themes";
+import { MENU_LAYOUTS, RESTAURANT_THEMES } from "../../../lib/themes";
 import { createSubscription, updateSubscription } from "../abonelikler/actions";
 
 // Sistem sahibinin restoran üzerindeki işlemleri. Her işlem önce sistem
@@ -84,6 +84,32 @@ export async function setRestaurantTheme(_prev: ActionResult, formData: FormData
   refresh(restaurantId);
   revalidatePath("/admin/ayarlar");
   return { ok: true, message: `Tema ${meta.label} olarak kaydedildi.` };
+}
+
+/* ---------------- Menü düzeni ---------------- */
+
+export async function setRestaurantMenuLayout(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const restaurantId = readRestaurantId(formData);
+  const layout = String(formData.get("menu_layout") || "");
+  if (!restaurantId) return { ok: false, message: "Geçersiz restoran." };
+
+  const meta = MENU_LAYOUTS.find((item) => item.value === layout);
+  if (!meta) return { ok: false, message: "Geçersiz menü düzeni." };
+
+  await requireSystemAdmin();
+
+  const { error } = await createSupabaseAdminClient()
+    .from("restaurants")
+    .update({ menu_layout: layout })
+    .eq("id", restaurantId);
+
+  if (error) {
+    console.error("MENÜ DÜZENİ GÜNCELLEME HATASI:", error);
+    return { ok: false, message: `Menü düzeni kaydedilemedi: ${error.message}` };
+  }
+
+  refresh(restaurantId);
+  return { ok: true, message: `Menü düzeni ${meta.label} olarak kaydedildi.` };
 }
 
 /* ---------------- Paket ---------------- */

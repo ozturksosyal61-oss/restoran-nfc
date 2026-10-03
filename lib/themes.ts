@@ -20,6 +20,16 @@ export type RestaurantThemeMeta = {
   surface: string;
 };
 
+// Klasik temalardaki müşteri menüsünün yerleşimi (restaurants.menu_layout).
+// Aurora temaları kendi düzenini kullanır. Yalnızca sistem panelinden değişir.
+export const MENU_LAYOUTS = [
+  { value: "classic", label: "Classic", description: "Sade, temiz ve zamansız menü." },
+  { value: "editorial", label: "Editorial", description: "Dergi tarzı yerleşim." },
+  { value: "grid", label: "Grid", description: "İki sütunlu ürün kartları." },
+  { value: "luxury", label: "Luxury", description: "Koyu ve sofistike görünüm." },
+  { value: "minimal", label: "Minimal", description: "Bol boşluklu, sade görünüm." },
+] as const;
+
 export const RESTAURANT_THEMES: readonly RestaurantThemeMeta[] = [
   {
     value: "classic",

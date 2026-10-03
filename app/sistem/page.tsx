@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSystemAdmin } from "../../lib/system-admin";
 import { getRestaurantThemeMeta } from "../../lib/themes";
 import AdminIcon from "../admin/AdminIcon";
+import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 import { currentSubscription, loadManagers, loadRestaurants, loadSubscriptions } from "./data";
 import { SUBSCRIPTION_STATUS, subscriptionEnd } from "./format";
 import RestaurantDirectory, { type DirectoryRow } from "./RestaurantDirectory";
@@ -22,7 +23,11 @@ export default async function SystemOwnerPage({
     loadManagers(supabase),
   ]);
 
-  const rows: DirectoryRow[] = restaurants.map((restaurant) => {
+  // Müşteri demoları kendi sayfasında listelenir (tablo yoksa hepsi gösterilir).
+  const { data: demoRows } = await createSupabaseAdminClient().from("prospect_demos").select("restaurant_id");
+  const demoIds = new Set((demoRows ?? []).map((row) => Number(row.restaurant_id)));
+
+  const rows: DirectoryRow[] = restaurants.filter((restaurant) => !demoIds.has(Number(restaurant.id))).map((restaurant) => {
     const subscription = currentSubscription(subscriptions, restaurant.id);
     const status = subscription ? SUBSCRIPTION_STATUS[subscription.status] : null;
     const { end, daysLeft } =
@@ -68,6 +73,10 @@ export default async function SystemOwnerPage({
           <p>Hizmet verdiğiniz tüm işletmeler, abonelikleri ve yönetici hesapları.</p>
         </div>
         <div className="adm-head-actions">
+          <Link className="adm-btn" href="/sistem/demolar">
+            <AdminIcon name="sparkle" size={16} />
+            Müşteri demoları{demoIds.size > 0 ? ` (${demoIds.size})` : ""}
+          </Link>
           <Link className="adm-btn" href="/sistem/abonelikler">
             <AdminIcon name="card" size={16} />
             Abonelikler

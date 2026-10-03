@@ -14,6 +14,8 @@ import {
 import { SUBSCRIPTION_STATUS, formatDate, initialOf, subscriptionEnd } from "../../format";
 import ManagerAccess from "./ManagerAccess";
 import { DangerZone, RestaurantSettings } from "./RestaurantControls";
+import { RestaurantBillingControls } from "../../odeme-ayarlari/BillingAdminForms";
+import { getBillingAccess, loadBillingAccount, loadPlans as loadBillingPlans } from "../../../../lib/billing/service";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +39,18 @@ export default async function SystemRestaurantPage({
   ]);
 
   if (!restaurant) notFound();
+
+  const [billingAccount, billingAccess, billingPlans] = await Promise.all([
+    loadBillingAccount(restaurant.id),
+    getBillingAccess(restaurant.id),
+    loadBillingPlans(),
+  ]);
+
+  const { data: layoutRow } = await supabase
+    .from("restaurants")
+    .select("menu_layout")
+    .eq("id", restaurant.id)
+    .maybeSingle();
 
   const subscription = currentSubscription(subscriptions, restaurant.id);
   const status = subscription ? SUBSCRIPTION_STATUS[subscription.status] : null;
@@ -109,6 +123,7 @@ export default async function SystemRestaurantPage({
             restaurantId={restaurant.id}
             menuOnly={restaurant.menu_only}
             theme={theme.value}
+            menuLayout={String(layoutRow?.menu_layout ?? "grid")}
             plans={plans.map((plan) => ({
               id: plan.id,
               name: plan.name,
@@ -190,6 +205,39 @@ export default async function SystemRestaurantPage({
               <AdminIcon name="card" size={15} />
               Abonelik ayrıntıları
             </Link>
+          </section>
+
+          <section className="adm-card" aria-labelledby="oto-odeme">
+            <div className="adm-card-head">
+              <div>
+                <h2 id="oto-odeme">Otomatik ödeme</h2>
+                <p>
+                  {billingAccount
+                    ? billingAccount.status === "trial"
+                      ? `Deneme · ${formatDate(billingAccount.trial_ends_at ?? "")} tarihinde bitiyor`
+                      : billingAccount.status === "active"
+                        ? `Aktif · ödenen dönem ${billingAccount.paid_until ? formatDate(billingAccount.paid_until) : "—"}`
+                        : billingAccount.status === "past_due"
+                          ? "Ödeme alınamadı · ek süre işliyor"
+                          : billingAccount.status === "cancelled"
+                            ? "İptal edildi"
+                            : "Hizmet durduruldu"
+                    : "Kapalı · abonelik elle yönetiliyor."}
+                </p>
+              </div>
+              {billingAccount && (
+                <span className={`adm-badge ${billingAccess === "blocked" ? "s-danger" : billingAccess === "grace" ? "s-pending" : "s-ok"}`}>
+                  {billingAccess === "blocked" ? "Menü kapalı" : billingAccess === "grace" ? "Ek süre" : "Menü açık"}
+                </span>
+              )}
+            </div>
+            <RestaurantBillingControls
+              restaurantId={restaurant.id}
+              hasAccount={Boolean(billingAccount)}
+              status={billingAccount?.status ?? null}
+              hasSubscription={Boolean(billingAccount?.iyzico_subscription_ref)}
+              plans={billingPlans.map((plan) => ({ id: plan.id, name: plan.name }))}
+            />
           </section>
 
           <DangerZone

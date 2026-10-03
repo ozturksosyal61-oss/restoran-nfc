@@ -18,12 +18,14 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/sistem", label: "Restoranlar", icon: "store" },
       { href: "/sistem/yeni-restoran", label: "Yeni restoran", icon: "plus" },
+      { href: "/sistem/demolar", label: "Müşteri demoları", icon: "sparkle" },
     ],
   },
   {
     label: "Yönetim",
     items: [
       { href: "/sistem/abonelikler", label: "Abonelikler", icon: "card" },
+      { href: "/sistem/odeme-ayarlari", label: "Otomatik ödeme", icon: "wallet" },
       { href: "/sistem/yoneticiler", label: "Yönetici hesapları", icon: "user" },
     ],
   },

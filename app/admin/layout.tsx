@@ -6,7 +6,9 @@ import { getPlanLabel, hasPlanFeature } from "../../lib/plan";
 import { readMenuOnly } from "../../lib/restaurant-type";
 import { isDemoSession } from "../../lib/demo";
 import { isStaffUser } from "../../lib/staff";
-import AdminShell, { type AdminShellRestaurant } from "./AdminShell";
+import AdminShell, { type AdminBilling, type AdminShellRestaurant } from "./AdminShell";
+import { getBillingAccess, loadBillingAccount, loadBillingSettings, refreshIfStale } from "../../lib/billing/service";
+import { billingNotice } from "../../lib/billing/notice";
 import "./admin.css";
 
 const display = Cormorant_Garamond({
@@ -28,6 +30,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   let plan: string | null = null;
   let menuOnly = false;
   let demoMode = false;
+  let billing: AdminBilling | null = null;
 
   try {
     const supabase = await createSupabaseServerClient();
@@ -59,6 +62,20 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           plan = data.plan ?? null;
           menuOnly = await readMenuOnly(supabase, Number(membership.restaurant_id));
           demoMode = await isDemoSession(supabase);
+
+          // Otomatik abonelik (tablo yoksa ya da restoran elle yönetiliyorsa boş).
+          const account = await refreshIfStale(await loadBillingAccount(Number(membership.restaurant_id)));
+          if (account) {
+            const [access, { settings }] = await Promise.all([
+              getBillingAccess(Number(membership.restaurant_id)),
+              loadBillingSettings(),
+            ]);
+            billing = {
+              managed: true,
+              blocked: access === "blocked",
+              notice: billingNotice(account, access, settings?.grace_days ?? 7),
+            };
+          }
         }
       }
     }
@@ -78,6 +95,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         canUseReports={hasPlanFeature(plan, "analytics")}
         menuOnly={menuOnly}
         demoMode={demoMode}
+        billing={billing}
       >
         {children}
       </AdminShell>

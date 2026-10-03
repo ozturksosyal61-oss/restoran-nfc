@@ -51,10 +51,19 @@ const MENU_ONLY_HOME = "/admin/menu";
 function isAllowedForMenuOnly(pathname: string) {
   if (pathname.startsWith("/admin/login")) return true;
   if (pathname.startsWith("/admin/menu/promosyon")) return false;
-  return ["/admin/menu", "/admin/qr", "/admin/ayarlar", "/admin/geri-bildirim", "/admin/ozet"].some(
+  return ["/admin/menu", "/admin/qr", "/admin/ayarlar", "/admin/geri-bildirim", "/admin/ozet", "/admin/abonelik"].some(
     (href) => pathname === href || pathname.startsWith(`${href}/`)
   );
 }
+
+// Otomatik abonelikteki restoranın durumu (layout sunucuda hesaplar).
+export type AdminBilling = {
+  managed: boolean;
+  blocked: boolean;
+  notice: { tone: "info" | "warn" | "danger"; title: string; text: string } | null;
+};
+
+const BILLING_HOME = "/admin/abonelik";
 
 export default function AdminShell({
   restaurant,
@@ -64,6 +73,7 @@ export default function AdminShell({
   canUseReports = false,
   menuOnly = false,
   demoMode = false,
+  billing = null,
   children,
 }: {
   restaurant: AdminShellRestaurant | null;
@@ -74,17 +84,23 @@ export default function AdminShell({
   menuOnly?: boolean;
   // Salt okunur demo hesabı: üstte uyarı şeridi, çıkışta demo sayfasına dönülür.
   demoMode?: boolean;
+  billing?: AdminBilling | null;
   children: ReactNode;
 }) {
   const pathname = usePathname() || "/admin";
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  const blocked = Boolean(restaurant) && menuOnly && !isAllowedForMenuOnly(pathname);
+  const menuBlocked = Boolean(restaurant) && menuOnly && !isAllowedForMenuOnly(pathname);
+  // Abonelik ek süresi dolduysa yalnızca abonelik sayfası açılır.
+  const billingBlocked =
+    Boolean(restaurant && billing?.blocked) && !pathname.startsWith(BILLING_HOME) && !pathname.startsWith("/admin/login");
+  const blocked = menuBlocked || billingBlocked;
 
   useEffect(() => {
-    if (blocked) router.replace(MENU_ONLY_HOME);
-  }, [blocked, router]);
+    if (billingBlocked) router.replace(BILLING_HOME);
+    else if (menuBlocked) router.replace(MENU_ONLY_HOME);
+  }, [billingBlocked, menuBlocked, router]);
 
   // Sayfa değişince mobil menüyü kapat.
   const [lastPath, setLastPath] = useState(pathname);
@@ -126,6 +142,7 @@ export default function AdminShell({
         { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle" },
         { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe" },
         { href: "/admin/menu/kalori", label: "Kalori bilgileri", icon: "bolt" },
+        { href: "/admin/menu/duyuru", label: "Açılış duyurusu", icon: "bell" },
         { href: "/admin/menu/istatistik", label: "Menü istatistikleri", icon: "eye" },
         { href: "/admin/qr", label: "QR kod", icon: "qr" },
       ],
@@ -136,7 +153,10 @@ export default function AdminShell({
     },
     {
       label: "Ayarlar",
-      items: [{ href: "/admin/ayarlar", label: "İşletme bilgileri", icon: "settings" }],
+      items: [
+        { href: "/admin/ayarlar", label: "İşletme bilgileri", icon: "settings" },
+        ...(billing?.managed ? [{ href: BILLING_HOME, label: "Abonelik", icon: "card" as const }] : []),
+      ],
     },
   ];
 
@@ -159,6 +179,7 @@ export default function AdminShell({
         { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle" },
         { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe" },
         { href: "/admin/menu/kalori", label: "Kalori bilgileri", icon: "bolt" },
+        { href: "/admin/menu/duyuru", label: "Açılış duyurusu", icon: "bell" },
         { href: "/admin/menu/istatistik", label: "Menü istatistikleri", icon: "eye" },
       ],
     },
@@ -177,7 +198,7 @@ export default function AdminShell({
       label: "Ayarlar",
       items: [
         { href: "/admin/ayarlar", label: "İşletme ayarları", icon: "settings" },
-        { href: "/admin/tema", label: "Tema", icon: "palette" },
+        ...(billing?.managed ? [{ href: BILLING_HOME, label: "Abonelik", icon: "card" as const }] : []),
         { href: "/admin/online-odeme", label: "Online ödeme", icon: "wallet", locked: !canUseOrders },
       ],
     },
@@ -282,6 +303,23 @@ export default function AdminShell({
             <button type="button" className="adm-btn adm-btn-sm" onClick={logout}>
               Demodan çık
             </button>
+          </div>
+        )}
+
+        {billing?.notice && !demoMode && (
+          <div className={`adm-demo-bar adm-billing-bar is-${billing.notice.tone}`} role="status">
+            <span className="adm-demo-bar-icon">
+              <AdminIcon name={billing.notice.tone === "danger" ? "alert" : "card"} size={16} />
+            </span>
+            <span className="adm-demo-bar-text">
+              <strong>{billing.notice.title}</strong>
+              <small>{billing.notice.text}</small>
+            </span>
+            {!pathname.startsWith(BILLING_HOME) && (
+              <Link className="adm-btn adm-btn-sm" href={BILLING_HOME}>
+                Aboneliğe git
+              </Link>
+            )}
           </div>
         )}
 

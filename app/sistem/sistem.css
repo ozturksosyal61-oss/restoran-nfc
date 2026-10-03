@@ -901,3 +901,122 @@
     gap: 2px;
   }
 }
+
+/* =========================================================
+   MÜŞTERİ DEMOLARI
+   ========================================================= */
+
+.sys-demo-days {
+  position: relative;
+  cursor: pointer;
+}
+
+.sys-demo-days input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sys-demo-days span {
+  display: block;
+  padding: 7px 12px;
+  border-radius: 9px;
+  color: var(--a-muted);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sys-demo-days input:checked + span {
+  background: var(--a-surface);
+  color: var(--a-ink);
+  box-shadow: var(--a-shadow);
+}
+
+.sys-demo-days input:focus-visible + span {
+  outline: 2px solid var(--a-gold);
+}
+
+.sys-demo-ready {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.sys-demo-qr {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--a-line);
+  background: #fff;
+}
+
+.sys-demo-qr img {
+  width: 100%;
+  max-width: 176px;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.sys-demo-links {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.sys-demo-links .sys-link {
+  overflow-wrap: anywhere;
+}
+
+.sys-demo-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sys-demo-list > li {
+  display: grid;
+  gap: 12px;
+}
+
+.sys-demo-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sys-demo-head > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sys-demo-head strong {
+  font-size: 16px;
+}
+
+.sys-demo-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.sys-demo-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .sys-demo-ready {
+    grid-template-columns: 1fr;
+  }
+
+  .sys-demo-head {
+    flex-direction: column;
+  }
+}

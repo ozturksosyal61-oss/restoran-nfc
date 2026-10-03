@@ -12,7 +12,7 @@ const BASE_URL: Record<PaymentMode, string> = {
 
 const TIMEOUT_MS = 20_000;
 
-type IyzicoResponse = {
+export type IyzicoResponse = {
   status?: string;
   errorCode?: string;
   errorMessage?: string;
@@ -25,30 +25,32 @@ export function iyzicoPrice(value: number) {
   return text.includes(".") ? text : `${text}.0`;
 }
 
-async function call(
+// IYZWSv2 imzalı istek. İmza: randomKey + yol (sorgu hariç) + gövde (GET'te boş).
+export async function iyzicoRequest(
   credentials: IyzicoCredentials,
   mode: PaymentMode,
+  method: "GET" | "POST",
   path: string,
-  body: Record<string, unknown>
+  body?: Record<string, unknown>
 ): Promise<IyzicoResponse> {
-  const json = JSON.stringify(body);
+  const json = method === "POST" ? JSON.stringify(body ?? {}) : "";
   const random = `${Date.now()}${randomBytes(6).toString("hex")}`;
   const signature = createHmac("sha256", credentials.secretKey)
-    .update(random + path + json)
+    .update(random + path.split("?")[0] + json)
     .digest("hex");
   const authorization = Buffer.from(
     `apiKey:${credentials.apiKey}&randomKey:${random}&signature:${signature}`
   ).toString("base64");
 
   const response = await fetch(BASE_URL[mode] + path, {
-    method: "POST",
+    method,
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
       Authorization: `IYZWSv2 ${authorization}`,
       "x-iyzi-rnd": random,
     },
-    body: json,
+    body: method === "POST" ? json : undefined,
     cache: "no-store",
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
@@ -58,7 +60,11 @@ async function call(
   return data;
 }
 
-function failure(data: IyzicoResponse, fallback = "iyzico isteği reddetti.") {
+function call(credentials: IyzicoCredentials, mode: PaymentMode, path: string, body: Record<string, unknown>) {
+  return iyzicoRequest(credentials, mode, "POST", path, body);
+}
+
+export function failure(data: IyzicoResponse, fallback = "iyzico isteği reddetti.") {
   const code = data.errorCode ? ` (kod ${data.errorCode})` : "";
   return `${data.errorMessage || fallback}${code}`;
 }

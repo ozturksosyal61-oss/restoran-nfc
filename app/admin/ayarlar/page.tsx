@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties, ChangeEvent, ReactNode } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { compressImage } from "../../../lib/image-compress";
 import AdminIcon from "../AdminIcon";
@@ -22,15 +22,8 @@ type Restaurant = {
   is_open: boolean | null;
   opening_time: string | null;
   closing_time: string | null;
-  menu_layout: MenuLayout;
 };
 
-type MenuLayout =
-  | "classic"
-  | "editorial"
-  | "grid"
-  | "luxury"
-  | "minimal";
 
 type ImageType = "logo" | "cover";
 
@@ -67,7 +60,6 @@ export default function RestaurantSettingsPage() {
 
   const [openingTime, setOpeningTime] = useState("");
   const [closingTime, setClosingTime] = useState("");
-  const [menuLayout, setMenuLayout] = useState<MenuLayout>("grid");
 
   const [wifiName, setWifiName] = useState("");
   const [wifiPassword, setWifiPassword] = useState("");
@@ -135,8 +127,7 @@ export default function RestaurantSettingsPage() {
               google_review_url,
               is_open,
               opening_time,
-              closing_time,
-              menu_layout
+              closing_time
             `
           )
           .eq("id", membership.restaurant_id)
@@ -227,19 +218,6 @@ export default function RestaurantSettingsPage() {
         : ""
     );
 
-    const allowedLayouts: MenuLayout[] = [
-      "classic",
-      "editorial",
-      "grid",
-      "luxury",
-      "minimal",
-    ];
-
-    setMenuLayout(
-      allowedLayouts.includes(data.menu_layout)
-        ? data.menu_layout
-        : "grid"
-    );
   }
 
   /*
@@ -495,7 +473,6 @@ export default function RestaurantSettingsPage() {
           closing_time:
             closingTime || null,
 
-          menu_layout: menuLayout,
         })
         .eq("id", restaurant.id)
         .select(
@@ -865,42 +842,6 @@ export default function RestaurantSettingsPage() {
             </div>
           </SettingsSection>
 
-          {/* ============ MENÜ DÜZENİ ============ */}
-          <SettingsSection
-            title="Menü düzeni"
-            description="Klasik temalardaki müşteri menüsünün yerleşimi. Aurora temaları kendi düzenini kullanır."
-          >
-            <div className="adm-layout-grid" role="radiogroup" aria-label="Menü düzeni">
-              {menuLayoutOptions.map((option) => {
-                const selected = menuLayout === option.id;
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    className={`adm-layout ${selected ? "is-active" : ""}`}
-                    onClick={() => setMenuLayout(option.id)}
-                  >
-                    <span className="adm-layout-preview" style={option.preview}>
-                      <i />
-                      <i />
-                      <i />
-                    </span>
-                    <span className="adm-layout-text">
-                      <strong>{option.name}</strong>
-                      <small>{option.description}</small>
-                    </span>
-                    {selected && (
-                      <span className="adm-layout-check">
-                        <AdminIcon name="check" size={13} strokeWidth={2.6} />
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </SettingsSection>
           </>
           )}
 
@@ -981,40 +922,3 @@ function Field({
   );
 }
 
-const menuLayoutOptions: Array<{
-  id: MenuLayout;
-  name: string;
-  description: string;
-  preview: CSSProperties;
-}> = [
-  {
-    id: "classic",
-    name: "Classic",
-    description: "Sade, temiz ve zamansız menü.",
-    preview: { background: "#f8f6f1", color: "#171717" },
-  },
-  {
-    id: "editorial",
-    name: "Editorial",
-    description: "Dergi tarzı yerleşim.",
-    preview: { background: "#efe8dc", color: "#171717" },
-  },
-  {
-    id: "grid",
-    name: "Grid",
-    description: "İki sütunlu ürün kartları.",
-    preview: { background: "#071018", color: "#ffffff" },
-  },
-  {
-    id: "luxury",
-    name: "Luxury",
-    description: "Koyu ve sofistike görünüm.",
-    preview: { background: "linear-gradient(135deg,#15110b,#332712)", color: "#ffffff" },
-  },
-  {
-    id: "minimal",
-    name: "Minimal",
-    description: "Bol boşluklu, sade görünüm.",
-    preview: { background: "#ffffff", color: "#171717" },
-  },
-];

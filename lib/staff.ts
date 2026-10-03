@@ -20,7 +20,7 @@ export type StaffSession = {
 
 export type StaffCheck =
   | { ok: true; session: StaffSession }
-  | { ok: false; reason: "no-user" | "not-staff" | "inactive" | "role" | "plan" | "missing-table" };
+  | { ok: false; reason: "no-user" | "not-staff" | "inactive" | "role" | "plan" | "billing" | "missing-table" };
 
 export const STAFF_ROLES: StaffRole[] = ["garson", "mutfak"];
 
@@ -39,6 +39,7 @@ export const STAFF_DENIED_TEXT: Record<Exclude<StaffCheck, { ok: true }>["reason
   inactive: "Hesabınız işletme tarafından kapatılmış. Lütfen yöneticinize başvurun.",
   role: "Hesabınıza garson ya da mutfak görevi atanmamış. Lütfen yöneticinize başvurun.",
   plan: "İşletmenin paketi garson ve mutfak ekranlarını kapsamıyor. Lütfen yöneticinize başvurun.",
+  billing: "İşletmenin aboneliği askıda olduğu için ekranlar kapalı. Lütfen yöneticinize başvurun.",
   "missing-table": "Personel girişi için veritabanı güncellemesi bekleniyor. Lütfen OZT Digital ile iletişime geçin.",
 };
 
@@ -92,6 +93,10 @@ export async function checkStaffSession(): Promise<StaffCheck> {
 
   const menuOnly = !typeError && typeRow?.menu_only === true;
   if (!planAllowsStaff(restaurant.plan, menuOnly)) return { ok: false, reason: "plan" };
+
+  // Otomatik abonelikte ek süre dolduysa personel ekranları da kapanır.
+  const { data: billingState, error: billingError } = await admin.rpc("billing_access", { p_restaurant_id: restaurantId });
+  if (!billingError && billingState === "blocked") return { ok: false, reason: "billing" };
 
   // Son görülme en fazla dakikada bir yazılır.
   const lastSeen = account.last_seen_at ? new Date(account.last_seen_at).getTime() : 0;

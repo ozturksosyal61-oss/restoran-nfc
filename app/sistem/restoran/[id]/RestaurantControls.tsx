@@ -2,11 +2,12 @@
 
 import { useActionState, useState } from "react";
 import AdminIcon from "../../../admin/AdminIcon";
-import { RESTAURANT_THEMES, isAuroraTheme } from "../../../../lib/themes";
+import { MENU_LAYOUTS, RESTAURANT_THEMES, isAuroraTheme } from "../../../../lib/themes";
 import { ResultNote } from "../../SystemUi";
 import {
   deleteRestaurant,
   setRestaurantActive,
+  setRestaurantMenuLayout,
   setRestaurantPlan,
   setRestaurantTheme,
   setRestaurantType,
@@ -29,12 +30,14 @@ export function RestaurantSettings({
   restaurantId,
   menuOnly,
   theme,
+  menuLayout,
   plans,
   subscription,
 }: {
   restaurantId: number;
   menuOnly: boolean;
   theme: string;
+  menuLayout: string;
   plans: Plan[];
   subscription: CurrentSubscription;
 }) {
@@ -44,6 +47,8 @@ export function RestaurantSettings({
 
   const [type, setType] = useState(menuOnly ? "menu" : "full");
   const [selectedTheme, setSelectedTheme] = useState(theme);
+  const [layoutResult, layoutAction, layoutPending] = useActionState(setRestaurantMenuLayout, null);
+  const [selectedLayout, setSelectedLayout] = useState(menuLayout);
 
   // Sadece menü restoranları Aurora menüsünü kullanır.
   const themeChoices =
@@ -54,7 +59,7 @@ export function RestaurantSettings({
       <div className="adm-card-head">
         <div>
           <h2 id="ayar-baslik">Restoran ayarları</h2>
-          <p>Tür, paket ve tema yalnızca sistem panelinden değişir.</p>
+          <p>Tür, paket, tema ve menü düzeni yalnızca sistem panelinden değişir.</p>
         </div>
       </div>
 
@@ -206,6 +211,43 @@ export function RestaurantSettings({
           </button>
         </div>
       </form>
+
+      {/* ---------- Menü düzeni (yalnızca klasik temalar) ---------- */}
+      {type !== "menu" && !isAuroraTheme(theme) && (
+        <form action={layoutAction} className="sys-setting">
+          <input type="hidden" name="restaurant_id" value={restaurantId} />
+          <input type="hidden" name="menu_layout" value={selectedLayout} />
+          <div className="sys-setting-label">
+            <strong>Menü düzeni</strong>
+            <small>Klasik temalardaki müşteri menüsünün yerleşimi. Aurora temaları kendi düzenini kullanır.</small>
+          </div>
+          <div className="sys-themes" role="radiogroup" aria-label="Menü düzeni">
+            {MENU_LAYOUTS.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                role="radio"
+                aria-checked={selectedLayout === item.value}
+                className={`sys-theme ${selectedLayout === item.value ? "is-on" : ""}`}
+                onClick={() => setSelectedLayout(item.value)}
+                title={item.description}
+              >
+                <span className="sys-theme-name">{item.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="sys-setting-foot">
+            <ResultNote result={layoutResult} />
+            <button
+              type="submit"
+              className="adm-btn adm-btn-primary adm-btn-sm"
+              disabled={layoutPending || selectedLayout === menuLayout}
+            >
+              {layoutPending ? "Kaydediliyor…" : "Düzeni uygula"}
+            </button>
+          </div>
+        </form>
+      )}
     </section>
   );
 }
