@@ -1,6 +1,5 @@
-import { supabase } from "../../../../lib/supabase";
-import { readMenuOnly } from "../../../../lib/restaurant-type";
 import { isAuroraTheme } from "../../../../lib/themes";
+import { loadMenuData } from "../../../../lib/menu-data";
 import OztNovaPremiumMenu from "./OztNovaPremiumMenu";
 import AuroraMenu from "./AuroraMenu";
 import MenuViewTracker from "./MenuViewTracker";
@@ -16,22 +15,19 @@ export default async function RestaurantMenuRouteLayout({
 }) {
   const { slug } = await params;
 
-  const { data: restaurant } = await supabase
-    .from("restaurants")
-    .select("id, theme")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
+  // Restoran ve menünün tamamı tek sorguda sunucuda hazırlanır.
+  const menu = await loadMenuData(slug);
+  const restaurant = menu ? { id: menu.restaurant.id, theme: menu.theme } : null;
 
   // Sadece menü restoranları tema ne olursa olsun Aurora menüsünü kullanır;
   // sepet ve garson çağırma bu menüde kapatılır.
-  if (restaurant && (await readMenuOnly(supabase, Number(restaurant.id)))) {
-    return <AuroraMenu slug={slug} menuOnly />;
+  if (menu?.menuOnly) {
+    return <AuroraMenu slug={slug} menuOnly initialData={menu} />;
   }
 
   // Tüm Aurora renk temaları aynı menüyü kullanır.
   if (isAuroraTheme(restaurant?.theme)) {
-    return <AuroraMenu slug={slug} />;
+    return <AuroraMenu slug={slug} initialData={menu} />;
   }
 
   // Aurora menüsü açılışı kendisi sayar; diğer temalarda burada sayılır.

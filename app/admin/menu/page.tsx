@@ -30,6 +30,13 @@ export default async function AdminMenuPage() {
     return <main className="adm-page"><p className="adm-empty">İşletme bağlantısı bulunamadı.</p></main>;
   }
 
+  // Logo ve kapak (Fotoğrafları hızlandır bunları da küçültür).
+  const { data: restaurantAssets } = await supabase
+    .from("restaurants")
+    .select("logo_url, cover_image_url")
+    .eq("id", membership.restaurant_id)
+    .maybeSingle();
+
   /* =====================================================
      KATEGORİLER
      ===================================================== */
@@ -124,6 +131,11 @@ export default async function AdminMenuPage() {
         photos={productList
           .filter((product) => typeof product.image_url === "string" && product.image_url)
           .map((product) => ({ id: Number(product.id), image_url: String(product.image_url) }))}
+        assets={{
+          restaurantId: Number(membership.restaurant_id),
+          logoUrl: restaurantAssets?.logo_url ?? null,
+          coverUrl: restaurantAssets?.cover_image_url ?? null,
+        }}
       />
 
       {!categories || categories.length === 0 ? (

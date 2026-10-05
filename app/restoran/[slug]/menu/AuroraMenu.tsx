@@ -24,6 +24,7 @@ import {
 } from "../../../../lib/menu-i18n";
 import { trackMenuView, trackProductView } from "../../../../lib/menu-tracking";
 import { hasPlanFeature } from "../../../../lib/plan";
+import type { MenuData } from "../../../../lib/menu-data";
 import { useCart } from "./CartContext";
 import styles from "./AuroraMenu.module.css";
 
@@ -108,28 +109,32 @@ function smoothBehavior(): ScrollBehavior {
 export default function AuroraMenu({
   slug,
   menuOnly = false,
+  initialData = null,
 }: {
   slug: string;
   menuOnly?: boolean;
+  // Sunucuda hazırlanan menü; varsa sayfa ürünleriyle birlikte açılır ve
+  // telefon menüyü yeniden sorgulamaz.
+  initialData?: MenuData | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlToken = searchParams.get("masa")?.trim() || "";
   const cart = useCart();
 
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(initialData?.restaurant ?? null);
+  const [categories, setCategories] = useState<Category[]>(initialData?.categories ?? []);
+  const [products, setProducts] = useState<Product[]>(initialData?.products ?? []);
   const [table, setTable] = useState<Table | null>(null);
   const [lastOrderId, setLastOrderId] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialData);
   const [loadError, setLoadError] = useState("");
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
   const [sheet, setSheet] = useState<"cart" | "service" | "language" | null>(null);
-  const [languages, setLanguages] = useState<MenuLanguage[]>([]);
+  const [languages, setLanguages] = useState<MenuLanguage[]>(initialData?.languages ?? []);
   const [language, setLanguage] = useState<DisplayLanguage>("tr");
   const t = menuStrings(language);
   const [toast, setToast] = useState<Toast | null>(null);
@@ -152,6 +157,12 @@ export default function AuroraMenu({
     async function load() {
       try {
         const supabase = createClient();
+
+        // Sunucudan gelen menü varsa yalnızca masa kodu doğrulanır.
+        if (initialData) {
+          await finish(supabase, initialData.restaurant, initialData.categories, initialData.products, initialData.languages);
+          return;
+        }
 
         const { data: restaurantData } = await supabase
           .from("restaurants")
@@ -221,6 +232,24 @@ export default function AuroraMenu({
           product.calories = calories.get(product.id) ?? null;
         });
 
+        await finish(supabase, restaurantData as Restaurant, safeCategories, safeProducts, availableLanguages);
+      } catch (error) {
+        console.error("Aurora menü yüklenemedi:", error);
+        if (!cancelled) setLoadError(menuStrings("tr").loadError);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    // Menü verisi hazır olduktan sonra: masa kodu, dil, açılış sayımı, sepet.
+    async function finish(
+      supabase: ReturnType<typeof createClient>,
+      restaurantData: Restaurant,
+      safeCategories: Category[],
+      safeProducts: Product[],
+      availableLanguages: MenuLanguage[]
+    ) {
+      {
         // Masa yalnızca QR/NFC kodu bu restoranla eşleşirse kabul edilir.
         const token = menuOnly ? "" : urlToken || readSavedTableToken();
         let nextTable: Table | null = null;
@@ -278,11 +307,6 @@ export default function AuroraMenu({
             });
           }
         }
-      } catch (error) {
-        console.error("Aurora menü yüklenemedi:", error);
-        if (!cancelled) setLoadError(menuStrings("tr").loadError);
-      } finally {
-        if (!cancelled) setLoading(false);
       }
     }
 
@@ -290,7 +314,7 @@ export default function AuroraMenu({
     return () => {
       cancelled = true;
     };
-  }, [slug, urlToken, menuOnly]);
+  }, [slug, urlToken, menuOnly, initialData]);
 
   /* ---------------- Liste ---------------- */
 
