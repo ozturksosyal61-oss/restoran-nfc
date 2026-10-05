@@ -114,7 +114,7 @@ export default function AuroraRating({
           <span className={styles.introLogo}>
             {restaurant.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={restaurant.logo_url} alt="" />
+              <img src={restaurant.logo_url} alt={`${restaurant.name} logosu`} />
             ) : (
               restaurant.name.trim().charAt(0).toLocaleUpperCase("tr-TR")
             )}

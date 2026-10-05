@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { restaurantMetadata } from "../../../lib/restaurant-metadata";
 import { notFound, redirect } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { readMenuOnly, restaurantMenuPath } from "../../../lib/restaurant-type";
@@ -103,6 +105,11 @@ async function requestBill(formData: FormData) {
   redirect(
     `/restoran/${slug}?masa=${encodeURIComponent(masa)}&hesap=ok`
   );
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  return restaurantMetadata(slug, "home");
 }
 
 export default async function RestaurantPage({

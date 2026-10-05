@@ -25,7 +25,7 @@ export default function LegalGate({ restaurantName }: { restaurantName: string }
           <span className="adm-eyebrow">Sözleşmeler</span>
           <h1>Devam etmeden önce</h1>
           <p>
-            {restaurantName} için OZT Digital Menu hizmet sözleşmelerini onaylamanız gerekiyor. Belgeleri yeni sekmede
+            {restaurantName} için OZT Digital hizmet sözleşmelerini onaylamanız gerekiyor. Belgeleri yeni sekmede
             okuyabilirsiniz. Son güncelleme: {LEGAL_UPDATED}.
           </p>
         </div>

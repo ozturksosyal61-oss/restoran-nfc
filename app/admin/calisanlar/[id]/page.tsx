@@ -7,6 +7,7 @@ import { planAllowsStaff } from "../../../../lib/staff";
 import { createSupabaseAdminClient } from "../../../../lib/supabase-admin";
 import EditEmployeeForm from "./EditEmployeeForm";
 import StaffLoginCard from "./StaffLoginCard";
+import { SITE_HOST } from "../../../../lib/site";
 
 type Props = {
   params: Promise<{
@@ -104,7 +105,7 @@ export default async function EditEmployeePage({
     headers(),
   ]);
 
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "www.oztdigital.com.tr";
+  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? SITE_HOST;
 
   return (
     <EditEmployeeForm

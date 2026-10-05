@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "../../../lib/supabase-server";
 import { readMenuOnly, restaurantMenuPath } from "../../../lib/restaurant-type";
 import AdminIcon from "../AdminIcon";
+import { SITE_URL } from "../../../lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -52,8 +53,7 @@ export default async function AdminQRPage() {
     );
   }
 
-  const baseUrl =
-    "https://www.oztdigital.com.tr";
+  const baseUrl = SITE_URL;
 
   // Sadece menü restoranında masa yok; tek QR doğrudan menüye açılır.
   const menuOnly = await readMenuOnly(supabase, Number(restaurant.id));

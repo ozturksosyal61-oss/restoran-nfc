@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { restaurantMetadata } from "../../../../lib/restaurant-metadata";
 import { notFound, redirect } from "next/navigation";
 
 import { supabase } from "../../../../lib/supabase";
@@ -112,6 +114,11 @@ async function callWaiter(
   redirect(
     `/restoran/${slug}/menu?masa=${encodeURIComponent(masa)}&garson=ok`
   );
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  return restaurantMetadata(slug, "menu");
 }
 
 export default async function RestaurantMenuPage({
@@ -803,7 +810,7 @@ export default async function RestaurantMenuPage({
                     src={
                       restaurantData.logo_url
                     }
-                    alt=""
+                    alt={`${restaurantData.name} logosu`}
                     style={{
                       width:
                         "58px",
@@ -1449,7 +1456,7 @@ export default async function RestaurantMenuPage({
                 "5px",
             }}
           >
-            OZT DIGITAL MENU
+            OZT DIGITAL
           </strong>
 
           Dijital restoran

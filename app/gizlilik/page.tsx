@@ -2,11 +2,14 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import LegalDocument, { CompanyCard } from "../LegalDocument";
 import { COMPANY } from "../../lib/legal";
+import { pageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/gizlilik",
   title: "Gizlilik Politikası",
-  description: "OZT Digital Menu'nün verileri nasıl koruduğu ve kullandığına ilişkin gizlilik politikası.",
-};
+  description:
+    "OZT Digital'in verileri nasıl koruduğu ve kullandığına ilişkin gizlilik politikası.",
+});
 
 export default function PrivacyPage() {
   return (

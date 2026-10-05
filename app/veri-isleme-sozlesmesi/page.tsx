@@ -3,11 +3,14 @@ import type { Metadata } from "next";
 import LegalDocument, { CompanyCard } from "../LegalDocument";
 import { COMPANY } from "../../lib/legal";
 import styles from "../LegalDocument.module.css";
+import { pageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/veri-isleme-sozlesmesi",
   title: "Veri İşleme Sözleşmesi",
-  description: "OZT Digital Menu ile işletmeler arasında KVKK kapsamındaki veri işleme sözleşmesi.",
-};
+  description:
+    "OZT Digital ile işletmeler arasında KVKK kapsamındaki veri işleme sözleşmesi.",
+});
 
 export default function DataProcessingPage() {
   return (

@@ -7,12 +7,15 @@ import QRCode from "qrcode";
 import TrackedLink from "../TrackedLink";
 import home from "../page.module.css";
 import styles from "./demo.module.css";
+import { SITE_HOST } from "../../lib/site";
+import { pageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
-  title: "Canlı Demo",
+export const metadata: Metadata = pageMetadata({
+  path: "/demo",
+  title: "Canlı Demo: QR Menü ve Masadan Sipariş",
   description:
-    "OZT Digital Menu'yü gerçek bir restoranda deneyin: QR menü, çok dilli menü, masadan sipariş, garson çağırma ve sipariş takibi.",
-};
+    "OZT Digital'i gerçek bir restoranda deneyin: QR menü, çok dilli menü, masadan sipariş, garson çağırma ve sipariş takibi.",
+});
 
 const display = Fraunces({
   subsets: ["latin", "latin-ext"],
@@ -122,7 +125,7 @@ const panelFeatures: { icon: keyof typeof iconPaths; title: string; text: string
 
 async function demoQrSvg() {
   const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "www.oztdigital.com.tr";
+  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? SITE_HOST;
   const protocol = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
 
   return QRCode.toString(`${protocol}://${host}${DEMO_PATH}`, {
@@ -155,9 +158,9 @@ export default async function DemoPage({
       {/* NAV */}
       <header className={home.nav}>
         <div className={home.navInner}>
-          <Link href="/" className={home.brand} aria-label="OZT Digital Menu ana sayfa">
+          <Link href="/" className={home.brand} aria-label="OZT Digital ana sayfa">
             <span className={home.brandMark}>OZT</span>
-            <span>Digital Menu</span>
+            <span>Digital</span>
           </Link>
 
           <nav className={home.navLinks} aria-label="Demo bölümleri">
@@ -341,7 +344,7 @@ export default async function DemoPage({
           <div className={home.footerBrand}>
             <span className={home.brand}>
               <span className={home.brandMark}>OZT</span>
-              <span>Digital Menu</span>
+              <span>Digital</span>
             </span>
             <p>Restoranlar için QR &amp; NFC dijital deneyim platformu.</p>
           </div>
@@ -359,7 +362,7 @@ export default async function DemoPage({
         </div>
 
         <small className={home.copyright}>
-          © {new Date().getFullYear()} OZT Digital Menu. Tüm hakları saklıdır.
+          © {new Date().getFullYear()} OZT Digital. Tüm hakları saklıdır.
         </small>
       </footer>
 

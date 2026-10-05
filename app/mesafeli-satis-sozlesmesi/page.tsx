@@ -2,11 +2,14 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import LegalDocument, { CompanyCard } from "../LegalDocument";
 import { COMPANY } from "../../lib/legal";
+import { pageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/mesafeli-satis-sozlesmesi",
   title: "Mesafeli Satış Sözleşmesi",
-  description: "OZT Digital Menu abonelik hizmeti için mesafeli satış sözleşmesi.",
-};
+  description:
+    "OZT Digital abonelik hizmeti için mesafeli satış sözleşmesi.",
+});
 
 export default function DistanceSalesPage() {
   return (

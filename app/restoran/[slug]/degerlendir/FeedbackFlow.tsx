@@ -347,7 +347,7 @@ export default function FeedbackFlow({
               <span className={styles.introLogo}>
                 {logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logoUrl} alt="" />
+                  <img src={logoUrl} alt={`${name} logosu`} />
                 ) : (
                   initialOf(name)
                 )}

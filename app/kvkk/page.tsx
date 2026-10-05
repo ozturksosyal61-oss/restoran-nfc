@@ -2,12 +2,14 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import LegalDocument, { CompanyCard } from "../LegalDocument";
 import { COMPANY } from "../../lib/legal";
+import { pageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/kvkk",
   title: "KVKK Aydınlatma Metni",
   description:
-    "6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında OZT Digital Menu'nün kişisel verileri nasıl işlediğine ilişkin aydınlatma metni.",
-};
+    "6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında OZT Digital'in kişisel verileri nasıl işlediğine ilişkin aydınlatma metni.",
+});
 
 export default function KvkkPage() {
   return (

@@ -1,4 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/site";
+
+export const metadata: Metadata = pageMetadata({
+  path: "/urunler",
+  title: "NFC Menü Standı, QR Menü Kartı ve Masa Ürünleri",
+  description:
+    "Restoranınız için NFC menü standları, QR menü kartları ve masa ürünleri: UV baskı, pleksi ve özel tasarım seçenekleriyle dijital menünüze tek dokunuşla erişim.",
+});
 
 const standProducts = [
   {
@@ -69,7 +78,7 @@ function ProductCard({
       <div className="product-visual" aria-hidden="true">
         <div className="product-floor-glow" />
         <div className="product-3d">
-          <img src={image} alt="" />
+          <img src={image} alt={title} />
         </div>
       </div>
       <div className="product-body">
@@ -435,7 +444,7 @@ export default function ProductsPage() {
       <nav className="products-nav">
         <Link href="/" className="brand">
           <span className="brand-box">OZT</span>
-          <span>OZT DIGITAL MENU</span>
+          <span>OZT DIGITAL</span>
         </Link>
         <div className="nav-links">
           <Link href="/" className="nav-link">Ana Sayfa</Link>

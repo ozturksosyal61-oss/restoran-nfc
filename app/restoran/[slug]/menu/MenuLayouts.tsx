@@ -284,7 +284,7 @@ function IvoryLuxury3DLayout({
     <div className="ozt-layout ozt-layout-ivory-3d">
       <div className="ozt-ivory-hero">
         <div className="ozt-ivory-orb" />
-        <div className="ozt-ivory-kicker">OZT DIGITAL MENU</div>
+        <div className="ozt-ivory-kicker">OZT DIGITAL</div>
         <div className="ozt-ivory-title">Lezzeti Keşfet</div>
         <div className="ozt-ivory-subtitle">Premium menü deneyimi</div>
       </div>
@@ -535,7 +535,7 @@ const filteredProducts = normalizedSearch
             return (
               <a key={category.id} href={`#category-${category.id}`} className="ozt-app-category">
                 <div className="ozt-app-category-image">
-                  {img ? <img src={img} alt="" /> : <span>🍽️</span>}
+                  {img ? <img src={img} alt={category.name} /> : <span>🍽️</span>}
                 </div>
                 <span>{category.name}</span>
               </a>
@@ -684,7 +684,7 @@ const filteredProducts = normalizedSearch
             <div className="ozt-app-cart-items">
               {items.map((item) => (
                 <div key={item.id} className="ozt-app-cart-item">
-                  {item.image_url ? <img src={item.image_url} alt="" /> : <div className="ozt-app-cart-placeholder">🍽️</div>}
+                  {item.image_url ? <img src={item.image_url} alt={item.name} /> : <div className="ozt-app-cart-placeholder">🍽️</div>}
                   <div className="ozt-app-cart-info">
                     <strong>{item.name}</strong>
                     <span>{Number(item.price).toLocaleString("tr-TR")} TL</span>

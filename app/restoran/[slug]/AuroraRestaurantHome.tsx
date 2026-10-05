@@ -190,7 +190,7 @@ export default function AuroraRestaurantHome({
           <section className={styles.hero} aria-label={restaurant.name}>
             {restaurant.cover_image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img className={styles.heroImage} src={restaurant.cover_image_url} alt="" />
+              <img className={styles.heroImage} src={restaurant.cover_image_url} alt={`${restaurant.name} kapak fotoğrafı`} />
             ) : (
               <div className={styles.heroFallback} />
             )}

@@ -113,7 +113,7 @@ export default function MenuPopup({
 
         {popup.imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element -- işletmenin yüklediği duyuru görseli
-          <img className={styles.image} src={popup.imageUrl} alt="" />
+          <img className={styles.image} src={popup.imageUrl} alt={popup.title || "Restoran duyurusu görseli"} />
         )}
 
         <div className={styles.body}>

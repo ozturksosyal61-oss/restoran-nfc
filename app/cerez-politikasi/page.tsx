@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import LegalDocument from "../LegalDocument";
 import CookieSettingsLink from "../CookieSettingsLink";
 import styles from "../LegalDocument.module.css";
+import { pageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/cerez-politikasi",
   title: "Çerez Politikası",
-  description: "OZT Digital Menu'de kullanılan çerezler, tarayıcı depolama kayıtları ve tercihlerin nasıl değiştirileceği.",
-};
+  description:
+    "OZT Digital'de kullanılan çerezler, tarayıcı depolama kayıtları ve tercihlerin nasıl değiştirileceği.",
+});
 
 export default function CookiePolicyPage() {
   return (

@@ -608,7 +608,7 @@ export default function AuroraMenu({
             <span className={styles.sideLogo}>
               {restaurant.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={restaurant.logo_url} alt="" />
+                <img src={restaurant.logo_url} alt={`${restaurant.name} logosu`} />
               ) : (
                 initial
               )}
@@ -694,7 +694,7 @@ export default function AuroraMenu({
               <span className={`${styles.round} ${styles.topLogo}`} aria-hidden="true">
                 {restaurant.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={restaurant.logo_url} alt="" />
+                  <img src={restaurant.logo_url} alt={`${restaurant.name} logosu`} />
                 ) : (
                   initial
                 )}
@@ -836,7 +836,7 @@ export default function AuroraMenu({
                     {product.image_url && (
                       <span className={styles.dealImage}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={product.image_url} alt="" loading="lazy" />
+                        <img src={product.image_url} alt={product.name} loading="lazy" />
                       </span>
                     )}
                     <span className={styles.promoBadge}>{product.promo?.label}</span>
@@ -1132,7 +1132,7 @@ function ProductRow({
         {product.image_url && (
           <span className={styles.productImage}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={product.image_url} alt="" loading="lazy" />
+            <img src={product.image_url} alt={product.name} loading="lazy" />
           </span>
         )}
       </button>
@@ -1385,7 +1385,7 @@ function CartContents({
                 <span className={styles.cartThumb}>
                   {item.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.image_url} alt="" />
+                    <img src={item.image_url} alt={item.name} />
                   ) : (
                     <AuroraIcon name="plate" size={22} />
                   )}

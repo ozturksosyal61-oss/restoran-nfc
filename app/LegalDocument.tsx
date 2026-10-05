@@ -67,7 +67,7 @@ export default function LegalDocument({
       <header className="legal-header">
         <Link href="/" className={`brand-mark ${styles.brand}`}>
           <span className="brand-mark-box">OZT</span>
-          <span>OZT DIGITAL MENU</span>
+          <span>OZT DIGITAL</span>
         </Link>
         <Link href="/" className="legal-back">
           ← Ana sayfa
@@ -75,7 +75,7 @@ export default function LegalDocument({
       </header>
 
       <article className={`legal-card ${styles.doc}`}>
-        <div className="eyebrow">OZT DIGITAL MENU</div>
+        <div className="eyebrow">OZT DIGITAL</div>
         <h1>{title}</h1>
         <p className={styles.updated}>Son güncelleme: {LEGAL_UPDATED}</p>
         <div className="legal-intro">{intro}</div>

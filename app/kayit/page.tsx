@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./kayit.module.css";
+import { pageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/kayit",
   title: "İşletme hesabı",
-  robots: { index: false },
-};
+  description:
+    "OZT Digital işletme hesapları ekibimiz tarafından açılır.",
+  index: false,
+});
 
 // Herkese açık kayıt kapalı: işletme hesapları sistem panelinden açılır.
 export default function KayitPage() {

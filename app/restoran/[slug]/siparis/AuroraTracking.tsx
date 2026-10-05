@@ -277,7 +277,7 @@ export default function AuroraTracking({
                   <span className={styles.thumb}>
                     {item.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.image_url} alt="" />
+                      <img src={item.image_url} alt={item.product_name} />
                     ) : (
                       <AuroraIcon name="plate" size={20} />
                     )}

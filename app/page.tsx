@@ -6,6 +6,9 @@ import TrackedLink from "./TrackedLink";
 import CookieSettingsLink from "./CookieSettingsLink";
 import { FEATURE_INFO, featuresAddedIn } from "../lib/plan";
 import styles from "./page.module.css";
+import type { Metadata } from "next";
+import { INSTAGRAM_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL, pageMetadata } from "../lib/site";
+import { COMPANY } from "../lib/legal";
 
 // Restoran sayısı en fazla 5 dakikada bir güncellenir.
 export const revalidate = 300;
@@ -200,9 +203,49 @@ const faqs = [
   },
 ];
 
+export const metadata: Metadata = pageMetadata({
+  path: "/",
+  title: SITE_TITLE,
+  absoluteTitle: true,
+  description: SITE_DESCRIPTION,
+});
+
 /* =========================================================
    SAYFA
    ========================================================= */
+
+// Arama motorları için yapılandırılmış veri: kurum, site ve SSS.
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: `${SITE_URL}/logo.png`,
+      email: COMPANY.email,
+      sameAs: [INSTAGRAM_URL],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      inLanguage: "tr-TR",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+    },
+    {
+      "@type": "FAQPage",
+      "@id": `${SITE_URL}/#sss`,
+      mainEntity: faqs.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: { "@type": "Answer", text: item.a },
+      })),
+    },
+  ],
+};
 
 export default async function Home() {
   const restaurantCount = await getRestaurantCount();
@@ -226,16 +269,21 @@ export default async function Home() {
     <main
       className={`${styles.page} ${display.variable} ${sans.variable}`}
     >
+      <script
+        type="application/ld+json"
+        // "<" kaçırılır; metin içinden etiket enjekte edilemez.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       {/* NAV */}
       <header className={styles.nav}>
         <div className={styles.navInner}>
           <Link
             href="/"
             className={styles.brand}
-            aria-label="OZT Digital Menu ana sayfa"
+            aria-label="OZT Digital ana sayfa"
           >
             <span className={styles.brandMark}>OZT</span>
-            <span>Digital Menu</span>
+            <span>Digital</span>
           </Link>
 
           <nav className={styles.navLinks} aria-label="Sayfa bölümleri">
@@ -322,7 +370,7 @@ export default async function Home() {
             <div className={styles.heroPhoto}>
               <Image
                 src="/products/menu-stand-black.png"
-                alt=""
+                alt="Restoran masasında duran siyah NFC menü standı"
                 fill
                 preload
                 sizes="(max-width: 900px) 90vw, 520px"
@@ -600,7 +648,7 @@ export default async function Home() {
           <h2>
             İşletmenize uygun <em>planı seçin.</em>
           </h2>
-          <p>İhtiyacınız büyüdükçe OZT Digital Menu de sizinle büyür.</p>
+          <p>İhtiyacınız büyüdükçe OZT Digital de sizinle büyür.</p>
         </div>
 
         <div className={styles.pricing}>
@@ -693,7 +741,7 @@ export default async function Home() {
           <div className={styles.footerBrand}>
             <span className={styles.brand}>
               <span className={styles.brandMark}>OZT</span>
-              <span>Digital Menu</span>
+              <span>Digital</span>
             </span>
             <p>Restoranlar için QR &amp; NFC dijital deneyim platformu.</p>
           </div>
@@ -711,7 +759,7 @@ export default async function Home() {
         </div>
 
         <small className={styles.copyright}>
-          © {new Date().getFullYear()} OZT Digital Menu. Tüm hakları
+          © {new Date().getFullYear()} OZT Digital. Tüm hakları
           saklıdır.
         </small>
       </footer>

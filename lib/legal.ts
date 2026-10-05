@@ -4,7 +4,7 @@
 // işletmeler panele girişte yeni sürümü yeniden onaylar.
 
 export const COMPANY = {
-  brand: "OZT Digital Menu",
+  brand: "OZT Digital",
   owner: "Turan Öztürk",
   // Şahıs işletmesi; vergi numarası eklenince aşağıya yazılır.
   taxInfo: null as string | null,

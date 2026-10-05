@@ -2,11 +2,14 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import LegalDocument, { CompanyCard } from "../LegalDocument";
 import { COMPANY } from "../../lib/legal";
+import { pageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/kullanim-sartlari",
   title: "Kullanım Şartları",
-  description: "OZT Digital Menu dijital menü ve sipariş platformunun işletmeler için kullanım şartları.",
-};
+  description:
+    "OZT Digital dijital menü ve sipariş platformunun işletmeler için kullanım şartları.",
+});
 
 export default function TermsPage() {
   return (
@@ -117,7 +120,7 @@ export default function TermsPage() {
           title: "Sorumluluğun sınırı",
           body: (
             <p>
-              Kast veya ağır ihmal hâlleri saklı kalmak kaydıyla, {COMPANY.brand}&apos;nün bu sözleşmeden doğan toplam
+              Kast veya ağır ihmal hâlleri saklı kalmak kaydıyla, {COMPANY.brand}&apos;in bu sözleşmeden doğan toplam
               sorumluluğu, zararın doğduğu tarihten önceki 12 ay içinde İşletme&apos;nin ödediği abonelik ücreti
               toplamıyla sınırlıdır. Kâr kaybı, ciro kaybı gibi dolaylı zararlardan sorumluluk kabul edilmez.
             </p>

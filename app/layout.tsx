@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import CookieConsent from "./CookieConsent";
 import ErrorReporter from "./ErrorReporter";
 import "./globals.css";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "../lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,40 +16,37 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://oztdigital.com.tr"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "OZT Digital Menu | QR & NFC Restoran Sistemi",
-    template: "%s | OZT Digital Menu",
+    default: SITE_TITLE,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    "QR ve NFC destekli dijital menü, masa bazlı sipariş, garson çağırma ve restoran yönetim platformu.",
-  applicationName: "OZT Digital Menu",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
   keywords: [
-    "dijital menü",
     "QR menü",
     "NFC menü",
+    "dijital menü",
     "restoran sipariş sistemi",
     "QR sipariş",
+    "masadan sipariş",
   ],
-  authors: [{ name: "OZT Digital Menu" }],
-  creator: "OZT Digital Menu",
-  publisher: "OZT Digital Menu",
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
   robots: { index: true, follow: true },
-
+  // Sayfalar kendi adresini pageMetadata ile verir; vermeyenler ana sayfaya işaret etmez.
   openGraph: {
     type: "website",
     locale: "tr_TR",
-    siteName: "OZT Digital Menu",
-    title: "OZT Digital Menu | QR & NFC Restoran Sistemi",
-    description:
-      "Restoranınız için dijital menü, QR/NFC, sipariş ve müşteri deneyimi platformu.",
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
   },
-
   twitter: {
     card: "summary_large_image",
-    title: "OZT Digital Menu",
-    description:
-      "QR & NFC destekli restoran dijital menü ve sipariş platformu.",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
   },
 };
 

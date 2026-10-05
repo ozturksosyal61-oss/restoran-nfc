@@ -2,11 +2,14 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import LegalDocument from "../LegalDocument";
 import { COMPANY } from "../../lib/legal";
+import { pageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/iptal-iade",
   title: "İptal ve İade Koşulları",
-  description: "OZT Digital Menu aboneliğinin iptali ve ücret iadesine ilişkin koşullar.",
-};
+  description:
+    "OZT Digital aboneliğinin iptali ve ücret iadesine ilişkin koşullar.",
+});
 
 export default function CancellationPage() {
   return (

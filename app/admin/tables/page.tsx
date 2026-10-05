@@ -5,6 +5,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { createClient } from "../../../lib/supabase/client";
 import NfcWriter from "./NfcWriter";
 import AdminIcon from "../AdminIcon";
+import { SITE_URL } from "../../../lib/site";
 
 type Restaurant = {
   id: number;
@@ -20,8 +21,7 @@ type RestaurantTable = {
   is_active: boolean;
 };
 
-const APP_URL =
-  "https://www.oztdigital.com.tr";
+const APP_URL = SITE_URL;
   
 export default function TablesPage() {
   const [restaurants, setRestaurants] =

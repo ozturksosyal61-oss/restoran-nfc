@@ -26,7 +26,7 @@ export async function testConnection(c: BillingCredentials, mode: PaymentMode): 
 export async function createProduct(c: BillingCredentials, mode: PaymentMode): Promise<Ok<{ ref: string }> | Fail> {
   const response = await iyzicoRequest(creds(c), mode, "POST", "/v2/subscription/products", {
     locale: "tr",
-    name: "OZT Digital Menü aboneliği",
+    name: "OZT Digital aboneliği",
     description: "Restoranlar için QR / NFC dijital menü ve sipariş sistemi",
   });
   const ref = data(response).referenceCode;

@@ -471,12 +471,12 @@ export default function ServiceRequests({
         `(${requests.length}) Garson Çağrısı • OZT`;
     } else {
       document.title =
-        "OZT Digital Menü";
+        "OZT Digital";
     }
 
     return () => {
       document.title =
-        "OZT Digital Menü";
+        "OZT Digital";
     };
   }, [requests.length]);
 

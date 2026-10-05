@@ -13,6 +13,7 @@ import {
   type PaymentProvider,
   type PaytrCredentials,
 } from "./providers";
+import { SITE_HOST } from "../site";
 
 // Online ödemenin sunucu tarafı. Tablolar yalnızca service role ile okunur;
 // buradaki fonksiyonlar çağrılmadan ÖNCE yetki kontrolü yapılmış olmalıdır
@@ -116,7 +117,7 @@ export async function loadTransaction(reference: string, restaurantId?: number) 
 // İsteğin geldiği adres ve müşterinin IP'si (sağlayıcılar IP ister).
 export async function requestContext() {
   const list = await headers();
-  const host = list.get("x-forwarded-host") ?? list.get("host") ?? "www.oztdigital.com.tr";
+  const host = list.get("x-forwarded-host") ?? list.get("host") ?? SITE_HOST;
   const proto = list.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const ip = (list.get("x-forwarded-for") ?? "").split(",")[0].trim() || list.get("x-real-ip") || "127.0.0.1";
   return { origin: `${proto}://${host}`, ip };
