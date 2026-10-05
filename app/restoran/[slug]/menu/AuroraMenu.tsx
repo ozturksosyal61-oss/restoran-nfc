@@ -902,6 +902,14 @@ export default function AuroraMenu({
               <AuroraIcon name="arrow" size={16} />
             </a>
           )}
+
+          {sections.length > 0 && !query && (
+            <p className={`${styles.legalLine} ${styles.menuLegal}`}>
+              <a href="/kvkk#menu-kullanicilari" target="_blank" rel="noreferrer">
+                {t.privacy}
+              </a>
+            </p>
+          )}
         </main>
 
         {/* ===== Masaüstü: sepet ===== */}

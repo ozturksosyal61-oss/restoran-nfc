@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { supabase } from "../lib/supabase";
 import TrackedLink from "./TrackedLink";
+import CookieSettingsLink from "./CookieSettingsLink";
 import { FEATURE_INFO, featuresAddedIn } from "../lib/plan";
 import styles from "./page.module.css";
 
@@ -702,6 +703,10 @@ export default async function Home() {
             <Link href="/kvkk">KVKK</Link>
             <Link href="/kullanim-sartlari">Kullanım Şartları</Link>
             <Link href="/cerez-politikasi">Çerez Politikası</Link>
+            <Link href="/mesafeli-satis-sozlesmesi">Mesafeli Satış</Link>
+            <Link href="/iptal-iade">İptal ve İade</Link>
+            <Link href="/veri-isleme-sozlesmesi">Veri İşleme Sözleşmesi</Link>
+            <CookieSettingsLink />
           </nav>
         </div>
 

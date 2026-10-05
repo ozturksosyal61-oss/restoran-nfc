@@ -1,26 +1,145 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import LegalDocument from "../LegalDocument";
+import CookieSettingsLink from "../CookieSettingsLink";
+import styles from "../LegalDocument.module.css";
 
 export const metadata: Metadata = {
   title: "Çerez Politikası",
-  description: "OZT Digital Menu web uygulamasında kullanılan çerezler ve benzeri teknolojiler hakkında genel bilgilendirmedir.",
+  description: "OZT Digital Menu'de kullanılan çerezler, tarayıcı depolama kayıtları ve tercihlerin nasıl değiştirileceği.",
 };
 
-export default function LegalPage() {
+export default function CookiePolicyPage() {
   return (
-    <main className="legal-page">
-      <header className="legal-header">
-        <Link href="/" className="brand-mark"><span className="brand-mark-box">OZT</span><span>OZT DIGITAL MENU</span></Link>
-        <Link href="/" className="legal-back">← Ana sayfa</Link>
-      </header>
-      <article className="legal-card">
-        <div className="eyebrow">OZT DIGITAL MENU</div>
-        <h1>Çerez Politikası</h1>
-        <p className="legal-intro">OZT Digital Menu web uygulamasında kullanılan çerezler ve benzeri teknolojiler hakkında genel bilgilendirmedir.</p>
-        <section className="legal-block"><h2>Zorunlu teknolojiler</h2><p>Oturum yönetimi, güvenlik ve uygulamanın temel işlevleri için gerekli çerezler veya yerel depolama teknolojileri kullanılabilir.</p></section><section className="legal-block"><h2>Tercih ve analiz</h2><p>İleride tercih veya analiz amaçlı ek teknolojiler kullanılabilir. Bunların kullanılması halinde gerekli bilgilendirme ve izin mekanizmaları uygulanır.</p></section><section className="legal-block"><h2>Kontrol</h2><p>Tarayıcı ayarlarınız üzerinden çerezleri yönetebilir veya silebilirsiniz; ancak zorunlu teknolojileri engellemek bazı özelliklerin çalışmasını etkileyebilir.</p></section>
-        <div className="legal-note"><strong>Önemli:</strong> Bu metin ürünün mevcut yapısına göre genel bilgilendirme amaçlı hazırlanmıştır. Ticari ve hukuki süreçler kesinleştirilmeden önce hukuk danışmanı tarafından gözden geçirilmelidir.</div>
-      </article>
-      <footer className="legal-footer">© {new Date().getFullYear()} OZT Digital Menu</footer>
-    </main>
+    <LegalDocument
+      path="/cerez-politikasi"
+      title="Çerez Politikası"
+      intro={
+        <p>
+          Çerezler ve benzeri tarayıcı depolama kayıtları, bir siteyi ziyaret ettiğinizde cihazınıza kaydedilen küçük
+          dosyalardır. Bu sayfa hangi kayıtları neden kullandığımızı ve tercihinizi nasıl değiştireceğinizi açıklar.
+        </p>
+      }
+      sections={[
+        {
+          title: "Zorunlu çerezler ve kayıtlar",
+          body: (
+            <>
+              <p>Hizmetin çalışması için gereklidir; izninize bağlı değildir ve kapatılamaz.</p>
+              <div className={styles.tableWrap}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Kayıt</th>
+                      <th>Amaç</th>
+                      <th>Süre</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Oturum çerezleri (sb-…)</td>
+                      <td>İşletme, personel ve sistem paneline girişin sürdürülmesi</td>
+                      <td>Oturum kapanana kadar</td>
+                    </tr>
+                    <tr>
+                      <td>restaurant-cart</td>
+                      <td>Menüde sepetinizin hatırlanması</td>
+                      <td>Sipariş verilene ya da siz silene kadar</td>
+                    </tr>
+                    <tr>
+                      <td>ozt_table_token</td>
+                      <td>Okuttuğunuz masanın hatırlanması</td>
+                      <td>Siz silene kadar</td>
+                    </tr>
+                    <tr>
+                      <td>ozt_menu_language</td>
+                      <td>Seçtiğiniz menü dilinin hatırlanması</td>
+                      <td>Siz silene kadar</td>
+                    </tr>
+                    <tr>
+                      <td>Sipariş takip kaydı</td>
+                      <td>Verdiğiniz siparişin takip ekranının açılabilmesi</td>
+                      <td>Siz silene kadar</td>
+                    </tr>
+                    <tr>
+                      <td>Ödeme takip kaydı</td>
+                      <td>Masadan ödeme sonrası dekont ekranına dönülebilmesi</td>
+                      <td>Ödeme tamamlanana kadar</td>
+                    </tr>
+                    <tr>
+                      <td>ozt_popup_…</td>
+                      <td>Restoranın açılış duyurusunun size tekrar tekrar gösterilmemesi</td>
+                      <td>Siz silene kadar</td>
+                    </tr>
+                    <tr>
+                      <td>ozt_visitor</td>
+                      <td>
+                        Menü istatistiklerinde aynı ziyaretçinin bir kez sayılması. Rastgele üretilen bir koddur; adınız,
+                        telefonunuz gibi bilgilerle ilişkilendirilmez.
+                      </td>
+                      <td>Siz silene kadar</td>
+                    </tr>
+                    <tr>
+                      <td>ozt_mv_… / ozt_pv_…</td>
+                      <td>Menü ve ürün görüntülemelerinin aynı oturumda iki kez sayılmaması</td>
+                      <td>Tarayıcı oturumu</td>
+                    </tr>
+                    <tr>
+                      <td>ozt_cookie_consent</td>
+                      <td>Çerez tercihinizin hatırlanması</td>
+                      <td>Siz silene kadar</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ),
+        },
+        {
+          title: "Pazarlama çerezleri (yalnızca izninizle)",
+          body: (
+            <>
+              <div className={styles.tableWrap}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Hizmet</th>
+                      <th>Amaç</th>
+                      <th>Süre</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Meta Pixel (_fbp)</td>
+                      <td>Reklamlarımızı gören kişilerin tanıtım sitemizi ziyaret edip etmediğinin ölçülmesi</td>
+                      <td>90 gün</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Meta Pixel yalnızca tanıtım sitemizde ve yalnızca &quot;Kabul et&quot; ya da ayarlardan pazarlama
+                çerezlerine izin vermeniz hâlinde çalışır. Restoran menülerinde, işletme ve personel panellerinde hiçbir
+                koşulda kullanılmaz.
+              </p>
+            </>
+          ),
+        },
+        {
+          title: "Tercihinizi nasıl değiştirirsiniz?",
+          body: (
+            <>
+              <p>
+                İzninizi dilediğiniz an geri alabilir veya yeniden verebilirsiniz: <CookieSettingsLink /> (sitenin alt
+                kısmında da bulunur).
+              </p>
+              <p>
+                Ayrıca tarayıcınızın ayarlarından çerezleri ve site verilerini silebilirsiniz. Zorunlu kayıtları
+                silerseniz sepetiniz ve oturumunuz sıfırlanır.
+              </p>
+            </>
+          ),
+        },
+      ]}
+    />
   );
 }

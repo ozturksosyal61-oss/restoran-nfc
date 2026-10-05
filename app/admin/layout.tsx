@@ -9,6 +9,8 @@ import { isStaffUser } from "../../lib/staff";
 import AdminShell, { type AdminBilling, type AdminShellRestaurant } from "./AdminShell";
 import { getBillingAccess, loadBillingAccount, loadBillingSettings, refreshIfStale } from "../../lib/billing/service";
 import { billingNotice } from "../../lib/billing/notice";
+import { hasAcceptedLegal } from "../../lib/legal-acceptance";
+import LegalGate from "./LegalGate";
 import "./admin.css";
 
 const display = Cormorant_Garamond({
@@ -31,6 +33,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   let menuOnly = false;
   let demoMode = false;
   let billing: AdminBilling | null = null;
+  // Sözleşmeler henüz onaylanmadıysa panel yerine onay ekranı gösterilir.
+  let needsLegal = false;
 
   try {
     const supabase = await createSupabaseServerClient();
@@ -62,6 +66,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           plan = data.plan ?? null;
           menuOnly = await readMenuOnly(supabase, Number(membership.restaurant_id));
           demoMode = await isDemoSession(supabase);
+          if (!demoMode) needsLegal = !(await hasAcceptedLegal(Number(membership.restaurant_id)));
 
           // Otomatik abonelik (tablo yoksa ya da restoran elle yönetiliyorsa boş).
           const account = await refreshIfStale(await loadBillingAccount(Number(membership.restaurant_id)));
@@ -95,7 +100,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         demoMode={demoMode}
         billing={billing}
       >
-        {children}
+        {needsLegal && restaurant ? <LegalGate restaurantName={restaurant.name} /> : children}
       </AdminShell>
     </div>
   );

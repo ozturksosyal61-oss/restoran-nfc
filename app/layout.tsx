@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
+import CookieConsent from "./CookieConsent";
+import ErrorReporter from "./ErrorReporter";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -69,43 +70,8 @@ export default function RootLayout({
       <body>
         {children}
 
-        {/* Meta Pixel */}
-        <Script
-          id="meta-pixel"
-          strategy="afterInteractive"
-        >
-          {`
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;
-            n.push=n;
-            n.loaded=!0;
-            n.version='2.0';
-            n.queue=[];
-            t=b.createElement(e);
-            t.async=!0;
-            t.src=v;
-            s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}
-            (window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-
-            fbq('init', '1417151607050534');
-            fbq('track', 'PageView');
-          `}
-        </Script>
-
-        {/* Meta Pixel - NoScript */}
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=1417151607050534&ev=PageView&noscript=1"
-            alt=""
-          />
-        </noscript>
+        <CookieConsent />
+        <ErrorReporter />
       </body>
     </html>
   );

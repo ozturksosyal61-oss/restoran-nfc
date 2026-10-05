@@ -179,6 +179,13 @@ export default function AuroraCheckout({
           </span>
         </div>
 
+        <p className={styles.legalLine}>
+          Adınız ve notunuz yalnızca siparişinizin hazırlanması için restorana iletilir.{" "}
+          <a href="/kvkk#menu-kullanicilari" target="_blank" rel="noreferrer">
+            Kişisel verilerin işlenmesi
+          </a>
+        </p>
+
         {error && (
           <p className={styles.error} role="alert">
             <AuroraIcon name="alert" size={16} />

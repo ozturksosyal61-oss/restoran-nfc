@@ -1,0 +1,122 @@
+/* Yasal belgeler: globals.css'teki legal-* stillerine ek olarak liste,
+   tablo ve şirket bilgisi kutusu. */
+
+.doc {
+  max-width: 860px;
+}
+
+.updated {
+  margin: -6px 0 18px;
+  color: #8a8379;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.body {
+  display: grid;
+  gap: 10px;
+  color: #5f5a53;
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+
+.body p {
+  margin: 0;
+  font-size: inherit;
+}
+
+.body ul,
+.body ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-inline-start: 20px;
+}
+
+.body strong {
+  color: #2b2823;
+}
+
+.body a,
+.company a,
+.others a {
+  color: #8a6a1f;
+  font-weight: 700;
+}
+
+.body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.body th,
+.body td {
+  padding: 8px 10px;
+  border: 1px solid #eeeae3;
+  text-align: start;
+  vertical-align: top;
+}
+
+.body th {
+  background: #f7f4ee;
+  color: #2b2823;
+}
+
+.company {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 20px;
+  margin: 0 0 28px;
+  padding: 18px;
+  border-radius: 14px;
+  background: #f7f4ee;
+  font-size: 13px;
+}
+
+.company div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.company dt {
+  color: #8a8379;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.company dd {
+  margin: 0;
+  color: #2b2823;
+  overflow-wrap: anywhere;
+}
+
+.others {
+  display: grid;
+  gap: 8px;
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid #eeeae3;
+  font-size: 13px;
+}
+
+.others ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand {
+  color: #111;
+  text-decoration: none;
+}

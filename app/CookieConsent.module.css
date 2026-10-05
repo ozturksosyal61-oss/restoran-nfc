@@ -1,0 +1,114 @@
+/* Çerez onay bandı: sitenin krem / siyah / altın renkleriyle */
+
+.banner {
+  position: fixed;
+  inset-inline: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 1000;
+  display: grid;
+  gap: 14px;
+  width: min(560px, calc(100% - 32px));
+  margin-inline: auto;
+  padding: 18px;
+  border: 1px solid #e8e1d7;
+  border-radius: 18px;
+  background: #fffdf9;
+  color: #111;
+  box-shadow: 0 18px 50px rgba(17, 17, 17, 0.16);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.text {
+  display: grid;
+  gap: 4px;
+}
+
+.text strong {
+  font-size: 15px;
+}
+
+.text p {
+  margin: 0;
+  color: #5f5a53;
+}
+
+.text a {
+  color: #8a6a1f;
+  font-weight: 700;
+}
+
+.options {
+  display: grid;
+  gap: 10px;
+}
+
+.option {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f7f4ee;
+  cursor: pointer;
+}
+
+.option input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: #111;
+}
+
+.option span {
+  display: grid;
+  gap: 2px;
+}
+
+.option small {
+  color: #6f6b64;
+  font-size: 12.5px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.primary,
+.secondary {
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary {
+  border: 0;
+  background: #111;
+  color: #fff;
+}
+
+.secondary {
+  border: 1px solid #e8e1d7;
+  background: #fff;
+  color: #111;
+}
+
+.primary:focus-visible,
+.secondary:focus-visible,
+.option input:focus-visible {
+  outline: 2px solid #b8943d;
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .actions > * {
+    flex: 1 1 auto;
+  }
+}

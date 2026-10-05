@@ -1107,3 +1107,18 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Kişisel veriler bağlantısı (sipariş ekranı ve menü sonu) */
+.legalLine {
+  margin: 0;
+  padding: 0 4px;
+  color: var(--au-faint);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.legalLine a {
+  color: var(--au-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

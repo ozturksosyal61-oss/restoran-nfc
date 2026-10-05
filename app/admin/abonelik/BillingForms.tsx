@@ -193,7 +193,15 @@ export function StartSubscriptionForm({
       </div>
       <p className="adm-hint" style={{ margin: 0 }}>
         İlk ödeme kartınızı eklediğiniz gün alınır; sonra her dönem aynı gün otomatik yenilenir. İstediğiniz zaman iptal
-        edebilirsiniz.
+        edebilirsiniz; iptal dönem sonunda geçerli olur, ödenen ücret iade edilmez. Ödeme yaparak{" "}
+        <a href="/mesafeli-satis-sozlesmesi" target="_blank" rel="noreferrer">
+          Mesafeli Satış Sözleşmesi
+        </a>{" "}
+        ile{" "}
+        <a href="/iptal-iade" target="_blank" rel="noreferrer">
+          İptal ve İade Koşulları
+        </a>
+        &apos;nı kabul etmiş olursunuz.
       </p>
     </form>
   );

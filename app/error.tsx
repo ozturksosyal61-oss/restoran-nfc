@@ -1,9 +1,13 @@
  "use client";
 
 import { useEffect } from "react";
+import { reportClientError } from "../lib/report-client-error";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  useEffect(() => { console.error("Uygulama hatası:", error); }, [error]);
+  useEffect(() => {
+    console.error("Uygulama hatası:", error);
+    reportClientError(error, { digest: error.digest });
+  }, [error]);
 
   return <main className="status-page"><div className="status-card">
     <span className="status-code">500</span><div className="eyebrow">BEKLENMEYEN HATA</div>
