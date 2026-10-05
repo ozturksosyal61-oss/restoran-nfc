@@ -52,7 +52,6 @@ const MENU_ONLY_HOME = "/admin/menu";
 
 function isAllowedForMenuOnly(pathname: string) {
   if (pathname.startsWith("/admin/login")) return true;
-  if (pathname.startsWith("/admin/menu/promosyon")) return false;
   return ["/admin/menu", "/admin/qr", "/admin/ayarlar", "/admin/geri-bildirim", "/admin/ozet", "/admin/abonelik"].some(
     (href) => pathname === href || pathname.startsWith(`${href}/`)
   );
@@ -137,6 +136,7 @@ export default function AdminShell({
       items: [
         { href: "/admin/menu", label: "Ürünler", icon: "menu" },
         { href: "/admin/menu/kategori", label: "Kategoriler", icon: "category" },
+        { href: "/admin/menu/promosyon", label: "Kampanyalar", icon: "promo", feature: "campaigns" },
         { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle", feature: "ai" },
         { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe", feature: "languages" },
         { href: "/admin/menu/kalori", label: "Kalori bilgileri", icon: "bolt", feature: "calories" },
@@ -173,7 +173,7 @@ export default function AdminShell({
       items: [
         { href: "/admin/menu", label: "Ürünler", icon: "menu" },
         { href: "/admin/menu/kategori", label: "Kategoriler", icon: "category" },
-        { href: "/admin/menu/promosyon", label: "Kampanyalar", icon: "promo" },
+        { href: "/admin/menu/promosyon", label: "Kampanyalar", icon: "promo", feature: "campaigns" },
         { href: "/admin/menu/ice-aktar", label: "Fotoğraftan aktar", icon: "sparkle", feature: "ai" },
         { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe", feature: "languages" },
         { href: "/admin/menu/kalori", label: "Kalori bilgileri", icon: "bolt", feature: "calories" },

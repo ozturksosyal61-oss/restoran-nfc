@@ -3083,6 +3083,27 @@ button.adm-chip {
   font-size: 18px;
 }
 
+.adm-promo-preview {
+  display: grid;
+  gap: 8px;
+}
+
+.adm-promo-preview > small {
+  color: var(--a-muted);
+  font-size: 12px;
+}
+
+.adm-promo-tag {
+  justify-self: start;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--a-danger-bg);
+  color: var(--a-danger);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+
 @media (max-width: 1080px) {
   .adm-sticky-card {
     position: static;

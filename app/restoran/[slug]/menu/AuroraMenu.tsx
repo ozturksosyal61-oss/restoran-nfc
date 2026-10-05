@@ -25,6 +25,7 @@ import {
 import { trackMenuView, trackProductView } from "../../../../lib/menu-tracking";
 import { hasPlanFeature } from "../../../../lib/plan";
 import type { MenuData } from "../../../../lib/menu-data";
+import { applyPromotions, readMenuPromotions, type ProductPromo } from "../../../../lib/menu-promotions";
 import { useCart } from "./CartContext";
 import styles from "./AuroraMenu.module.css";
 
@@ -83,6 +84,8 @@ type Product = {
   allergens: string | null;
   translations?: unknown;
   calories?: number | null;
+  // Aktif kampanya varsa price indirimli fiyattır.
+  promo?: ProductPromo | null;
 };
 
 type Restaurant = {
@@ -196,6 +199,10 @@ export default function AuroraMenu({
             .order("sort_order", { ascending: true });
 
           safeProducts = (productData ?? []) as Product[];
+          safeProducts = applyPromotions(
+            safeProducts.map((product) => ({ ...product, price: Number(product.price) })),
+            await readMenuPromotions(supabase, Number(restaurantData.id))
+          );
         }
 
         // Çok dilli menü: sütunlar henüz yoksa her şey Türkçe kalır.
@@ -296,6 +303,9 @@ export default function AuroraMenu({
         // menüde olmayan (başka restorana ait ya da satıştan kalkmış) ürünler
         // çıkarılır; aksi hâlde sipariş veritabanında reddedilir.
         if (!menuOnly && safeProducts.length > 0) {
+          // Kampanya başladıysa ya da bittiyse sepetteki fiyat da güncellenir.
+          cartRef.current.syncPrices(new Map(safeProducts.map((product) => [product.id, Number(product.price)])));
+
           const valid = new Set(safeProducts.map((product) => product.id));
           const stale = cartRef.current.items.filter((item) => !valid.has(item.id));
 
@@ -384,6 +394,15 @@ export default function AuroraMenu({
     }
     return counts;
   }, [products]);
+
+  // Kampanyalı ürünler: popüler işaretlenenler önce.
+  const deals = useMemo(
+    () =>
+      shownProducts
+        .filter((product) => product.promo)
+        .sort((a, b) => Number(Boolean(b.promo?.popular)) - Number(Boolean(a.promo?.popular))),
+    [shownProducts]
+  );
 
   const quantities = useMemo(
     () => new Map(cart.items.map((item) => [item.id, item.quantity])),
@@ -797,6 +816,40 @@ export default function AuroraMenu({
             </p>
           )}
 
+          {!query && deals.length > 0 && (
+            <section className={styles.deals} aria-labelledby="kampanyalar-baslik">
+              <h2 id="kampanyalar-baslik" className={styles.sectionTitle}>
+                {t.deals}
+                <small>{t.items(deals.length)}</small>
+              </h2>
+              <div className={styles.dealRail}>
+                {deals.map((product) => (
+                  <button
+                    type="button"
+                    key={product.id}
+                    className={`${styles.deal} ${product.image_url ? "" : styles.dealNoImage}`}
+                    onClick={() => {
+                      setOpenProduct(product);
+                      trackProductView(restaurant.id, product.id, language);
+                    }}
+                  >
+                    {product.image_url && (
+                      <span className={styles.dealImage}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={product.image_url} alt="" loading="lazy" />
+                      </span>
+                    )}
+                    <span className={styles.promoBadge}>{product.promo?.label}</span>
+                    <strong>{product.name}</strong>
+                    <span className={styles.dealPrice}>
+                      <PriceLine product={product} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
           {sections.map(({ category, items }) => (
             <section
               key={category.id}
@@ -1020,6 +1073,19 @@ export default function AuroraMenu({
 }
 
 /* =========================================================
+   FİYAT (kampanyada eski fiyat üstü çizili)
+   ========================================================= */
+
+function PriceLine({ product }: { product: Product }) {
+  return (
+    <>
+      {product.promo && <del className={styles.oldPrice}>{formatLira(product.promo.oldPrice)}</del>}
+      {formatLira(Number(product.price))}
+    </>
+  );
+}
+
+/* =========================================================
    ÜRÜN SATIRI
    ========================================================= */
 
@@ -1043,12 +1109,13 @@ function ProductRow({
     >
       <button type="button" className={styles.productMain} onClick={onOpen}>
         <span className={styles.productText}>
+          {product.promo && <span className={styles.promoBadge}>{product.promo.label}</span>}
           <strong>{product.name}</strong>
           {product.description?.trim() && (
             <span className={styles.productDesc}>{product.description}</span>
           )}
           <span className={styles.productPrice}>
-            {formatLira(Number(product.price))}
+            <PriceLine product={product} />
             {product.calories != null && (
               <small className={styles.kcal}>{product.calories.toLocaleString(t.locale)} kcal</small>
             )}
@@ -1162,8 +1229,34 @@ function ProductDialog({
         <div className={styles.productBody}>
           <div className={styles.productHead}>
             <h2 id="urun-baslik">{product.name}</h2>
-            <span>{formatLira(price)}</span>
+            <span>
+              {product.promo && <del className={styles.oldPrice}>{formatLira(product.promo.oldPrice)}</del>}
+              {formatLira(price)}
+            </span>
           </div>
+
+          {product.promo && (
+            <div className={styles.promoNote}>
+              <span className={styles.promoBadge}>{product.promo.label}</span>
+              <span>
+                <strong>{product.promo.title}</strong>
+                {product.promo.description && <small>{product.promo.description}</small>}
+                {product.promo.endsAt && (
+                  <small>
+                    {t.dealUntil(
+                      new Date(product.promo.endsAt).toLocaleString(t.locale, {
+                        timeZone: "Europe/Istanbul",
+                        day: "numeric",
+                        month: "long",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    )}
+                  </small>
+                )}
+              </span>
+            </div>
+          )}
 
           {product.description?.trim() && <p>{product.description}</p>}
 

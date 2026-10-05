@@ -24,6 +24,9 @@ type CartContextType = {
   decreaseQuantity: (id: number) => void;
   removeFromCart: (id: number) => void;
   clearCart: () => void;
+  // Sepetteki fiyatları menünün güncel fiyatlarıyla eşitler (kampanya
+  // başlayınca ya da bitince sepette eski fiyat kalmasın).
+  syncPrices: (prices: Map<number, number>) => void;
   total: number;
   itemCount: number;
 };
@@ -182,6 +185,20 @@ export function CartProvider({
     );
   }
 
+  function syncPrices(prices: Map<number, number>) {
+    setItems((currentItems) => {
+      const changed = currentItems.some((item) => {
+        const price = prices.get(item.id);
+        return price !== undefined && price !== Number(item.price);
+      });
+      if (!changed) return currentItems;
+      return currentItems.map((item) => {
+        const price = prices.get(item.id);
+        return price === undefined ? item : { ...item, price };
+      });
+    });
+  }
+
   // =====================================================
   // SEPETİ TAMAMEN TEMİZLE
   // =====================================================
@@ -272,6 +289,7 @@ export function CartProvider({
         decreaseQuantity,
         removeFromCart,
         clearCart,
+        syncPrices,
         total,
         itemCount,
       }}

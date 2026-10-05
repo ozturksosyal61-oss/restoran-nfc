@@ -30,6 +30,7 @@ type Promotion = {
   is_active: boolean;
   is_popular: boolean;
   created_at: string;
+  badge?: string | null;
 };
 
 type FormState = {
@@ -44,6 +45,7 @@ type FormState = {
   endAt: string;
   isActive: boolean;
   isPopular: boolean;
+  badge: string;
 };
 
 const emptyForm: FormState = {
@@ -58,7 +60,26 @@ const emptyForm: FormState = {
   endAt: "",
   isActive: true,
   isPopular: false,
+  badge: "",
 };
+
+const BASE_COLUMNS =
+  "id, restaurant_id, product_id, category_id, title, description, discount_type, discount_value, start_at, end_at, is_active, is_popular, created_at";
+
+// Menüde ürünün üstünde görünen hazır etiketler.
+const BADGE_SUGGESTIONS = ["Kampanya", "Fırsat", "Hafta sonu", "Happy hour", "Şefin önerisi", "Yeni"];
+
+// Kampanyanın şu anki durumu (tarih ve açık/kapalı birlikte).
+function promotionStatus(promotion: Promotion, now: number) {
+  if (!promotion.is_active) return { label: "Durduruldu", tone: "s-delivered", live: false };
+  if (promotion.start_at && new Date(promotion.start_at).getTime() > now) {
+    return { label: "Planlandı", tone: "s-pending", live: false };
+  }
+  if (promotion.end_at && new Date(promotion.end_at).getTime() <= now) {
+    return { label: "Süresi doldu", tone: "s-danger", live: false };
+  }
+  return { label: "Menüde yayında", tone: "s-ok", live: true };
+}
 
 function formatPrice(value: number) {
   return Number(value || 0).toLocaleString("tr-TR", {
@@ -104,7 +125,7 @@ function calculateDiscountedPrice(
   if (type === "percentage") {
     return Math.max(
       0,
-      price - price * (value / 100)
+      Math.round(price * (1 - Math.min(value, 100) / 100) * 100) / 100
     );
   }
 
@@ -149,6 +170,20 @@ export default function PromotionsPage() {
 
   const [message, setMessage] =
     useState("");
+
+  // Etiket sütunu (20261016_promotions_pricing.sql) henüz yoksa alan gizlenir.
+  const [badgeSupported, setBadgeSupported] =
+    useState(true);
+
+  const [now, setNow] = useState(() => Date.now());
+
+  // Durumlar (Planlandı → Yayında) sayfa açıkken de güncellensin.
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const promotionColumns: string = badgeSupported ? `${BASE_COLUMNS}, badge` : BASE_COLUMNS;
 
   async function loadData() {
     setLoading(true);
@@ -233,29 +268,20 @@ export default function PromotionsPage() {
             ascending: true,
           }),
 
-        supabase
-          .from("promotions")
-          .select(
-            `
-              id,
-              restaurant_id,
-              product_id,
-              category_id,
-              title,
-              description,
-              discount_type,
-              discount_value,
-              start_at,
-              end_at,
-              is_active,
-              is_popular,
-              created_at
-            `
-          )
-          .eq("restaurant_id", id)
-          .order("created_at", {
-            ascending: false,
-          }),
+        (async () => {
+          const withBadge = await supabase
+            .from("promotions")
+            .select(`${BASE_COLUMNS}, badge`)
+            .eq("restaurant_id", id)
+            .order("created_at", { ascending: false });
+          if (!withBadge.error) return withBadge;
+          setBadgeSupported(false);
+          return supabase
+            .from("promotions")
+            .select(BASE_COLUMNS)
+            .eq("restaurant_id", id)
+            .order("created_at", { ascending: false });
+        })(),
       ]);
 
       if (restaurantResult.error) {
@@ -344,6 +370,7 @@ export default function PromotionsPage() {
       ),
       isActive: promotion.is_active,
       isPopular: promotion.is_popular,
+      badge: promotion.badge || "",
     });
 
     setMessage("");
@@ -466,6 +493,7 @@ export default function PromotionsPage() {
           : null,
         is_active: form.isActive,
         is_popular: form.isPopular,
+        ...(badgeSupported ? { badge: form.badge.trim().slice(0, 24) || null } : {}),
       };
 
       if (editingId) {
@@ -480,23 +508,7 @@ export default function PromotionsPage() {
             "restaurant_id",
             restaurantId
           )
-          .select(
-            `
-              id,
-              restaurant_id,
-              product_id,
-              category_id,
-              title,
-              description,
-              discount_type,
-              discount_value,
-              start_at,
-              end_at,
-              is_active,
-              is_popular,
-              created_at
-            `
-          )
+          .select(promotionColumns)
           .single();
 
         if (updateError) {
@@ -506,7 +518,7 @@ export default function PromotionsPage() {
         setPromotions((current) =>
           current.map((promotion) =>
             promotion.id === editingId
-              ? (data as Promotion)
+              ? (data as unknown as Promotion)
               : promotion
           )
         );
@@ -521,23 +533,7 @@ export default function PromotionsPage() {
         } = await supabase
           .from("promotions")
           .insert(payload)
-          .select(
-            `
-              id,
-              restaurant_id,
-              product_id,
-              category_id,
-              title,
-              description,
-              discount_type,
-              discount_value,
-              start_at,
-              end_at,
-              is_active,
-              is_popular,
-              created_at
-            `
-          )
+          .select(promotionColumns)
           .single();
 
         if (insertError) {
@@ -545,7 +541,7 @@ export default function PromotionsPage() {
         }
 
         setPromotions((current) => [
-          data as Promotion,
+          data as unknown as Promotion,
           ...current,
         ]);
 
@@ -711,21 +707,26 @@ export default function PromotionsPage() {
         )} TL`;
   }
 
-  const selectedProduct = products.find(
-    (product) =>
-      product.id ===
-      Number(form.productId)
-  );
+  // Önizleme: seçilen ürün ya da kategorideki ürünler.
+  const targetProducts =
+    form.targetType === "product"
+      ? products.filter((product) => product.id === Number(form.productId))
+      : products.filter((product) => product.category_id === Number(form.categoryId));
 
-  const previewPrice = selectedProduct
-    ? calculateDiscountedPrice(
-        Number(selectedProduct.price),
-        form.discountType,
-        Number(form.discountValue) || 0
-      )
-    : null;
+  const discountInput = Number(form.discountValue) || 0;
+  const previewItems = targetProducts.slice(0, 3).map((product) => ({
+    product,
+    price: calculateDiscountedPrice(Number(product.price), form.discountType, discountInput),
+  }));
+  const freeItems =
+    form.discountType === "fixed" && discountInput > 0
+      ? targetProducts.filter((product) => discountInput >= Number(product.price)).length
+      : 0;
+  const previewBadge =
+    form.badge.trim() ||
+    (form.discountType === "percentage" ? `-%${formatPrice(discountInput)}` : `-₺${formatPrice(discountInput)}`);
 
-  const activeCount = promotions.filter((promotion) => promotion.is_active).length;
+  const activeCount = promotions.filter((promotion) => promotionStatus(promotion, now).live).length;
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -737,9 +738,12 @@ export default function PromotionsPage() {
         <div className="adm-head-text">
           <span className="adm-eyebrow">Menü</span>
           <h1>Kampanyalar</h1>
-          <p>{restaurantName} için indirimleri ve öne çıkan ürünleri yönetin.</p>
+          <p>
+            {restaurantName} menüsünde indirimli fiyat ve kampanya etiketi gösterin. Müşteri indirimli fiyatı görür,
+            sipariş de bu fiyatla alınır.
+          </p>
         </div>
-        <span className="adm-badge s-ok is-dot">{activeCount} aktif kampanya</span>
+        <span className="adm-badge s-ok is-dot">{activeCount} kampanya menüde</span>
       </header>
 
       {message && (
@@ -772,30 +776,31 @@ export default function PromotionsPage() {
             <div className="adm-empty">
               <span className="adm-empty-icon"><AdminIcon name="promo" /></span>
               <strong>Henüz kampanya yok</strong>
-              <p>Sağdaki formdan ilk kampanyanızı oluşturun; ürün ya da kategori bazında indirim tanımlayabilirsiniz.</p>
+              <p>Formdan ilk kampanyanızı oluşturun. Ürün ya da kategoriye indirim tanımlayın; menüde eski fiyat üstü çizili, yeni fiyat ve etiketle görünür.</p>
             </div>
           ) : (
             <div className="adm-reviews">
               {promotions.map((promotion) => (
                 <article
                   key={promotion.id}
-                  className={`adm-card adm-promo ${promotion.is_active ? "" : "is-off"} ${editingId === promotion.id ? "is-editing" : ""}`}
+                  className={`adm-card adm-promo ${promotionStatus(promotion, now).live ? "" : "is-off"} ${editingId === promotion.id ? "is-editing" : ""}`}
                 >
                   <div className="adm-promo-top">
                     <span className="adm-promo-value">{getDiscountText(promotion)}</span>
                     <span className="adm-row-main">
                       <strong>
                         {promotion.title}
+                        {promotion.badge && <span className="adm-badge s-danger">{promotion.badge}</span>}
                         {promotion.is_popular && (
                           <span className="adm-badge s-accent">
-                            <AdminIcon name="star" size={11} /> Popüler
+                            <AdminIcon name="star" size={11} /> Öne çıkan
                           </span>
                         )}
                       </strong>
                       <small>{getTargetName(promotion)}</small>
                     </span>
-                    <span className={`adm-badge is-dot ${promotion.is_active ? "s-ok" : "s-delivered"}`}>
-                      {promotion.is_active ? "Aktif" : "Pasif"}
+                    <span className={`adm-badge is-dot ${promotionStatus(promotion, now).tone}`}>
+                      {promotionStatus(promotion, now).label}
                     </span>
                   </div>
 
@@ -869,9 +874,37 @@ export default function PromotionsPage() {
                 className="adm-input"
                 value={form.description}
                 onChange={(event) => update("description", event.target.value)}
-                placeholder="Kısa açıklama"
+                placeholder="Ürün penceresinde görünür"
               />
             </div>
+
+            {badgeSupported && (
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="kampanya-etiket">
+                  Menü etiketi <em>· boşsa indirim oranı yazar</em>
+                </label>
+                <input
+                  id="kampanya-etiket"
+                  className="adm-input"
+                  value={form.badge}
+                  maxLength={24}
+                  onChange={(event) => update("badge", event.target.value)}
+                  placeholder="Örn. Hafta sonu"
+                />
+                <div className="adm-chips" role="group" aria-label="Hazır etiketler">
+                  {BADGE_SUGGESTIONS.map((badge) => (
+                    <button
+                      type="button"
+                      key={badge}
+                      className={`adm-chip ${form.badge === badge ? "is-active" : ""}`}
+                      onClick={() => update("badge", form.badge === badge ? "" : badge)}
+                    >
+                      {badge}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="adm-field">
               <span className="adm-label">Hedef</span>
@@ -994,21 +1027,35 @@ export default function PromotionsPage() {
             <label className="adm-check">
               <input type="checkbox" checked={form.isPopular} onChange={(event) => update("isPopular", event.target.checked)} />
               <span>
-                <strong>Popüler olarak işaretle</strong>
-                <span>Ürün menüde öne çıkarılır.</span>
+                <strong>Öne çıkar</strong>
+                <span>Menünün başındaki Kampanyalar bölümünde en önde gösterilir.</span>
               </span>
             </label>
 
-            {selectedProduct && previewPrice !== null && (
-              <div className="adm-price-preview">
-                <span>
-                  <small>Fiyat önizlemesi</small>
-                  <strong>{selectedProduct.name}</strong>
-                </span>
-                <span className="adm-price-preview-values">
-                  <del>{formatPrice(Number(selectedProduct.price))} ₺</del>
-                  <strong>{formatPrice(previewPrice)} ₺</strong>
-                </span>
+            {previewItems.length > 0 && discountInput > 0 && (
+              <div className="adm-promo-preview">
+                <small>Menüde böyle görünecek</small>
+                {previewItems.map(({ product, price }) => (
+                  <div key={product.id} className="adm-price-preview">
+                    <span>
+                      <em className="adm-promo-tag">{previewBadge}</em>
+                      <strong>{product.name}</strong>
+                    </span>
+                    <span className="adm-price-preview-values">
+                      <del>{formatPrice(Number(product.price))} ₺</del>
+                      <strong>{formatPrice(price)} ₺</strong>
+                    </span>
+                  </div>
+                ))}
+                {targetProducts.length > previewItems.length && (
+                  <small>ve {targetProducts.length - previewItems.length} ürün daha</small>
+                )}
+                {freeItems > 0 && (
+                  <p className="adm-alert adm-alert-error" role="alert" style={{ margin: 0 }}>
+                    <AdminIcon name="alert" size={16} />
+                    İndirim tutarı {freeItems} ürünün fiyatına eşit ya da fazla; bu ürünler 0 ₺ olur.
+                  </p>
+                )}
               </div>
             )}
 

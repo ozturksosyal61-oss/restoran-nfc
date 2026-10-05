@@ -1527,3 +1527,148 @@
   color: var(--au-muted);
   font-size: 13px;
 }
+
+/* ---------- Kampanyalar ---------- */
+
+.promoBadge {
+  justify-self: start;
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--au-danger-bg);
+  color: var(--au-danger);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.oldPrice {
+  margin-inline-end: 7px;
+  color: var(--au-faint);
+  font-size: 0.86em;
+  font-weight: 500;
+  text-decoration-thickness: 1.5px;
+}
+
+.deals {
+  padding: 18px 0 4px;
+}
+
+.deals .sectionTitle {
+  padding-inline: 16px;
+  margin-bottom: 10px;
+}
+
+.dealRail {
+  display: flex;
+  gap: 12px;
+  padding: 2px 16px 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.dealRail::-webkit-scrollbar {
+  display: none;
+}
+
+.deal {
+  flex: none;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  width: 168px;
+  padding: 8px 8px 12px;
+  border: 1px solid var(--au-line);
+  border-radius: 18px;
+  background: var(--au-surface);
+  color: inherit;
+  text-align: start;
+  scroll-snap-align: start;
+}
+
+.deal strong {
+  display: -webkit-box;
+  overflow: hidden;
+  padding-inline: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.deal .promoBadge {
+  margin-inline: 4px;
+}
+
+.dealImage {
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--au-fill);
+}
+
+.dealImage img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dealNoImage {
+  padding-top: 12px;
+}
+
+.dealPrice {
+  padding-inline: 4px;
+  color: var(--au-accent);
+  font-size: 14.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.promoNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--au-surface);
+}
+
+.promoNote > span:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.promoNote strong {
+  font-size: 14px;
+}
+
+.promoNote small {
+  color: var(--au-muted);
+  font-size: 12.5px;
+}
+
+@media (min-width: 960px) {
+  .deals {
+    padding-top: 28px;
+  }
+
+  .deals .sectionTitle {
+    padding-inline: 0;
+  }
+
+  .dealRail {
+    padding-inline: 0;
+  }
+}

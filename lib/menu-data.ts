@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 import { hasPlanFeature } from "./plan";
 import { normalizeLanguages, type MenuLanguage } from "./menu-i18n";
 import { readMenuOnly } from "./restaurant-type";
+import { applyPromotions, readMenuPromotions, type ProductPromo } from "./menu-promotions";
 
 // Aurora menüsünün verisi sunucuda TEK sorguyla hazırlanır (restoran,
 // kategoriler, ürünler, çeviriler, kalori). Böylece telefon veritabanına
@@ -20,6 +21,8 @@ export type MenuProduct = {
   allergens: string | null;
   translations?: unknown;
   calories?: number | null;
+  // Aktif kampanya varsa price indirimli fiyattır.
+  promo?: ProductPromo | null;
 };
 export type MenuData = {
   restaurant: { id: number; name: string; logo_url: string | null; is_open: boolean | null };
@@ -69,7 +72,7 @@ export async function loadMenuData(slug: string): Promise<MenuData | null> {
   const showCalories = hasPlanFeature(raw.plan, "calories");
   const categories = [...(raw.categories ?? [])].sort(bySort);
 
-  const products: MenuProduct[] = [];
+  let products: MenuProduct[] = [];
   for (const category of categories) {
     for (const product of [...(category.products ?? [])].sort(bySort)) {
       if (product.is_available === false) continue;
@@ -87,6 +90,9 @@ export async function loadMenuData(slug: string): Promise<MenuData | null> {
       });
     }
   }
+
+  // Kampanyalar: indirimli fiyat ve etiket (sipariş de bu fiyatla alınır).
+  products = applyPromotions(products, await readMenuPromotions(supabase, Number(raw.id)));
 
   return {
     restaurant: { id: Number(raw.id), name: raw.name, logo_url: raw.logo_url ?? null, is_open: raw.is_open ?? null },

@@ -17,6 +17,7 @@ export type PlanFeature =
   | "popup"
   | "feedback"
   | "menu_stats"
+  | "campaigns"
   // Pro
   | "nfc"
   | "tables"
@@ -53,6 +54,7 @@ export const FEATURE_INFO: Record<PlanFeature, { plan: Plan; label: string }> = 
   popup: { plan: "starter", label: "Menü açılış duyurusu" },
   feedback: { plan: "starter", label: "Geri bildirim ve Google yorum yönlendirmesi" },
   menu_stats: { plan: "starter", label: "Menü istatistikleri" },
+  campaigns: { plan: "starter", label: "Kampanyalar: indirimli fiyat ve kampanya etiketi" },
 
   nfc: { plan: "pro", label: "Masaya özel QR ve NFC" },
   tables: { plan: "pro", label: "Masa yönetimi" },
