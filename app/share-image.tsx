@@ -91,3 +91,36 @@ export function logoImage(size: number) {
     { width: size, height: size }
   );
 }
+
+// Tarayıcı sekmesi / ana ekran simgesi: küçük boyutta okunabilsin diye
+// kenarlıksız, siyah kare üzerinde altın "OZT".
+export function iconImage(size: number) {
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: size * 0.22,
+          background: INK,
+          color: GOLD,
+          fontSize: size * 0.45,
+          letterSpacing: -size * 0.015,
+          // Yalnızca ince kesim yazı tipi var; gölgelerle kalınlaştırılır.
+          textShadow: [
+            `${size * 0.012}px 0 0 ${GOLD}`,
+            `-${size * 0.012}px 0 0 ${GOLD}`,
+            `0 ${size * 0.012}px 0 ${GOLD}`,
+            `0 -${size * 0.012}px 0 ${GOLD}`,
+          ].join(", "),
+        }}
+      >
+        OZT
+      </div>
+    ),
+    { width: size, height: size }
+  );
+}
