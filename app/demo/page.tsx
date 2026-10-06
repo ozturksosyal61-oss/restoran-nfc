@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import CookieSettingsLink from "../CookieSettingsLink";
+import SiteFooter from "../SiteFooter";
 import { headers } from "next/headers";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import QRCode from "qrcode";
@@ -339,32 +339,7 @@ export default async function DemoPage({
       </section>
 
       {/* FOOTER */}
-      <footer className={home.footer}>
-        <div className={home.footerInner}>
-          <div className={home.footerBrand}>
-            <span className={home.brand}>
-              <span className={home.brandMark}>OZT</span>
-              <span>Digital</span>
-            </span>
-            <p>Restoranlar için QR &amp; NFC dijital deneyim platformu.</p>
-          </div>
-
-          <nav className={home.footerLinks} aria-label="Yasal">
-            <Link href="/gizlilik">Gizlilik</Link>
-            <Link href="/kvkk">KVKK</Link>
-            <Link href="/kullanim-sartlari">Kullanım Şartları</Link>
-            <Link href="/cerez-politikasi">Çerez Politikası</Link>
-            <Link href="/mesafeli-satis-sozlesmesi">Mesafeli Satış</Link>
-            <Link href="/iptal-iade">İptal ve İade</Link>
-            <Link href="/veri-isleme-sozlesmesi">Veri İşleme Sözleşmesi</Link>
-            <CookieSettingsLink />
-          </nav>
-        </div>
-
-        <small className={home.copyright}>
-          © {new Date().getFullYear()} OZT Digital. Tüm hakları saklıdır.
-        </small>
-      </footer>
+      <SiteFooter />
 
       {/* MOBİL SABİT CTA */}
       <div className={home.mobileBar}>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { COMPANY, LEGAL_UPDATED } from "../lib/legal";
 import styles from "./LegalDocument.module.css";
+import { SOLUTION_LINKS } from "./SiteFooter";
 
 // Yasal sayfaların ortak şablonu: başlık, hizmet sağlayıcı bilgisi,
 // bölümler ve diğer belgelere bağlantılar.
@@ -101,7 +102,14 @@ export default function LegalDocument({
         </nav>
       </article>
 
-      <footer className="legal-footer">
+      <footer className={`legal-footer ${styles.footer}`}>
+        <nav aria-label="Çözümler" className={styles.footerLinks}>
+          {SOLUTION_LINKS.map((link) => (
+            <Link key={link.href} href={link.href}>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
         © {new Date().getFullYear()} {COMPANY.brand} · {COMPANY.email}
       </footer>
     </main>

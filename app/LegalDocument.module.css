@@ -120,3 +120,27 @@
   color: #111;
   text-decoration: none;
 }
+
+.footer {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.footerLinks a {
+  color: #5f5a53;
+  text-decoration: none;
+}
+
+.footerLinks a:hover {
+  color: #111;
+}

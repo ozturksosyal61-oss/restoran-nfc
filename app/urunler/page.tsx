@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { pageMetadata } from "../../lib/site";
+import SiteFooter from "../SiteFooter";
 
 export const metadata: Metadata = pageMetadata({
   path: "/urunler",
@@ -542,6 +543,8 @@ export default function ProductsPage() {
           <Link href="/admin/login" className="cta-soft">🔐 İşletme Girişi</Link>
         </div>
       </section>
+
+      <SiteFooter />
     </main>
   );
 }

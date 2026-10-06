@@ -1,0 +1,55 @@
+/* Ortak footer: ana sayfanın renk değişkenleri burada da tanımlı, böylece
+   ürünler sayfası gibi ayrı tasarımlı sayfalarda da aynı görünür. */
+
+.tokens {
+  --ink: #0f0e0c;
+  --line-dark: rgba(255, 255, 255, 0.1);
+  --muted-dark: #a8a296;
+  --gold: #c9a24a;
+  --gold-soft: #e3c67d;
+  --container: 1200px;
+  --gutter: clamp(20px, 5vw, 40px);
+
+  font-family: var(--font-sans), system-ui, sans-serif;
+  line-height: 1.6;
+  text-align: start;
+}
+
+.tokens a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.tokens p {
+  margin: 0;
+}
+
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px clamp(32px, 6vw, 72px);
+}
+
+.column {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.column strong {
+  color: #fff;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.column a:hover,
+.column button:hover {
+  color: #fff;
+}
+
+.column button {
+  justify-self: start;
+  text-align: start;
+}

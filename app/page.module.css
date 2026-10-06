@@ -681,6 +681,14 @@ a:hover .productName .btnIcon {
   text-transform: uppercase;
 }
 
+.cardLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-top: 22px;
+  font-size: 15px;
+}
+
 .textLink {
   display: inline-flex;
   align-items: center;

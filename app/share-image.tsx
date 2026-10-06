@@ -1,11 +1,11 @@
 import { ImageResponse } from "next/og";
-import { SITE_HOST } from "../lib/site";
+import { SHARE_IMAGE_ALT, SITE_HOST } from "../lib/site";
 
 // Paylaşım görseli (og:image / twitter:image) ve logo: kodla üretilir,
 // derlemede bir kez oluşturulup önbelleğe alınır.
 
 export const SHARE_SIZE = { width: 1200, height: 630 };
-export const SHARE_ALT = "OZT Digital: restoranlar için QR menü ve NFC dijital menü sistemi";
+export const SHARE_ALT = SHARE_IMAGE_ALT;
 
 const INK = "#111111";
 const GOLD = "#d9b866";
