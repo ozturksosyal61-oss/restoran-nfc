@@ -14,9 +14,23 @@ function daysUntil(value: string) {
   return Math.ceil((new Date(value).getTime() - Date.now()) / 86_400_000);
 }
 
-export default async function ProspectDemosPage() {
+export default async function ProspectDemosPage({ searchParams }: { searchParams: Promise<{ aday?: string }> }) {
   await requireSystemAdmin();
   const admin = createSupabaseAdminClient();
+
+  // Saha satıştaki bir işletme için demo kuruluyorsa ad ve not hazır gelir.
+  const leadId = Number((await searchParams).aday);
+  const { data: leadRow } =
+    Number.isInteger(leadId) && leadId > 0
+      ? await admin.from("sales_leads").select("id, name, contact_name, phone").eq("id", leadId).maybeSingle()
+      : { data: null };
+  const lead = leadRow
+    ? {
+        id: Number(leadRow.id),
+        name: String(leadRow.name),
+        note: [leadRow.contact_name, leadRow.phone].filter(Boolean).join(" · "),
+      }
+    : null;
 
   const { data: demos, error } = await admin
     .from("prospect_demos")
@@ -73,7 +87,7 @@ export default async function ProspectDemosPage() {
         </p>
       )}
 
-      <DemoCreator themes={themes} aiReady={aiConfigured()} />
+      <DemoCreator themes={themes} aiReady={aiConfigured()} lead={lead} />
       <DemoList rows={rows} />
     </main>
   );

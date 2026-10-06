@@ -112,9 +112,12 @@ export function DemoReady({ demo, onNew }: { demo: CreatedDemo; onNew: () => voi
 export default function DemoCreator({
   themes,
   aiReady,
+  lead = null,
 }: {
   themes: { value: string; label: string }[];
   aiReady: boolean;
+  // Saha satıştaki işletme: demo kurulunca kaydına bağlanır.
+  lead?: { id: number; name: string; note: string } | null;
 }) {
   const [result, action, pending] = useActionState(createDemo, null);
   const [preparing, setPreparing] = useState(false);
@@ -188,11 +191,19 @@ export default function DemoCreator({
         </p>
       )}
 
+      {lead && (
+        <p className="adm-alert adm-alert-info" style={{ margin: 0 }}>
+          <AdminIcon name="info" size={16} />
+          Saha satıştaki “{lead.name}” için kuruluyor; demo hazır olunca işletmenin kaydına eklenir.
+        </p>
+      )}
+
       <form key={formKey} className="adm-form" onSubmit={handleSubmit} noValidate>
+        {lead && <input type="hidden" name="lead_id" value={lead.id} />}
         <div className="adm-form-grid">
           <div className="adm-field">
             <label className="adm-label" htmlFor="demo-ad">İşletmenin adı</label>
-            <input id="demo-ad" name="name" className="adm-input" required maxLength={80} placeholder="Köşe Kahvesi" />
+            <input id="demo-ad" name="name" className="adm-input" required maxLength={80} placeholder="Köşe Kahvesi" defaultValue={lead?.name} />
           </div>
           <div className="adm-field">
             <label className="adm-label" htmlFor="demo-tema">Tema</label>
@@ -239,7 +250,7 @@ export default function DemoCreator({
             <label className="adm-label" htmlFor="demo-not">
               Not <em>· isteğe bağlı</em>
             </label>
-            <input id="demo-not" name="note" className="adm-input" maxLength={300} placeholder="Görüşme tarihi, yetkili kişi, telefon…" />
+            <input id="demo-not" name="note" className="adm-input" maxLength={300} placeholder="Görüşme tarihi, yetkili kişi, telefon…" defaultValue={lead?.note} />
           </div>
         </div>
 

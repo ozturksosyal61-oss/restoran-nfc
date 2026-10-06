@@ -2,6 +2,8 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { linkLeadToRestaurant } from "../saha/actions";
 import AdminIcon from "../../admin/AdminIcon";
 import { RESTAURANT_THEMES, isAuroraTheme, normalizeRestaurantTheme } from "../../../lib/themes";
 import { CredentialsBox } from "../SystemUi";
@@ -86,8 +88,25 @@ const EMPTY_FORM: Form = {
   theme: normalizeRestaurantTheme("aurora"),
 };
 
+// Saha satıştan "restorana dönüştür" ile gelindiyse form bilgilerle dolar.
+function initialForm(params: URLSearchParams): Form {
+  const name = params.get("ad")?.trim() ?? "";
+  const plan = params.get("paket");
+  const tables = Number(params.get("masa"));
+  return {
+    ...EMPTY_FORM,
+    name,
+    slug: name ? createSlug(name) : "",
+    instagram_url: params.get("instagram")?.trim() ?? "",
+    restaurant_type: plan === "starter" || plan === "pro" || plan === "premium" ? plan : EMPTY_FORM.restaurant_type,
+    table_count: Number.isInteger(tables) && tables > 0 ? String(Math.min(tables, 500)) : EMPTY_FORM.table_count,
+  };
+}
+
 export default function YeniRestoranPage() {
-  const [form, setForm] = useState<Form>(EMPTY_FORM);
+  const params = useSearchParams();
+  const leadId = Number(params.get("aday"));
+  const [form, setForm] = useState<Form>(() => initialForm(params));
   const [slugTouched, setSlugTouched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -166,6 +185,11 @@ export default function YeniRestoranPage() {
 
       if (!response.ok) {
         throw new Error(data.error || data.message || "Restoran oluşturulamadı.");
+      }
+
+      // Saha satıştaki işletme kazanıldı olarak bu restorana bağlanır.
+      if (Number.isInteger(leadId) && leadId > 0) {
+        await linkLeadToRestaurant(leadId, Number(data.restaurant_id)).catch(() => undefined);
       }
 
       setCreated({

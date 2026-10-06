@@ -196,6 +196,31 @@ export async function createDemo(_prev: DemoResult, formData: FormData): Promise
   });
   if (demoError) return rollback(`Demo kaydedilemedi: ${demoError.message}`);
 
+  // 7) Saha satıştaki işletmeye bağla (tablo yoksa sessizce geçilir).
+  const leadId = Number(formData.get("lead_id"));
+  if (Number.isInteger(leadId) && leadId > 0) {
+    const { data: lead } = await admin.from("sales_leads").select("stage").eq("id", leadId).maybeSingle();
+    if (lead) {
+      const advance = ["yeni", "gorusuldu", "ilgileniyor", "teklif"].includes(String(lead.stage));
+      await admin
+        .from("sales_leads")
+        .update({
+          demo_restaurant_id: restaurantId,
+          ...(advance ? { stage: "demo" } : {}),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", leadId);
+      await admin.from("sales_visits").insert({
+        lead_id: leadId,
+        channel: "sistem",
+        note: `Demo kuruldu (${days} gün).`,
+        created_by: user.id,
+      });
+      revalidatePath(`/sistem/saha/${leadId}`);
+      revalidatePath("/sistem/saha");
+    }
+  }
+
   refresh();
   return {
     ok: true,
