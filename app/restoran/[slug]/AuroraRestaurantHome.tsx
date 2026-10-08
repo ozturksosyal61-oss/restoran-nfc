@@ -5,6 +5,7 @@ import {
   OrderTabLink,
 } from "./AuroraActiveOrder";
 import styles from "./AuroraRestaurantHome.module.css";
+import TableGamesCard from "./TableGamesCard";
 
 // Renkler ve yazı tipleri restoran kabuğundan (layout.tsx) gelir.
 
@@ -296,6 +297,8 @@ export default function AuroraRestaurantHome({
                 done={hesapStatus === "ok"}
               />
             </div>
+
+            <TableGamesCard href={`${base}/oyunlar${tableQuery}`} />
 
             <div className={styles.secondaryGrid}>
               <a className={styles.secondaryButton} href={`${base}/odeme${tableQuery}`}>

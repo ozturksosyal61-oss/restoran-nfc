@@ -11,6 +11,7 @@ import MenuOnlyGate from "./MenuOnlyGate";
 import MenuPopup from "./MenuPopup";
 import NovaThemeStyles from "./NovaThemeStyles";
 import { RestaurantThemeProvider } from "./RestaurantThemeContext";
+import { visibleTableGames } from "../../../lib/table-games";
 
 // Menünün kapalı olduğu durumlarda (süresi dolan demo, ödenmeyen abonelik).
 function ServiceClosed({ title, text }: { title: string; text: string }) {
@@ -45,17 +46,21 @@ type ShellRestaurant = {
   demo_expires_at?: string | null;
   menu_popup?: unknown;
   instagram_url?: string | null;
+  plan?: string | null;
+  table_games?: unknown;
 };
 
-async function loadShellRestaurant(slug: string): Promise<{ restaurant: ShellRestaurant } | null> {
-  const full = await supabase
-    .from("restaurants")
-    .select("id, theme, menu_only, demo_expires_at, menu_popup, instagram_url")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
+const SHELL_COLUMNS = "id, theme, menu_only, demo_expires_at, menu_popup, instagram_url";
 
-  if (!full.error) return full.data ? { restaurant: full.data as ShellRestaurant } : null;
+async function loadShellRestaurant(slug: string): Promise<{ restaurant: ShellRestaurant } | null> {
+  const read = (columns: string) =>
+    supabase.from("restaurants").select(columns).eq("slug", slug).eq("is_active", true).maybeSingle();
+
+  // Masa oyunları sütunu (20261020) henüz yoksa oyunlarsız okunur.
+  let full = await read(`${SHELL_COLUMNS}, plan, table_games`);
+  if (full.error) full = await read(SHELL_COLUMNS);
+
+  if (!full.error) return full.data ? { restaurant: full.data as unknown as ShellRestaurant } : null;
 
   // Yedek: eski şema. Menü türü ayrı (hataya dayanıklı) okunur.
   const basic = await supabase
@@ -132,7 +137,12 @@ export default async function RestaurantLayout({
   return (
     <CartProvider>
       <RestaurantThemeProvider
-        value={{ restaurantId: Number(restaurant.id), auroraPalette, menuOnly }}
+        value={{
+          restaurantId: Number(restaurant.id),
+          auroraPalette,
+          menuOnly,
+          tableGames: visibleTableGames(restaurant.table_games, restaurant.plan, menuOnly),
+        }}
       >
         <div
           className={shellClass}

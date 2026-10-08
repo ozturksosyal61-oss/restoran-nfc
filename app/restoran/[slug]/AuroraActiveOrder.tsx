@@ -121,6 +121,11 @@ export function ActiveOrderProvider({
   );
 }
 
+// Masadaki aktif sipariş (yoksa null); oyun ekranındaki durum şeridi okur.
+export function useActiveOrder() {
+  return useContext(ActiveOrderContext);
+}
+
 // Aşamalar paneldeki sipariş durumlarıyla eşleşir.
 // fill: üç çubuğun (Alındı · Hazırlanıyor · Masanızda) doluluk oranı.
 const STAGES: Record<string, { title: string; step: number; fill: number[] }> = {

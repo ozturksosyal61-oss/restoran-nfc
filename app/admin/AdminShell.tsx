@@ -33,7 +33,9 @@ function isActive(pathname: string, href: string) {
       !pathname.startsWith("/admin/menu/ice-aktar") &&
       !pathname.startsWith("/admin/menu/diller") &&
       !pathname.startsWith("/admin/menu/istatistik") &&
-      !pathname.startsWith("/admin/menu/kalori")
+      !pathname.startsWith("/admin/menu/kalori") &&
+      !pathname.startsWith("/admin/menu/duyuru") &&
+      !pathname.startsWith("/admin/menu/oyunlar")
     );
   }
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -178,6 +180,7 @@ export default function AdminShell({
         { href: "/admin/menu/diller", label: "Menü dilleri", icon: "globe", feature: "languages" },
         { href: "/admin/menu/kalori", label: "Kalori bilgileri", icon: "bolt", feature: "calories" },
         { href: "/admin/menu/duyuru", label: "Açılış duyurusu", icon: "bell" },
+        { href: "/admin/menu/oyunlar", label: "Masa oyunları", icon: "sparkle", feature: "table_games" },
         { href: "/admin/menu/istatistik", label: "Menü istatistikleri", icon: "eye" },
       ],
     },

@@ -25,6 +25,7 @@ export type PlanFeature =
   | "waiter_call"
   | "analytics"
   | "languages"
+  | "table_games"
   // Premium
   | "online_payment"
   | "multi_user"
@@ -62,6 +63,7 @@ export const FEATURE_INFO: Record<PlanFeature, { plan: Plan; label: string }> = 
   waiter_call: { plan: "pro", label: "Garson çağırma ve hesap isteme" },
   analytics: { plan: "pro", label: "Satış raporları ve dönem özeti" },
   languages: { plan: "pro", label: "Çok dilli menü" },
+  table_games: { plan: "pro", label: "Masa oyunları: sipariş beklerken masaca oyun" },
 
   online_payment: { plan: "premium", label: "Masadan kartla ödeme, hesap bölüşme, bahşiş" },
   multi_user: { plan: "premium", label: "Çalışanlar, garson ve mutfak ekranları" },

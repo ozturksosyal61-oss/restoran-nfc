@@ -1,0 +1,790 @@
+/* =========================================================
+   MASA OYUNLARI
+   Renkler restoranın Aurora temasından (--au-*); Aurora dışı temalarda
+   koyu varsayılanlar kullanılır.
+   ========================================================= */
+
+.page {
+  --bg: var(--au-bg, #14110d);
+  --surface: var(--au-surface, #1f1b16);
+  --ink: var(--au-ink, #f6efe3);
+  --muted: var(--au-muted, #b3a998);
+  --line: var(--au-line, rgba(255, 255, 255, 0.1));
+  --tile: var(--au-tile, #3a2f1f);
+  --tile-ink: var(--au-tile-ink, #e6c47a);
+  --accent: var(--au-accent, #d9b866);
+  --cta-bg: var(--au-cta-bg, #d9b866);
+  --cta-ink: var(--au-cta-ink, #14110d);
+  --ok: var(--au-ok, #3fb37f);
+  --danger: var(--au-danger, #e5534b);
+  --display: var(--font-aurora-display), "Iowan Old Style", Georgia, serif;
+  --sans: var(--font-aurora-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: var(--au-scheme, dark);
+}
+
+.page *,
+.page *::before,
+.page *::after {
+  box-sizing: border-box;
+}
+
+:where(.page) a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:where(.page) button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.page :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.column {
+  display: grid;
+  gap: 14px;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) 16px calc(env(safe-area-inset-bottom, 0px) + 28px);
+}
+
+/* ---------- Üst bar ---------- */
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0 0;
+}
+
+.round {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.round svg {
+  width: 20px;
+  height: 20px;
+}
+
+.topText {
+  display: grid;
+  min-width: 0;
+}
+
+.topText h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.topText small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- Sipariş şeridi ve bildirim ---------- */
+
+.orderStrip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.orderStrip small {
+  margin-inline-start: auto;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.orderPulse,
+.orderDot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.orderDot {
+  background: var(--ok);
+}
+
+.orderPulse {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+}
+
+.noticeRoot {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.notice {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  width: min(360px, 100%);
+  padding: 26px 22px 22px;
+  border-radius: 22px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: center;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+}
+
+.notice strong {
+  font-family: var(--display);
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.noticeIcon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--tile);
+  color: var(--tile-ink);
+}
+
+.noticeIcon svg {
+  width: 30px;
+  height: 30px;
+}
+
+/* ---------- Oyun seçimi ---------- */
+
+.lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.gameList {
+  display: grid;
+  gap: 12px;
+}
+
+.gameCard {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  text-align: start;
+}
+
+.gameIcon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
+  background: var(--tile);
+  color: var(--tile-ink);
+}
+
+.gameIcon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.gameText {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.gameText strong {
+  font-size: 18px;
+}
+
+.gameText span {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.gameText small {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.playPill {
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: var(--cta-bg);
+  color: var(--cta-ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* ---------- Ortak paneller ---------- */
+
+.panel {
+  display: grid;
+  gap: 18px;
+  padding: 22px 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+}
+
+.center {
+  justify-items: center;
+  text-align: center;
+}
+
+.panelTitle {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.rules {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-inline-start: 20px;
+  color: var(--muted);
+  font-size: 14.5px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.seg button {
+  flex: 1 1 auto;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.seg .segOn {
+  border-color: var(--accent);
+  background: var(--tile);
+  color: var(--tile-ink);
+}
+
+.teamInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+.primary,
+.secondary {
+  min-height: 54px;
+  padding: 0 22px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.primary {
+  width: 100%;
+  border: 0;
+  background: var(--cta-bg);
+  color: var(--cta-ink) !important;
+}
+
+.secondary {
+  border: 1px solid var(--line);
+  background: transparent;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+.row > * {
+  flex: 1 1 140px;
+}
+
+.kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.bigTitle {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: clamp(28px, 8vw, 36px);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.muted {
+  margin: 0;
+  color: var(--muted);
+}
+
+.ghost {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.linkButton {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.scoreboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.scoreboard > div {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg);
+}
+
+.scoreboard span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.scoreboard b {
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+}
+
+.stats div {
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--bg);
+}
+
+.stats dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.stats dd {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.trophy {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: var(--tile);
+  color: var(--tile-ink);
+}
+
+.trophy svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* ---------- Anlat Bakalım ---------- */
+
+.play {
+  display: grid;
+  gap: 14px;
+}
+
+.timerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timer {
+  min-width: 48px;
+  font-size: 30px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.timerLow {
+  color: var(--danger);
+}
+
+.timerTrack {
+  flex: 1;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.timerFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.2s linear;
+}
+
+.wordCard {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 26px 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.word {
+  font-family: var(--display);
+  font-size: clamp(36px, 11vw, 52px);
+  font-weight: 600;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.wordHidden .word {
+  color: var(--muted);
+}
+
+.tabooLabel {
+  margin-top: 4px;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tabooList {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  max-width: 300px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tabooList li {
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.playButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.3fr;
+  gap: 10px;
+}
+
+.playButtons button {
+  display: grid;
+  place-items: center;
+  gap: 0;
+  min-height: 78px;
+  border: 0;
+  border-radius: 18px;
+  color: #fff;
+  touch-action: manipulation;
+}
+
+.playButtons button:disabled {
+  opacity: 0.4;
+}
+
+.playButtons b {
+  font-size: 19px;
+}
+
+.playButtons small {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.btnTaboo {
+  background: #c8443c;
+}
+
+.btnPass {
+  background: #5d6470;
+}
+
+.btnCorrect {
+  background: #2f9e62;
+}
+
+.turnLine {
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+  font-size: 14px;
+}
+
+/* ---------- En Hızlı Parmak ---------- */
+
+.reflexRoot {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--bg);
+  overscroll-behavior: none;
+}
+
+.reflexSetup {
+  width: min(560px, 100%);
+}
+
+.reflexBoard {
+  gap: 6px;
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) 6px calc(env(safe-area-inset-bottom, 0px) + 6px);
+  place-items: stretch;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.players2 {
+  grid-template-rows: 1fr 1fr;
+}
+
+.players3 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.players3 > .zone:first-child {
+  grid-column: 1 / -1;
+}
+
+.players4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.zone {
+  display: grid;
+  place-items: center;
+  border: 4px solid;
+  border-radius: 22px;
+  background: var(--surface);
+  touch-action: none;
+  transition: background-color 0.08s linear;
+}
+
+.zoneWait {
+  background: #b3261e;
+}
+
+.zoneGreen {
+  background: #1f9d55;
+}
+
+.zoneBlue {
+  background: #2563eb;
+}
+
+.zoneBurned {
+  background: #3a3a3a !important;
+  opacity: 0.75;
+}
+
+.zoneWinner {
+  box-shadow: inset 0 0 0 6px var(--accent);
+}
+
+.zoneInner {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 10px;
+  color: #fff;
+  text-align: center;
+  pointer-events: none;
+}
+
+.zone:not(.zoneWait):not(.zoneGreen):not(.zoneBlue) .zoneInner {
+  color: var(--ink);
+}
+
+.flipped {
+  transform: rotate(180deg);
+}
+
+.zoneInner strong {
+  font-size: clamp(26px, 8vw, 40px);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.zoneInner small {
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.zoneTag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.reflexCenter {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 110;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: min(280px, calc(100% - 48px));
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  text-align: center;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6);
+}
+
+.reflexCenter strong {
+  font-size: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orderPulse {
+    animation: none;
+  }
+
+  .timerFill,
+  .zone {
+    transition: none;
+  }
+}

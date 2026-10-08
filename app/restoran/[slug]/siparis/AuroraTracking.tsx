@@ -4,6 +4,7 @@ import { useState } from "react";
 import AuroraIcon, { type AuroraIconName } from "../AuroraIcon";
 import { formatLira, sendTableRequest, type TableRequestType } from "../aurora-utils";
 import styles from "../AuroraFlow.module.css";
+import TableGamesCard from "../TableGamesCard";
 import { orderNumber } from "../../../../lib/order-number";
 
 // Sipariş takibi — Aurora görünümü. Siparişin yüklenmesi, 2 saniyelik
@@ -213,6 +214,9 @@ export default function AuroraTracking({
             </div>
           )}
         </section>
+
+        {/* Sipariş beklerken masa oyunları (işletme açtıysa) */}
+        {live && !cancelled && <TableGamesCard href={`${base}/oyunlar${tableQuery}`} variant="tracking" />}
 
         {/* Zaman çizelgesi */}
         {!cancelled && (

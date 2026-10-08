@@ -2,6 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import type { AuroraPalette } from "../../../lib/themes";
+import type { TableGameId } from "../../../lib/table-games";
 
 type RestaurantThemeValue = {
   restaurantId: number;
@@ -9,6 +10,8 @@ type RestaurantThemeValue = {
   auroraPalette: AuroraPalette | null;
   // Sadece menü restoranı: sipariş, garson çağırma ve ödeme gizlenir.
   menuOnly: boolean;
+  // Müşteriye açık masa oyunları; kapalıysa boş (hiçbir yerde görünmez).
+  tableGames?: TableGameId[];
 };
 
 const RestaurantThemeContext = createContext<RestaurantThemeValue | null>(null);
