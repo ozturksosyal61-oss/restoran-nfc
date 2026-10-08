@@ -19,6 +19,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "/sistem", label: "Restoranlar", icon: "store" },
       { href: "/sistem/yeni-restoran", label: "Yeni restoran", icon: "plus" },
       { href: "/sistem/saha", label: "Saha satış", icon: "pin" },
+      { href: "/sistem/iletisim", label: "İletişim talepleri", icon: "mail" },
       { href: "/sistem/demolar", label: "Müşteri demoları", icon: "sparkle" },
     ],
   },

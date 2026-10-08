@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import TrackedLink from "./TrackedLink";
 import SiteHeader, { DEMO_EVENT, PRODUCTS_EVENT } from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
+import ContactSection from "./ContactSection";
 import Icon, { type SiteIconName } from "./SiteIcon";
 import { siteFontClass } from "./site-fonts";
 import { FEATURE_INFO, featuresAddedIn } from "../lib/plan";
@@ -624,7 +625,7 @@ export default async function Home() {
       </section>
 
       {/* CTA */}
-      <section id="iletisim" className={styles.ctaWrap}>
+      <section id="basla" className={styles.ctaWrap}>
         <div className={`${styles.cta} ${styles.reveal}`}>
           <span className={styles.eyebrow}>Hazır mısınız?</span>
           <h2>
@@ -648,6 +649,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* İLETİŞİM */}
+      <ContactSection />
 
       {/* FOOTER */}
       <SiteFooter />

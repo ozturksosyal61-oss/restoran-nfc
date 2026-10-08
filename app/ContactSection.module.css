@@ -1,0 +1,276 @@
+/* Ana sayfa iletişim bölümü. Renk ve yazı tipleri ana sayfanın .page
+   token'larından gelir (page.module.css). */
+
+.section {
+  max-width: calc(var(--container) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: clamp(56px, 8vw, 104px) var(--gutter);
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  align-items: start;
+  gap: clamp(32px, 6vw, 72px);
+  scroll-margin-top: 80px;
+}
+
+.intro {
+  display: grid;
+  gap: 16px;
+}
+
+.eyebrow {
+  color: var(--gold-deep);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.intro h2 {
+  font-size: clamp(34px, 4.6vw, 54px);
+  line-height: 1.05;
+}
+
+.intro p {
+  max-width: 460px;
+  color: var(--muted);
+  font-size: 17px;
+}
+
+.instagram {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  max-width: 460px;
+  margin-top: 8px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+
+.instagram:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.instagramIcon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f9ce34, #ee2a7b 55%, #6228d7);
+  color: #fff;
+}
+
+.instagramIcon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.instagramText {
+  display: grid;
+  min-width: 0;
+}
+
+.instagramText small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.instagramText strong {
+  overflow: hidden;
+  font-size: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.instagramCta {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.card {
+  padding: clamp(22px, 4vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.form h3,
+.done h3 {
+  font-size: 26px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.field em {
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--gold);
+  outline: 2px solid rgba(201, 162, 74, 0.25);
+  outline-offset: 0;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.consent input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--ink);
+}
+
+.consent a {
+  color: var(--gold-deep) !important;
+  font-weight: 700;
+  text-decoration: underline !important;
+}
+
+.trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.error {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: #fdecea;
+  color: #a1281e;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.submit {
+  min-height: 54px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.25s var(--ease);
+}
+
+.submit:hover {
+  transform: translateY(-2px);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.done {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.done p {
+  color: var(--muted);
+}
+
+.doneIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(47, 158, 98, 0.12);
+  color: var(--green);
+}
+
+.doneIcon svg {
+  width: 28px;
+  height: 28px;
+}
+
+@media (max-width: 900px) {
+  .section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -35,6 +35,7 @@ export default function SiteHeader({ onHome = false }: { onHome?: boolean }) {
           </TrackedLink>
           <a href={`${base}#paketler`}>Paketler</a>
           <a href={`${base}#sss`}>SSS</a>
+          <a href={`${base}#iletisim`}>İletişim</a>
         </nav>
 
         <div className={styles.navActions}>

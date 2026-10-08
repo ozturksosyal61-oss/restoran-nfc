@@ -36,6 +36,7 @@ export default function SiteFooter() {
             ))}
             <Link href="/urunler">Masa Ürünleri</Link>
             <Link href="/demo">Demo</Link>
+            <Link href="/#iletisim">İletişim</Link>
           </nav>
 
           <nav className={styles.column} aria-label="Yasal">
