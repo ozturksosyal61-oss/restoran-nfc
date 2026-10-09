@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { disablePush } from "../../lib/push-client";
 import { createClient } from "../../lib/supabase/client";
 import AdminIcon, { type AdminIconName } from "./AdminIcon";
 import { featurePlan, getPlanLabel, hasPlanFeature, type PlanFeature } from "../../lib/plan";
@@ -123,6 +124,8 @@ export default function AdminShell({
   }
 
   async function logout() {
+    // Çıkıştan sonra bu cihaza sipariş bildirimi gitmesin.
+    await disablePush({ keepPreference: true });
     await createClient().auth.signOut();
     router.push(demoMode ? "/demo" : "/admin/login");
     router.refresh();

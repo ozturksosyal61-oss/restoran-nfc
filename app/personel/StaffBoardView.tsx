@@ -489,8 +489,9 @@ export default function StaffBoardView({
 
   // Telefona bildirim: ekran kapalıyken de yeni sipariş ve çağrı haber verilir.
   useEffect(() => {
-    void getPushState().then(setPush);
-    void refreshPush();
+    void refreshPush()
+      .then(getPushState)
+      .then(setPush);
   }, []);
 
   async function togglePush() {

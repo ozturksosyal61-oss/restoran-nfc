@@ -84,8 +84,9 @@ async function buildMessage(event: PushEvent, id: number, restaurantId: number):
   };
 }
 
-// Hâlâ yetkili olan aboneler: kapatılan personel ve restorandan çıkarılan
-// yöneticinin cihazları ayıklanır ve silinir.
+// Hâlâ yetkili olan aboneler: kapatılan personel, restorandan çıkarılan
+// yönetici ve çıkış yapmış (oturumu kalmamış) kullanıcının cihazları
+// ayıklanır ve silinir.
 async function loadRecipients(restaurantId: number, roles: PushRole[]) {
   const admin = createSupabaseAdminClient();
   const { data: subscriptions } = await admin
@@ -95,15 +96,21 @@ async function loadRecipients(restaurantId: number, roles: PushRole[]) {
     .in("role", roles);
   if (!subscriptions?.length) return [];
 
-  const [{ data: staff }, { data: managers }] = await Promise.all([
+  const userIds = [...new Set(subscriptions.map((row) => String(row.user_id)))];
+  const [{ data: staff }, { data: managers }, { data: sessions, error: sessionError }] = await Promise.all([
     admin.from("staff_accounts").select("user_id").eq("restaurant_id", restaurantId).eq("is_active", true),
     admin.from("restaurant_users").select("user_id").eq("restaurant_id", restaurantId),
+    admin.rpc("push_users_with_session", { p_user_ids: userIds }),
   ]);
   const staffIds = new Set((staff ?? []).map((row) => String(row.user_id)));
   const managerIds = new Set((managers ?? []).map((row) => String(row.user_id)));
+  // Oturum kontrolü yapılamazsa (fonksiyon yok vb.) bu adım atlanır.
+  const signedIn = sessionError || !Array.isArray(sessions) ? null : new Set((sessions as unknown[]).map(String));
 
-  const allowed = subscriptions.filter((row) =>
-    row.role === "yonetici" ? managerIds.has(String(row.user_id)) : staffIds.has(String(row.user_id))
+  const allowed = subscriptions.filter(
+    (row) =>
+      (row.role === "yonetici" ? managerIds.has(String(row.user_id)) : staffIds.has(String(row.user_id))) &&
+      (!signedIn || signedIn.has(String(row.user_id)))
   );
   const stale = subscriptions.filter((row) => !allowed.includes(row)).map((row) => row.id);
   if (stale.length) await admin.from("push_subscriptions").delete().in("id", stale);

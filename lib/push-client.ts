@@ -10,6 +10,25 @@ export const DENIED_TEXT =
   "Bildirim izni kapalı. Telefonun ya da tarayıcının ayarlarından bu site için bildirimlere izin verin.";
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+// Kullanıcı bu cihazda bildirimi açtı mı. Çıkışta kayıt silinir ama tercih
+// kalır; yeniden giriş yapınca bildirim kendiliğinden açılır.
+const WANTED_KEY = "ozt_push_wanted";
+
+function setWanted(value: boolean) {
+  try {
+    window.localStorage.setItem(WANTED_KEY, value ? "1" : "0");
+  } catch {
+    // yok sayılır
+  }
+}
+
+function wanted() {
+  try {
+    return window.localStorage.getItem(WANTED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 function isIos() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -72,13 +91,17 @@ export async function enablePush(): Promise<{ ok: boolean; message: string }> {
       (await registration.pushManager.getSubscription()) ??
       (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(VAPID_KEY) }));
     const saved = await save(subscription);
+    if (saved.ok) setWanted(true);
     return saved.ok ? { ok: true, message: "Bildirimler açıldı. Telefon kilitliyken de haber verilecek." } : saved;
   } catch {
     return { ok: false, message: "Bildirim açılamadı. Sayfayı yenileyip tekrar deneyin." };
   }
 }
 
-export async function disablePush() {
+// Bildirimi bu cihazda kapatır. Çıkış yaparken keepPreference ile çağrılır:
+// kayıt silinir, yeniden girişte bildirim kendiliğinden açılır.
+export async function disablePush({ keepPreference = false }: { keepPreference?: boolean } = {}) {
+  if (!keepPreference) setWanted(false);
   try {
     const subscription = await currentSubscription();
     if (!subscription) return;
@@ -93,9 +116,15 @@ export async function disablePush() {
   }
 }
 
-// İzin zaten verilmişse kaydı sessizce tazeler (tarayıcı adresi değiştirmiş olabilir).
+// Panel açılınca: kayıt varsa tazeler (tarayıcı adresi değiştirmiş olabilir),
+// çıkışta silinmiş ve kullanıcı bildirimi açık bırakmışsa yeniden açar.
 export async function refreshPush() {
-  if ((await getPushState()) !== "on") return;
+  const state = await getPushState();
+  if (state === "off" && wanted() && Notification.permission === "granted") {
+    await enablePush();
+    return;
+  }
+  if (state !== "on") return;
   try {
     const subscription = await currentSubscription();
     if (subscription) await save(subscription);
