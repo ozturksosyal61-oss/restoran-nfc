@@ -1,0 +1,13 @@
+# Satır sonları her bilgisayarda (Windows / Mac) LF olarak tutulur.
+* text=auto eol=lf
+
+# İkili dosyalar dönüştürülmez.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
