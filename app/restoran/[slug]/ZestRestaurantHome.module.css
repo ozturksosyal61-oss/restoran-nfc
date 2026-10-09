@@ -1,0 +1,682 @@
+/* =========================================================
+   ZEST — RESTORAN ANA SAYFASI
+   Fast food ve kafe tasarımı: iri başlıklar, büyük dokunma
+   alanları, tek güçlü vurgu rengi. Renkler Zest paletinden
+   (aurora-palette.module.css) gelir.
+   ========================================================= */
+
+.page {
+  /* Ortak kartların (aktif sipariş) kullandığı kısa adlar */
+  --bg: var(--au-bg);
+  --surface: var(--au-surface);
+  --ink: var(--au-ink);
+  --muted: var(--au-muted);
+  --line: var(--au-line);
+  --tile: var(--au-tile);
+  --tile-ink: var(--au-tile-ink);
+  --accent: var(--au-accent);
+  --cta-bg: var(--au-cta-bg);
+  --cta-ink: var(--au-cta-ink);
+  --cta-sub: var(--au-cta-sub);
+  --cta-tile: var(--au-cta-tile);
+  --cta-tile-ink: var(--au-cta-tile-ink);
+  --order-bg: var(--au-order-bg);
+  --order-line: var(--au-order-line);
+  --track: var(--au-track);
+  --fill: var(--au-fill);
+  --secondary-bg: var(--au-secondary-bg);
+  --tab-on-bg: var(--au-tab-on-bg);
+  --tab-on-ink: var(--au-tab-on-ink);
+  --badge-bg: var(--au-badge-bg);
+  --badge-ink: var(--au-badge-ink);
+  --ok: var(--au-ok);
+  --ok-tile: var(--au-ok-tile);
+  --danger: var(--au-danger);
+  --danger-bg: var(--au-danger-bg);
+  --shadow: var(--au-shadow);
+
+  --display: var(--font-zest-display), var(--font-aurora-sans), system-ui, sans-serif;
+  --sans: var(--font-aurora-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pop: var(--zest-pop, #ffc93c);
+  --pop-ink: var(--zest-pop-ink, #1b1a17);
+
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: var(--au-scheme, light);
+}
+
+.page *,
+.page *::before,
+.page *::after {
+  box-sizing: border-box;
+}
+
+:where(.page) a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:where(.page) button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.page svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.column {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px 16px 112px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Üst çubuk ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--cta-bg);
+  color: var(--cta-ink);
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 21px;
+  overflow: hidden;
+  flex: none;
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.brandText strong {
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.dotOpen,
+.dotClosed {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: none;
+}
+
+.dotOpen {
+  background: var(--ok);
+}
+
+.dotClosed {
+  background: var(--danger);
+}
+
+.tableChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tableChip svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------- Kapak ---------- */
+
+.hero {
+  position: relative;
+  height: 210px;
+  border-radius: 26px;
+  overflow: hidden;
+  background: var(--cta-bg);
+}
+
+.heroImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.heroFallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--cta-ink);
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 92px;
+  line-height: 1;
+}
+
+.heroBadge {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--pop);
+  color: var(--pop-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 2px 0;
+}
+
+.name {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(30px, 8.4vw, 40px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.notice {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ---------- Menü düğmesi ---------- */
+
+.menuCta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 92px;
+  padding: 18px 18px 18px 20px;
+  border-radius: 24px;
+  background: var(--cta-bg);
+  color: var(--cta-ink) !important;
+  box-shadow: var(--au-float-shadow);
+  transition: transform 0.15s ease;
+}
+
+.menuCta:hover {
+  transform: translateY(-1px);
+}
+
+.menuCta:active {
+  transform: scale(0.99);
+}
+
+.menuText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menuText strong {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 26px;
+  line-height: 1.05;
+}
+
+.menuText small {
+  color: var(--cta-sub);
+  font-size: 14px;
+}
+
+.menuArrow {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background: var(--pop);
+  color: var(--pop-ink);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.menuArrow svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ---------- Garson / hesap ---------- */
+
+.serviceGrid,
+.quickGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.serviceForm {
+  display: contents;
+}
+
+.serviceCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 128px;
+  padding: 16px;
+  border: 0;
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: left;
+  transition: transform 0.15s ease;
+}
+
+button.serviceCard:hover {
+  transform: translateY(-1px);
+}
+
+.serviceCard strong {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 19px;
+  line-height: 1.1;
+}
+
+.serviceCard small {
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.serviceTile {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--tile);
+  color: var(--tile-ink);
+  display: grid;
+  place-items: center;
+}
+
+.serviceDone .serviceTile {
+  background: var(--ok-tile);
+  color: var(--ok);
+}
+
+.serviceDisabled {
+  opacity: 0.6;
+  box-shadow: none;
+  border: 1px dashed var(--line);
+}
+
+/* ---------- Ödeme / değerlendirme ---------- */
+
+.quickItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 16px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.quickItem svg {
+  color: var(--accent);
+}
+
+/* ---------- WiFi ---------- */
+
+.wifi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.wifi > svg {
+  color: var(--accent);
+}
+
+.wifiText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wifiText small {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.wifiText strong {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Bilgiler ---------- */
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.fact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 12px 16px;
+}
+
+.fact + .fact {
+  border-top: 1px solid var(--line);
+}
+
+.fact > svg {
+  color: var(--muted);
+}
+
+.factText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.factText small {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.factText strong,
+.factText a {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.factLink {
+  flex: none;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--tile);
+  color: var(--tile-ink) !important;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.infoLink {
+  align-self: center;
+  padding: 12px 18px;
+  font-weight: 700;
+  color: var(--accent) !important;
+}
+
+/* ---------- Alt çubuk ---------- */
+
+.bottomBar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 20;
+  max-width: 536px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 6px;
+  border-radius: 22px;
+  background: var(--ink);
+  color: var(--surface);
+  box-shadow: var(--au-float-shadow);
+}
+
+.bottomItem {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: inherit;
+  opacity: 0.72;
+}
+
+.bottomItemOn {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.bottomBadge {
+  position: absolute;
+  top: 6px;
+  right: calc(50% - 22px);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--pop);
+  color: var(--pop-ink);
+  font-size: 11px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+/* ---------- Bilgi penceresi ---------- */
+
+.dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.dialog:target {
+  display: flex;
+}
+
+.dialogBackdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--au-overlay);
+}
+
+.dialogCard {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 22px 20px calc(24px + env(safe-area-inset-bottom));
+  border-radius: 28px 28px 0 0;
+  background: var(--surface);
+}
+
+.dialogHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dialogHead h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.dialogClose {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--bg);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.dialogLead {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.dialogList {
+  margin: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dialogList > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dialogList dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dialogList dt svg {
+  width: 16px;
+  height: 16px;
+}
+
+.dialogList dd {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+}
+
+.dialogList dd small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.dialogList dd a {
+  color: var(--accent);
+}
+
+.dialogLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.dialogLinks a {
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--tile);
+  color: var(--tile-ink) !important;
+  font-weight: 700;
+}
+
+@media (min-width: 900px) {
+  .column {
+    padding-top: 28px;
+  }
+
+  .hero {
+    height: 260px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menuCta,
+  .serviceCard {
+    transition: none;
+  }
+}

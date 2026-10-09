@@ -1,7 +1,8 @@
-import { isAuroraTheme } from "../../../../lib/themes";
+import { getMenuDesign, isAuroraTheme } from "../../../../lib/themes";
 import { loadMenuData } from "../../../../lib/menu-data";
 import OztNovaPremiumMenu from "./OztNovaPremiumMenu";
 import AuroraMenu from "./AuroraMenu";
+import ZestMenu from "./ZestMenu";
 import MenuViewTracker from "./MenuViewTracker";
 
 export default async function RestaurantMenuRouteLayout({
@@ -19,15 +20,17 @@ export default async function RestaurantMenuRouteLayout({
   const menu = await loadMenuData(slug);
   const restaurant = menu ? { id: menu.restaurant.id, theme: menu.theme } : null;
 
-  // Sadece menü restoranları tema ne olursa olsun Aurora menüsünü kullanır;
-  // sepet ve garson çağırma bu menüde kapatılır.
+  // Aurora ailesinde menü tasarıma göre seçilir (Aurora, Zest).
+  const Menu = getMenuDesign(restaurant?.theme) === "zest" ? ZestMenu : AuroraMenu;
+
+  // Sadece menü restoranları her zaman Aurora ailesinden bir menü kullanır
+  // (Aurora dışı tema seçiliyse Aurora); sepet ve garson çağırma kapatılır.
   if (menu?.menuOnly) {
-    return <AuroraMenu slug={slug} menuOnly initialData={menu} />;
+    return <Menu slug={slug} menuOnly initialData={menu} />;
   }
 
-  // Tüm Aurora renk temaları aynı menüyü kullanır.
   if (isAuroraTheme(restaurant?.theme)) {
-    return <AuroraMenu slug={slug} initialData={menu} />;
+    return <Menu slug={slug} initialData={menu} />;
   }
 
   // Aurora menüsü açılışı kendisi sayar; diğer temalarda burada sayılır.

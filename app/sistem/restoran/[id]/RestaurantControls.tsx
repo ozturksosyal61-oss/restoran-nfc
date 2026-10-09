@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import AdminIcon from "../../../admin/AdminIcon";
-import { MENU_LAYOUTS, RESTAURANT_THEMES, isAuroraTheme } from "../../../../lib/themes";
+import { MENU_DESIGNS, MENU_LAYOUTS, RESTAURANT_THEMES, getMenuDesign, isAuroraTheme } from "../../../../lib/themes";
 import { ResultNote } from "../../SystemUi";
 import {
   deleteRestaurant,
@@ -52,6 +52,22 @@ export function RestaurantSettings({
   // Sadece menü restoranları Aurora menüsünü kullanır.
   const themeChoices =
     type === "menu" ? RESTAURANT_THEMES.filter((item) => isAuroraTheme(item.value)) : RESTAURANT_THEMES;
+
+  // Temalar tasarıma göre gruplanır: önce tasarım, altında renk paletleri.
+  const themeGroups = [
+    ...MENU_DESIGNS.map((design) => ({
+      key: design.value,
+      title: design.label,
+      description: design.description,
+      items: themeChoices.filter((item) => getMenuDesign(item.value) === design.value),
+    })),
+    {
+      key: "diger",
+      title: "Diğer temalar",
+      description: "Eski klasik ve Nova temaları.",
+      items: themeChoices.filter((item) => getMenuDesign(item.value) === null),
+    },
+  ].filter((group) => group.items.length > 0);
 
   return (
     <section className="adm-card" aria-labelledby="ayar-baslik">
@@ -139,28 +155,38 @@ export function RestaurantSettings({
               : "Müşteri sayfalarının tasarımı."}
           </small>
         </div>
-        <div className="sys-themes" role="radiogroup" aria-label="Tema">
-          {themeChoices.map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              role="radio"
-              aria-checked={selectedTheme === item.value}
-              className={`sys-theme ${selectedTheme === item.value ? "is-on" : ""}`}
-              onClick={() => setSelectedTheme(item.value)}
-              title={item.description}
-            >
-              <span
-                className="sys-theme-swatch"
-                style={{ background: item.surface, color: item.accent }}
-                aria-hidden="true"
-              >
-                Aa
-              </span>
-              <span className="sys-theme-name">
-                {item.label.replace(/^AURORA - /, "Aurora · ")}
-              </span>
-            </button>
+        <div className="sys-theme-groups" role="radiogroup" aria-label="Tema">
+          {themeGroups.map((group) => (
+            <div key={group.key} className="sys-theme-group">
+              <div className="sys-theme-group-head">
+                <strong>{group.title}</strong>
+                <small>{group.description}</small>
+              </div>
+              <div className="sys-themes">
+                {group.items.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selectedTheme === item.value}
+                    className={`sys-theme ${selectedTheme === item.value ? "is-on" : ""}`}
+                    onClick={() => setSelectedTheme(item.value)}
+                    title={item.description}
+                  >
+                    <span
+                      className="sys-theme-swatch"
+                      style={{ background: item.surface, color: item.accent }}
+                      aria-hidden="true"
+                    >
+                      Aa
+                    </span>
+                    <span className="sys-theme-name">
+                      {item.label.replace(/^(AURORA|ZEST) - /, "")}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
         <div className="sys-setting-foot">

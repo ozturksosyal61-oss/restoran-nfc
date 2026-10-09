@@ -271,3 +271,87 @@
   --au-float-shadow: 0 18px 32px -16px rgba(20, 20, 24, 0.4);
   --au-scheme: light;
 }
+
+/* =========================================================
+   ZEST — fast food ve kafe tasarımı
+   Açık zemin, iri başlıklar, tek güçlü vurgu rengi. Ortak
+   ekranlar (sipariş, takip, ödeme) bu değişkenlerle Zest
+   renklerine bürünür; başlık yazı tipi Bricolage Grotesque.
+   ========================================================= */
+
+.shell[data-palette^="zest-"] {
+  --font-aurora-display: var(--font-zest-display);
+
+  --au-bg: #f6f3ee;
+  --au-surface: #ffffff;
+  --au-raised: #ffffff;
+  --au-field: #fbf9f5;
+  --au-ink: #1b1a17;
+  --au-muted: #5e5a52;
+  --au-faint: #8c867b;
+  --au-line: rgba(27, 26, 23, 0.1);
+  --au-cta-ink: #ffffff;
+  --au-cta-sub: rgba(255, 255, 255, 0.78);
+  --au-cta-tile: #ffc93c;
+  --au-cta-tile-ink: #1b1a17;
+  --au-track: rgba(27, 26, 23, 0.1);
+  --au-secondary-bg: #ffffff;
+  --au-tab-on-bg: #1b1a17;
+  --au-tab-on-ink: #ffffff;
+  --au-badge-bg: #ffc93c;
+  --au-badge-ink: #1b1a17;
+  --au-ok: #1e7f4a;
+  --au-ok-tile: rgba(30, 127, 74, 0.12);
+  --au-danger: #b42318;
+  --au-danger-bg: rgba(180, 35, 24, 0.08);
+  --au-warn: #9a5a12;
+  --au-warn-tile: rgba(196, 120, 40, 0.13);
+  --au-overlay: rgba(27, 26, 23, 0.45);
+  --au-shadow: 0 1px 2px rgba(27, 26, 23, 0.06), 0 12px 28px -18px rgba(27, 26, 23, 0.3);
+  --au-float-shadow: 0 18px 32px -14px rgba(27, 26, 23, 0.42);
+  --au-scheme: light;
+
+  /* Zest'e özel: sarı vurgu (rozet, + düğmesi) */
+  --zest-pop: #ffc93c;
+  --zest-pop-ink: #1b1a17;
+}
+
+.shell[data-palette="zest-kirmizi"] {
+  --au-accent: #c8231b;
+  --au-cta-bg: #d7261e;
+  --au-fill: #d7261e;
+  --au-tile: #fde7e5;
+  --au-tile-ink: #b01f18;
+  --au-order-bg: #fff1ef;
+  --au-order-line: rgba(215, 38, 30, 0.28);
+}
+
+.shell[data-palette="zest-turuncu"] {
+  --au-accent: #b93d0b;
+  --au-cta-bg: #c2410c;
+  --au-fill: #c2410c;
+  --au-tile: #ffeadb;
+  --au-tile-ink: #a5370a;
+  --au-order-bg: #fff3ea;
+  --au-order-line: rgba(194, 65, 12, 0.28);
+}
+
+.shell[data-palette="zest-yesil"] {
+  --au-accent: #146c40;
+  --au-cta-bg: #157a47;
+  --au-fill: #157a47;
+  --au-tile: #e1f3e8;
+  --au-tile-ink: #11643a;
+  --au-order-bg: #eef8f1;
+  --au-order-line: rgba(21, 122, 71, 0.28);
+}
+
+.shell[data-palette="zest-mavi"] {
+  --au-accent: #2340b5;
+  --au-cta-bg: #2747c9;
+  --au-fill: #2747c9;
+  --au-tile: #e5eafd;
+  --au-tile-ink: #1f3aa6;
+  --au-order-bg: #f0f3fe;
+  --au-order-line: rgba(39, 71, 201, 0.26);
+}

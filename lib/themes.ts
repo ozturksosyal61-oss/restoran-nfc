@@ -10,7 +10,11 @@ export type RestaurantTheme =
   | "aurora-zeytin"
   | "aurora-bordo"
   | "aurora-lacivert"
-  | "aurora-mermer";
+  | "aurora-mermer"
+  | "zest-kirmizi"
+  | "zest-turuncu"
+  | "zest-yesil"
+  | "zest-mavi";
 
 export type RestaurantThemeMeta = {
   value: RestaurantTheme;
@@ -126,6 +130,38 @@ export const RESTAURANT_THEMES: readonly RestaurantThemeMeta[] = [
     accent: "#7a6230",
     surface: "#f3f2ef",
   },
+  {
+    value: "zest-kirmizi",
+    label: "ZEST - KIRMIZI",
+    description:
+      "Büyük fotoğraflar, hızlı sepet; burgerci, fast food ve kafeler için iştah açan kırmızı.",
+    accent: "#d7261e",
+    surface: "#f6f3ee",
+  },
+  {
+    value: "zest-turuncu",
+    label: "ZEST - TURUNCU",
+    description:
+      "Zest tasarımı, sıcak turuncu vurgu; pizzacı, dönerci ve sokak lezzetleri için.",
+    accent: "#c2410c",
+    surface: "#f6f3ee",
+  },
+  {
+    value: "zest-yesil",
+    label: "ZEST - YEŞİL",
+    description:
+      "Zest tasarımı, taze yeşil vurgu; salata, bowl ve sağlıklı mutfak için.",
+    accent: "#157a47",
+    surface: "#f6f3ee",
+  },
+  {
+    value: "zest-mavi",
+    label: "ZEST - MAVİ",
+    description:
+      "Zest tasarımı, canlı mavi vurgu; kahve zincirleri ve modern kafeler için.",
+    accent: "#2747c9",
+    surface: "#f6f3ee",
+  },
 ];
 
 export function normalizeRestaurantTheme(
@@ -162,7 +198,11 @@ export type AuroraPalette =
   | "zeytin"
   | "bordo"
   | "lacivert"
-  | "mermer";
+  | "mermer"
+  | "zest-kirmizi"
+  | "zest-turuncu"
+  | "zest-yesil"
+  | "zest-mavi";
 
 const AURORA_PALETTES: Partial<Record<RestaurantTheme, AuroraPalette>> = {
   aurora: "dark",
@@ -172,6 +212,10 @@ const AURORA_PALETTES: Partial<Record<RestaurantTheme, AuroraPalette>> = {
   "aurora-bordo": "bordo",
   "aurora-lacivert": "lacivert",
   "aurora-mermer": "mermer",
+  "zest-kirmizi": "zest-kirmizi",
+  "zest-turuncu": "zest-turuncu",
+  "zest-yesil": "zest-yesil",
+  "zest-mavi": "zest-mavi",
 };
 
 // Aurora temalarından biri değilse null döner.
@@ -181,4 +225,26 @@ export function getAuroraPalette(value: unknown): AuroraPalette | null {
 
 export function isAuroraTheme(value: unknown): boolean {
   return getAuroraPalette(value) !== null;
+}
+
+/* ---------------------------------------------------------
+   MENÜ TASARIMLARI
+   Aurora ailesindeki her tema bir tasarıma ve bir renk paletine
+   karşılık gelir. Ana sayfa ve menü tasarıma göre değişir; sipariş,
+   takip, ödeme ve değerlendirme ekranları ortaktır ve paletin
+   renklerini alır.
+   --------------------------------------------------------- */
+
+export type MenuDesign = "aurora" | "zest";
+
+export const MENU_DESIGNS: readonly { value: MenuDesign; label: string; description: string }[] = [
+  { value: "aurora", label: "Aurora", description: "Sinematik ve premium; her tür restoran için." },
+  { value: "zest", label: "Zest", description: "Hızlı ve görsel; fast food, burgerci ve kafeler için." },
+];
+
+// Aurora ailesinden olmayan (klasik, Nova) temalarda null döner.
+export function getMenuDesign(value: unknown): MenuDesign | null {
+  const theme = normalizeRestaurantTheme(value);
+  if (!isAuroraTheme(theme)) return null;
+  return theme.startsWith("zest-") ? "zest" : "aurora";
 }

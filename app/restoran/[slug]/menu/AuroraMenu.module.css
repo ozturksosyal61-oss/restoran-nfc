@@ -18,18 +18,35 @@
   color-scheme: var(--au-scheme, dark);
 }
 
+/* Menü pencereleri (ürün, sepet, hizmet, dil) başka tasarımların
+   sayfalarında da açılır; yazı tipi ve sıfırlamaları buradan alır. */
+.scope {
+  --display: var(--font-aurora-display), "Iowan Old Style", Georgia, serif;
+  --sans: var(--font-aurora-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  color: var(--au-ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: var(--au-scheme, dark);
+}
+
 .page *,
 .page *::before,
-.page *::after {
+.page *::after,
+.scope *,
+.scope *::before,
+.scope *::after {
   box-sizing: border-box;
 }
 
-:where(.page) a {
+:where(.page, .scope) a {
   color: inherit;
   text-decoration: none;
 }
 
-:where(.page) button {
+:where(.page, .scope) button {
   font: inherit;
   color: inherit;
   cursor: pointer;

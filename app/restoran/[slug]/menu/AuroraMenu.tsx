@@ -11,6 +11,7 @@ import {
   type CartApi,
   type MenuProduct as Product,
   type MenuTable as Table,
+  type MenuController,
 } from "./useMenuController";
 
 // Renkler ve yazı tipleri restoran kabuğundan (layout.tsx) gelir;
@@ -30,6 +31,7 @@ export default function AuroraMenu({
   // telefon menüyü yeniden sorgulamaz.
   initialData?: MenuData | null;
 }) {
+  const menu = useMenuController({ slug, menuOnly, initialData });
   const {
     cart,
     restaurant,
@@ -40,15 +42,11 @@ export default function AuroraMenu({
     search,
     setSearch,
     activeCategory,
-    openProduct,
-    setOpenProduct,
     viewProduct,
-    sheet,
     setSheet,
     languages,
     language,
     t,
-    toast,
     pendingRequest,
     sentRequests,
     chipsRef,
@@ -69,7 +67,7 @@ export default function AuroraMenu({
     lastOrderHref,
     goToCheckout,
     base,
-  } = useMenuController({ slug, menuOnly, initialData });
+  } = menu;
 
 
   /* ---------------- Yükleniyor / hata ---------------- */
@@ -463,137 +461,175 @@ export default function AuroraMenu({
         </button>
       )}
 
-      {/* ===== Bildirim ===== */}
-      <div className={styles.toastRegion} aria-live="polite">
-        {toast && (
-          <div className={`${styles.toast} ${toast.tone === "error" ? styles.toastError : ""}`}>
-            <span className={styles.toastIcon}>
-              <AuroraIcon name={toast.tone === "error" ? "alert" : "check"} size={13} strokeWidth={2.4} />
-            </span>
-            {toast.text}
-          </div>
-        )}
-      </div>
+      <MenuOverlays menu={menu} />
+    </div>
+  );
+}
 
-      {/* ===== Ürün ===== */}
-      {openProduct && (
-        <ProductDialog
-          key={openProduct.id}
-          t={t}
-          product={localize(openProduct, language)}
-          inCart={quantities.get(openProduct.id) ?? 0}
-          onClose={() => setOpenProduct(null)}
-          onAdd={
-            menuOnly
-              ? undefined
-              : (quantity) => {
-                  addProduct(localize(openProduct, language), quantity);
-                  setOpenProduct(null);
-                }
-          }
-        />
-      )}
+/* =========================================================
+   MENÜ PENCERELERİ
+   Bildirim, ürün detayı, sepet, garson / hesap ve dil pencereleri.
+   Tüm menü tasarımları (Aurora, Zest, Linen, Luna) bunları ortak
+   kullanır; renkler seçili tasarımın paletinden gelir.
+   ========================================================= */
 
-      {/* ===== Sepet ===== */}
-      {sheet === "cart" && (
-        <Sheet labelledBy="sepet-baslik" onClose={() => setSheet(null)} closeLabel={t.close}>
-          <span className={styles.handle} aria-hidden="true" />
-          <CartContents
-            t={t}
-            cart={cart}
-            table={table}
-            onCheckout={goToCheckout}
-            onClose={() => setSheet(null)}
-            headingId="sepet-baslik"
-          />
-        </Sheet>
-      )}
+export function MenuOverlays({ menu }: { menu: MenuController }) {
+  const {
+    cart,
+    table,
+    language,
+    t,
+    toast,
+    openProduct,
+    setOpenProduct,
+    sheet,
+    setSheet,
+    pendingRequest,
+    sentRequests,
+    quantities,
+    addProduct,
+    requestService,
+    languageOptions,
+    chooseLanguage,
+    billHref,
+    lastOrderHref,
+    goToCheckout,
+    menuOnly,
+  } = menu;
 
-      {/* ===== Hizmet ===== */}
-      {sheet === "service" && (
-        <Sheet labelledBy="hizmet-baslik" onClose={() => setSheet(null)} closeLabel={t.close}>
-          <span className={styles.handle} aria-hidden="true" />
-          <div className={styles.sheetHead}>
-            <div>
-              <h2 id="hizmet-baslik">{t.helpTitle}</h2>
-              <small>{table ? `${t.table} ${table.number}` : t.noTableLink}</small>
-            </div>
-            <button type="button" className={styles.round} onClick={() => setSheet(null)} aria-label={t.close}>
-              <AuroraIcon name="close" />
-            </button>
-          </div>
-
-          {table ? (
-            <div className={styles.serviceList}>
-              <ServiceItem
-                t={t}
-                icon="bell"
-                title={t.callWaiter}
-                subtitle={t.callWaiterSub}
-                doneTitle={t.waiterCalled}
-                done={sentRequests.includes("garson")}
-                pending={pendingRequest === "garson"}
-                onClick={() => requestService("garson")}
-              />
-              <ServiceItem
-                t={t}
-                icon="receipt"
-                title={t.askBill}
-                subtitle={t.askBillSub}
-                doneTitle={t.billAsked}
-                done={sentRequests.includes("hesap")}
-                pending={pendingRequest === "hesap"}
-                onClick={() => requestService("hesap")}
-              />
-              {lastOrderHref && (
-                <ServiceLink icon="clock" title={t.myOrder} subtitle={t.myOrderSub} href={lastOrderHref} />
-              )}
-              <ServiceLink icon="card" title={t.pay} subtitle={t.paySub} href={billHref} />
-            </div>
-          ) : (
-            <div className={styles.noTable}>
-              <AuroraIcon name="qr" size={22} />
-              <strong>{t.scanTable}</strong>
-              <span>{t.scanTableSub}</span>
+  return (
+    <div className={styles.scope}>
+        {/* ===== Bildirim ===== */}
+        <div className={styles.toastRegion} aria-live="polite">
+          {toast && (
+            <div className={`${styles.toast} ${toast.tone === "error" ? styles.toastError : ""}`}>
+              <span className={styles.toastIcon}>
+                <AuroraIcon name={toast.tone === "error" ? "alert" : "check"} size={13} strokeWidth={2.4} />
+              </span>
+              {toast.text}
             </div>
           )}
-        </Sheet>
-      )}
+        </div>
 
-      {/* ===== Dil ===== */}
-      {sheet === "language" && (
-        <Sheet labelledBy="dil-baslik" onClose={() => setSheet(null)} closeLabel={t.close}>
-          <span className={styles.handle} aria-hidden="true" />
-          <div className={styles.sheetHead}>
-            <div>
-              <h2 id="dil-baslik">{t.language}</h2>
-            </div>
-            <button type="button" className={styles.round} onClick={() => setSheet(null)} aria-label={t.close}>
-              <AuroraIcon name="close" />
-            </button>
-          </div>
+        {/* ===== Ürün ===== */}
+        {openProduct && (
+          <ProductDialog
+            key={openProduct.id}
+            t={t}
+            product={localize(openProduct, language)}
+            inCart={quantities.get(openProduct.id) ?? 0}
+            onClose={() => setOpenProduct(null)}
+            onAdd={
+              menuOnly
+                ? undefined
+                : (quantity) => {
+                    addProduct(localize(openProduct, language), quantity);
+                    setOpenProduct(null);
+                  }
+            }
+          />
+        )}
 
-          <div className={styles.serviceList}>
-            {languageOptions.map((option) => (
-              <button
-                type="button"
-                key={option.code}
-                lang={option.code}
-                className={`${styles.serviceItem} ${language === option.code ? styles.serviceDone : ""}`}
-                aria-pressed={language === option.code}
-                onClick={() => chooseLanguage(option.code)}
-              >
-                <span className={styles.serviceTile}>
-                  {language === option.code ? <AuroraIcon name="check" /> : option.short}
-                </span>
-                <span className={styles.serviceText}>
-                  <strong>{option.label}</strong>
-                </span>
+        {/* ===== Sepet ===== */}
+        {sheet === "cart" && (
+          <Sheet labelledBy="sepet-baslik" onClose={() => setSheet(null)} closeLabel={t.close}>
+            <span className={styles.handle} aria-hidden="true" />
+            <CartContents
+              t={t}
+              cart={cart}
+              table={table}
+              onCheckout={goToCheckout}
+              onClose={() => setSheet(null)}
+              headingId="sepet-baslik"
+            />
+          </Sheet>
+        )}
+
+        {/* ===== Hizmet ===== */}
+        {sheet === "service" && (
+          <Sheet labelledBy="hizmet-baslik" onClose={() => setSheet(null)} closeLabel={t.close}>
+            <span className={styles.handle} aria-hidden="true" />
+            <div className={styles.sheetHead}>
+              <div>
+                <h2 id="hizmet-baslik">{t.helpTitle}</h2>
+                <small>{table ? `${t.table} ${table.number}` : t.noTableLink}</small>
+              </div>
+              <button type="button" className={styles.round} onClick={() => setSheet(null)} aria-label={t.close}>
+                <AuroraIcon name="close" />
               </button>
-            ))}
-          </div>
-        </Sheet>
-      )}
+            </div>
+
+            {table ? (
+              <div className={styles.serviceList}>
+                <ServiceItem
+                  t={t}
+                  icon="bell"
+                  title={t.callWaiter}
+                  subtitle={t.callWaiterSub}
+                  doneTitle={t.waiterCalled}
+                  done={sentRequests.includes("garson")}
+                  pending={pendingRequest === "garson"}
+                  onClick={() => requestService("garson")}
+                />
+                <ServiceItem
+                  t={t}
+                  icon="receipt"
+                  title={t.askBill}
+                  subtitle={t.askBillSub}
+                  doneTitle={t.billAsked}
+                  done={sentRequests.includes("hesap")}
+                  pending={pendingRequest === "hesap"}
+                  onClick={() => requestService("hesap")}
+                />
+                {lastOrderHref && (
+                  <ServiceLink icon="clock" title={t.myOrder} subtitle={t.myOrderSub} href={lastOrderHref} />
+                )}
+                <ServiceLink icon="card" title={t.pay} subtitle={t.paySub} href={billHref} />
+              </div>
+            ) : (
+              <div className={styles.noTable}>
+                <AuroraIcon name="qr" size={22} />
+                <strong>{t.scanTable}</strong>
+                <span>{t.scanTableSub}</span>
+              </div>
+            )}
+          </Sheet>
+        )}
+
+        {/* ===== Dil ===== */}
+        {sheet === "language" && (
+          <Sheet labelledBy="dil-baslik" onClose={() => setSheet(null)} closeLabel={t.close}>
+            <span className={styles.handle} aria-hidden="true" />
+            <div className={styles.sheetHead}>
+              <div>
+                <h2 id="dil-baslik">{t.language}</h2>
+              </div>
+              <button type="button" className={styles.round} onClick={() => setSheet(null)} aria-label={t.close}>
+                <AuroraIcon name="close" />
+              </button>
+            </div>
+
+            <div className={styles.serviceList}>
+              {languageOptions.map((option) => (
+                <button
+                  type="button"
+                  key={option.code}
+                  lang={option.code}
+                  className={`${styles.serviceItem} ${language === option.code ? styles.serviceDone : ""}`}
+                  aria-pressed={language === option.code}
+                  onClick={() => chooseLanguage(option.code)}
+                >
+                  <span className={styles.serviceTile}>
+                    {language === option.code ? <AuroraIcon name="check" /> : option.short}
+                  </span>
+                  <span className={styles.serviceText}>
+                    <strong>{option.label}</strong>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Sheet>
+        )}
     </div>
   );
 }

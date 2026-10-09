@@ -3,11 +3,12 @@ import { restaurantMetadata } from "../../../lib/restaurant-metadata";
 import { notFound, redirect } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { readMenuOnly, restaurantMenuPath } from "../../../lib/restaurant-type";
-import { isAuroraTheme } from "../../../lib/themes";
+import { getMenuDesign, isAuroraTheme } from "../../../lib/themes";
 import SiparisTakipLink from "./SiparisTakipLink";
 import NovaRestaurantHome from "./NovaRestaurantHome";
 import { hasPlanFeature } from "../../../lib/plan";
 import AuroraRestaurantHome from "./AuroraRestaurantHome";
+import ZestRestaurantHome from "./ZestRestaurantHome";
 
 async function callWaiter(formData: FormData) {
   "use server";
@@ -282,8 +283,11 @@ export default async function RestaurantPage({
       />
     );
   }
-  // Tüm Aurora renk temaları aynı ana sayfayı kullanır; renkler layout'tan gelir.
+  // Aurora ailesinde ana sayfa tasarıma göre seçilir (Aurora, Zest);
+  // renkler layout'taki paletten gelir.
   if (isAuroraTheme(restaurant.theme)) {
+    const Home = getMenuDesign(restaurant.theme) === "zest" ? ZestRestaurantHome : AuroraRestaurantHome;
+
     // WiFi ve slogan sütunları ayrı migration'larla eklenir. Migration henüz
     // uygulanmamışsa sorgu hata verir; sayfa bozulmasın diye ayrı tutuldu
     // ve hata durumunda ilgili bilgi gösterilmez.
@@ -300,7 +304,7 @@ export default async function RestaurantPage({
       .maybeSingle();
 
     return (
-      <AuroraRestaurantHome
+      <Home
         restaurant={{
           ...restaurant,
           cover_image_url: restaurant.cover_image_url ?? null,

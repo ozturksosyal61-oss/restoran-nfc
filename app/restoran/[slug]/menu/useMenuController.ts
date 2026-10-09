@@ -561,6 +561,8 @@ export function useMenuController({
   }
 
   return {
+    slug,
+    menuOnly,
     cart,
     restaurant,
     products,
