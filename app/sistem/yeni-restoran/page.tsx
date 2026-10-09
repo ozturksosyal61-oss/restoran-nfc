@@ -450,7 +450,7 @@ export default function YeniRestoranPage() {
                 >
                   Aa
                 </span>
-                <span className="sys-theme-name">{theme.label.replace(/^AURORA - /, "Aurora · ").replace(/^ZEST - /, "Zest · ").replace(/^LINEN - /, "Linen · ")}</span>
+                <span className="sys-theme-name">{theme.label.replace(/^AURORA - /, "Aurora · ").replace(/^ZEST - /, "Zest · ").replace(/^LINEN - /, "Linen · ").replace(/^LUNA - /, "Luna · ")}</span>
               </button>
             ))}
           </div>
@@ -509,7 +509,7 @@ export default function YeniRestoranPage() {
         <div className="adm-sticky-actions">
           <span>
             {form.restaurant_type === "starter" ? "Başlangıç" : form.restaurant_type === "pro" ? "Pro" : "Premium"} ·{" "}
-            {RESTAURANT_THEMES.find((theme) => theme.value === form.theme)?.label.replace(/^AURORA - /, "Aurora · ").replace(/^ZEST - /, "Zest · ").replace(/^LINEN - /, "Linen · ")}
+            {RESTAURANT_THEMES.find((theme) => theme.value === form.theme)?.label.replace(/^AURORA - /, "Aurora · ").replace(/^ZEST - /, "Zest · ").replace(/^LINEN - /, "Linen · ").replace(/^LUNA - /, "Luna · ")}
           </span>
           <Link className="adm-btn" href="/sistem">Vazgeç</Link>
           <button type="submit" className="adm-btn adm-btn-primary adm-btn-lg" disabled={loading}>

@@ -18,7 +18,11 @@ export type RestaurantTheme =
   | "linen-fildisi"
   | "linen-beyaz"
   | "linen-zeytin"
-  | "linen-bordo";
+  | "linen-bordo"
+  | "luna-nane"
+  | "luna-amber"
+  | "luna-mavi"
+  | "luna-pembe";
 
 export type RestaurantThemeMeta = {
   value: RestaurantTheme;
@@ -195,6 +199,35 @@ export const RESTAURANT_THEMES: readonly RestaurantThemeMeta[] = [
     accent: "#7a1f2b",
     surface: "#f6f0ee",
   },
+  {
+    value: "luna-nane",
+    label: "LUNA - NANE",
+    description:
+      "Koyu zemin, neon nane vurgu, öne çıkan masa oyunları; bar, pub ve kokteyl mekânları için.",
+    accent: "#5ef2c2",
+    surface: "#0f0e15",
+  },
+  {
+    value: "luna-amber",
+    label: "LUNA - AMBER",
+    description: "Luna tasarımı, sıcak amber vurgu; viski barları ve pub'lar için.",
+    accent: "#ffb84d",
+    surface: "#0f0e15",
+  },
+  {
+    value: "luna-mavi",
+    label: "LUNA - MAVİ",
+    description: "Luna tasarımı, soğuk mavi vurgu; lounge ve rooftop barlar için.",
+    accent: "#8fa8ff",
+    surface: "#0f0e15",
+  },
+  {
+    value: "luna-pembe",
+    label: "LUNA - PEMBE",
+    description: "Luna tasarımı, neon pembe vurgu; kokteyl barları ve gece kulüpleri için.",
+    accent: "#ff8cc0",
+    surface: "#0f0e15",
+  },
 ];
 
 export function normalizeRestaurantTheme(
@@ -239,7 +272,11 @@ export type AuroraPalette =
   | "linen-fildisi"
   | "linen-beyaz"
   | "linen-zeytin"
-  | "linen-bordo";
+  | "linen-bordo"
+  | "luna-nane"
+  | "luna-amber"
+  | "luna-mavi"
+  | "luna-pembe";
 
 const AURORA_PALETTES: Partial<Record<RestaurantTheme, AuroraPalette>> = {
   aurora: "dark",
@@ -257,6 +294,10 @@ const AURORA_PALETTES: Partial<Record<RestaurantTheme, AuroraPalette>> = {
   "linen-beyaz": "linen-beyaz",
   "linen-zeytin": "linen-zeytin",
   "linen-bordo": "linen-bordo",
+  "luna-nane": "luna-nane",
+  "luna-amber": "luna-amber",
+  "luna-mavi": "luna-mavi",
+  "luna-pembe": "luna-pembe",
 };
 
 // Aurora temalarından biri değilse null döner.
@@ -276,12 +317,13 @@ export function isAuroraTheme(value: unknown): boolean {
    renklerini alır.
    --------------------------------------------------------- */
 
-export type MenuDesign = "aurora" | "zest" | "linen";
+export type MenuDesign = "aurora" | "zest" | "linen" | "luna";
 
 export const MENU_DESIGNS: readonly { value: MenuDesign; label: string; description: string }[] = [
   { value: "aurora", label: "Aurora", description: "Sinematik ve premium; her tür restoran için." },
   { value: "zest", label: "Zest", description: "Hızlı ve görsel; fast food, burgerci ve kafeler için." },
   { value: "linen", label: "Linen", description: "Sakin ve zarif; fine dining, bistro ve meyhaneler için." },
+  { value: "luna", label: "Luna", description: "Koyu ve neon; bar, pub ve kokteyl mekânları için." },
 ];
 
 // Aurora ailesinden olmayan (klasik, Nova) temalarda null döner.
@@ -290,5 +332,6 @@ export function getMenuDesign(value: unknown): MenuDesign | null {
   if (!isAuroraTheme(theme)) return null;
   if (theme.startsWith("zest-")) return "zest";
   if (theme.startsWith("linen-")) return "linen";
+  if (theme.startsWith("luna-")) return "luna";
   return "aurora";
 }

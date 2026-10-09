@@ -10,6 +10,7 @@ import { hasPlanFeature } from "../../../lib/plan";
 import AuroraRestaurantHome from "./AuroraRestaurantHome";
 import ZestRestaurantHome from "./ZestRestaurantHome";
 import LinenRestaurantHome from "./LinenRestaurantHome";
+import LunaRestaurantHome from "./LunaRestaurantHome";
 
 async function callWaiter(formData: FormData) {
   "use server";
@@ -284,12 +285,18 @@ export default async function RestaurantPage({
       />
     );
   }
-  // Aurora ailesinde ana sayfa tasarıma göre seçilir (Aurora, Zest, Linen);
+  // Aurora ailesinde ana sayfa tasarıma göre seçilir (Aurora, Zest, Linen, Luna);
   // renkler layout'taki paletten gelir.
   if (isAuroraTheme(restaurant.theme)) {
     const design = getMenuDesign(restaurant.theme);
     const Home =
-      design === "zest" ? ZestRestaurantHome : design === "linen" ? LinenRestaurantHome : AuroraRestaurantHome;
+      design === "zest"
+        ? ZestRestaurantHome
+        : design === "linen"
+          ? LinenRestaurantHome
+          : design === "luna"
+            ? LunaRestaurantHome
+            : AuroraRestaurantHome;
 
     // WiFi ve slogan sütunları ayrı migration'larla eklenir. Migration henüz
     // uygulanmamışsa sorgu hata verir; sayfa bozulmasın diye ayrı tutuldu

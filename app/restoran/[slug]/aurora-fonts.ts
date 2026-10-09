@@ -1,4 +1,12 @@
-import { Bricolage_Grotesque, Cormorant_Garamond, DM_Sans, Instrument_Serif, Manrope } from "next/font/google";
+import {
+  Bricolage_Grotesque,
+  Cormorant_Garamond,
+  DM_Sans,
+  Instrument_Serif,
+  Manrope,
+  Sora,
+  Unbounded,
+} from "next/font/google";
 
 // Aurora sayfalarının ortak yazı tipleri. Restoran kabuğuna eklenir;
 // tüm Aurora ekranları bu değişkenleri kullanır.
@@ -40,10 +48,28 @@ const linenSans = Manrope({
   preload: false,
 });
 
+// Luna yazı tipleri: geniş, gece hissi veren başlık ve modern gövde.
+// Luna paletleri Aurora değişkenlerini bunlara yönlendirir. Önceden yüklenmez.
+const lunaDisplay = Unbounded({
+  subsets: ["latin", "latin-ext"],
+  weight: ["500", "700"],
+  variable: "--font-luna-display",
+  preload: false,
+});
+
+const lunaSans = Sora({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600"],
+  variable: "--font-luna-sans",
+  preload: false,
+});
+
 export const auroraFontVariables = [
   display.variable,
   sans.variable,
   zestDisplay.variable,
   linenDisplay.variable,
   linenSans.variable,
+  lunaDisplay.variable,
+  lunaSans.variable,
 ].join(" ");
