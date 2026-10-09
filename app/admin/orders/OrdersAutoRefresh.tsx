@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import AdminIcon from "../AdminIcon";
 import { useBoardSignal } from "../../../lib/board-signal";
 import { IOS_INSTALL_TEXT, enablePush, getPushState, refreshPush } from "../../../lib/push-client";
@@ -14,17 +15,23 @@ type Props = {
   restaurantId: number;
 };
 
+type NewOrder = { id: number; number: number };
+
 export default function OrdersAutoRefresh({
   restaurantId,
 }: Props) {
-  const [newOrders, setNewOrders] = useState<number[]>([]);
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const [newOrders, setNewOrders] = useState<NewOrder[]>([]);
+  // Yalnızca yeni sipariş gelince artar; "Gördüm" demek sesi tekrar çaldırmaz.
+  const [alertTick, setAlertTick] = useState(0);
   const [notificationEnabled, setNotificationEnabled] =
     useState(false);
 
   const lastOrderId = useRef<number | null>(null);
   const firstCheck = useRef(true);
   const mountedRef = useRef(true);
-  const reloadingRef = useRef(false);
+  const checkingRef = useRef(false);
 
   // --------------------------------------------------
   // SİPARİŞ KABUL EDİLDİ EVENTİ
@@ -42,7 +49,7 @@ export default function OrdersAutoRefresh({
       }
 
       setNewOrders((current) =>
-        current.filter((id) => id !== orderId)
+        current.filter((order) => order.id !== orderId)
       );
     }
 
@@ -71,106 +78,121 @@ export default function OrdersAutoRefresh({
     };
   }, []);
 
-  const checkOrders = useCallback(async () => {
-    if (reloadingRef.current) {
+  // Panodaki veriyi sayfayı yeniden yüklemeden tazeler.
+  const refreshBoard = useCallback(() => {
+    startTransition(() => router.refresh());
+  }, [router]);
+
+  // Yeni sipariş var mı bakar; varsa uyarı verir ve panoyu tazeler.
+  // refreshAnyway: anlık sinyal geldiyse (durum değişikliği de olabilir)
+  // yeni sipariş olmasa da pano tazelenir.
+  const checkOrders = useCallback(async (refreshAnyway = false) => {
+    if (checkingRef.current) {
       return;
     }
+    checkingRef.current = true;
 
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("restaurant_id", restaurantId)
-      .order("id", {
-        ascending: false,
-      })
-      .limit(1)
-      .maybeSingle();
+      // İlk kontrolde yalnızca en son sipariş kaydedilir.
+      if (firstCheck.current) {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("id")
+          .eq("restaurant_id", restaurantId)
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-    if (error) {
-      console.error(
-        "Sipariş kontrol hatası:",
-        error
-      );
-      return;
-    }
-
-    if (!mountedRef.current || !data) {
-      return;
-    }
-
-    const currentOrderId = Number(data.id);
-
-    // İlk kontrolde mevcut siparişi kaydet.
-    if (firstCheck.current) {
-      lastOrderId.current = currentOrderId;
-      firstCheck.current = false;
-
-      console.log(
-        "İlk sipariş ID:",
-        currentOrderId
-      );
-
-      return;
-    }
-
-    // ------------------------------------------------
-    // YENİ SİPARİŞ GELDİ
-    // ------------------------------------------------
-
-    if (
-      lastOrderId.current !== null &&
-      currentOrderId > lastOrderId.current
-    ) {
-      reloadingRef.current = true;
-
-      console.log(
-        "🔔 YENİ SİPARİŞ ALGILANDI:",
-        currentOrderId
-      );
-
-      setNewOrders((current) => {
-        if (current.includes(currentOrderId)) {
-          return current;
+        if (error) {
+          console.error("Sipariş kontrol hatası:", error);
+          return;
         }
 
-        return [...current, currentOrderId];
-      });
-
-      // Tarayıcı bildirimi
-      if (
-        typeof Notification !== "undefined" &&
-        Notification.permission === "granted"
-      ) {
-        new Notification(
-          "🔔 Yeni Sipariş!",
-          {
-            body:
-              `Yeni bir sipariş geldi. Sipariş No: #${data.daily_number ?? currentOrderId}`,
-            icon: "/favicon.ico",
-            // Telefona gelen bildirimle aynı etiket: aynı sipariş iki kez gösterilmez.
-            tag: `order-${currentOrderId}`,
-          }
-        );
+        lastOrderId.current = data ? Number(data.id) : 0;
+        firstCheck.current = false;
+        return;
       }
 
-      lastOrderId.current = currentOrderId;
+      const { data, error } = await supabase
+        .from("orders")
+        .select("id, daily_number")
+        .eq("restaurant_id", restaurantId)
+        .gt("id", lastOrderId.current ?? 0)
+        .order("id", { ascending: true })
+        .limit(20);
 
-      // Önce Server Component'in yenilenmesini dene
-      window.location.reload();
+      if (error) {
+        console.error("Sipariş kontrol hatası:", error);
+        return;
+      }
+
+      if (!mountedRef.current) {
+        return;
+      }
+
+      // ------------------------------------------------
+      // YENİ SİPARİŞ GELDİ
+      // ------------------------------------------------
+
+      const arrived: NewOrder[] = (data ?? []).map((row) => ({
+        id: Number(row.id),
+        number: Number(row.daily_number ?? row.id),
+      }));
+
+      if (arrived.length > 0) {
+        lastOrderId.current = arrived[arrived.length - 1].id;
+
+        setNewOrders((current) => [
+          ...current,
+          ...arrived.filter((order) => !current.some((item) => item.id === order.id)),
+        ]);
+        setAlertTick((tick) => tick + 1);
+
+        // Tarayıcı bildirimi
+        if (
+          typeof Notification !== "undefined" &&
+          Notification.permission === "granted"
+        ) {
+          for (const order of arrived) {
+            new Notification(
+              "🔔 Yeni Sipariş!",
+              {
+                body:
+                  `Yeni bir sipariş geldi. Sipariş No: #${order.number}`,
+                icon: "/favicon.ico",
+                // Telefona gelen bildirimle aynı etiket: aynı sipariş iki kez gösterilmez.
+                tag: `order-${order.id}`,
+              }
+            );
+          }
+        }
+      }
+
+      if (arrived.length > 0 || refreshAnyway) {
+        refreshBoard();
+      }
+    } finally {
+      checkingRef.current = false;
     }
-  }, [restaurantId]);
+  }, [restaurantId, refreshBoard]);
+
+  // Anlık sinyal: sipariş geldi ya da bir siparişin durumu değişti
+  // (personel ekranından da olabilir); pano hemen tazelenir.
+  const onBoardSignal = useCallback(() => {
+    void checkOrders(true);
+  }, [checkOrders]);
 
   // Yeni sipariş sinyali gelince hemen kontrol edilir.
-  const live = useBoardSignal(restaurantId, checkOrders);
+  const live = useBoardSignal(restaurantId, onBoardSignal);
 
   useEffect(() => {
     // İlk kontrol
     void checkOrders();
 
     const interval = setInterval(
-      checkOrders,
+      () => void checkOrders(),
       live ? LIVE_CHECK_MS : FALLBACK_CHECK_MS
     );
 
@@ -184,7 +206,7 @@ export default function OrdersAutoRefresh({
   // --------------------------------------------------
 
   useEffect(() => {
-    if (newOrders.length === 0) {
+    if (alertTick === 0) {
       return;
     }
 
@@ -287,7 +309,7 @@ export default function OrdersAutoRefresh({
         audioContext.close().catch(() => {});
       }
     };
-  }, [newOrders]);
+  }, [alertTick]);
 
   // --------------------------------------------------
   // BİLDİRİMLERİ AÇ
@@ -361,7 +383,7 @@ export default function OrdersAutoRefresh({
   function dismissOrder(orderId: number) {
     setNewOrders((current) =>
       current.filter(
-        (id) => id !== orderId
+        (order) => order.id !== orderId
       )
     );
   }
@@ -391,10 +413,10 @@ export default function OrdersAutoRefresh({
           </div>
 
           <ul>
-            {newOrders.map((orderId) => (
-              <li key={orderId}>
-                <span>Sipariş #{orderId}</span>
-                <button type="button" onClick={() => dismissOrder(orderId)}>
+            {newOrders.map((order) => (
+              <li key={order.id}>
+                <span>Sipariş #{order.number}</span>
+                <button type="button" onClick={() => dismissOrder(order.id)}>
                   Gördüm
                 </button>
               </li>
