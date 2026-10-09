@@ -3,6 +3,7 @@ import { loadMenuData } from "../../../../lib/menu-data";
 import OztNovaPremiumMenu from "./OztNovaPremiumMenu";
 import AuroraMenu from "./AuroraMenu";
 import ZestMenu from "./ZestMenu";
+import LinenMenu from "./LinenMenu";
 import MenuViewTracker from "./MenuViewTracker";
 
 export default async function RestaurantMenuRouteLayout({
@@ -20,8 +21,9 @@ export default async function RestaurantMenuRouteLayout({
   const menu = await loadMenuData(slug);
   const restaurant = menu ? { id: menu.restaurant.id, theme: menu.theme } : null;
 
-  // Aurora ailesinde menü tasarıma göre seçilir (Aurora, Zest).
-  const Menu = getMenuDesign(restaurant?.theme) === "zest" ? ZestMenu : AuroraMenu;
+  // Aurora ailesinde menü tasarıma göre seçilir (Aurora, Zest, Linen).
+  const design = getMenuDesign(restaurant?.theme);
+  const Menu = design === "zest" ? ZestMenu : design === "linen" ? LinenMenu : AuroraMenu;
 
   // Sadece menü restoranları her zaman Aurora ailesinden bir menü kullanır
   // (Aurora dışı tema seçiliyse Aurora); sepet ve garson çağırma kapatılır.

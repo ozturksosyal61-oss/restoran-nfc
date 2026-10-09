@@ -14,7 +14,11 @@ export type RestaurantTheme =
   | "zest-kirmizi"
   | "zest-turuncu"
   | "zest-yesil"
-  | "zest-mavi";
+  | "zest-mavi"
+  | "linen-fildisi"
+  | "linen-beyaz"
+  | "linen-zeytin"
+  | "linen-bordo";
 
 export type RestaurantThemeMeta = {
   value: RestaurantTheme;
@@ -162,6 +166,35 @@ export const RESTAURANT_THEMES: readonly RestaurantThemeMeta[] = [
     accent: "#2747c9",
     surface: "#f6f3ee",
   },
+  {
+    value: "linen-fildisi",
+    label: "LINEN - FİLDİŞİ",
+    description:
+      "Tipografi ağırlıklı, sakin ve zarif; fildişi zemin, orman yeşili ve pirinç. Fine dining ve bistrolar için.",
+    accent: "#74592f",
+    surface: "#f3f1ea",
+  },
+  {
+    value: "linen-beyaz",
+    label: "LINEN - BEYAZ",
+    description: "Linen tasarımı, beyaz zemin ve siyah yazı; modern ve minimal restoranlar için.",
+    accent: "#141414",
+    surface: "#ffffff",
+  },
+  {
+    value: "linen-zeytin",
+    label: "LINEN - ZEYTİN",
+    description: "Linen tasarımı, zeytin yeşili tonlar; Ege ve Akdeniz mutfağı için.",
+    accent: "#5a6630",
+    surface: "#eeefe6",
+  },
+  {
+    value: "linen-bordo",
+    label: "LINEN - BORDO",
+    description: "Linen tasarımı, şarap kırmızısı tonlar; meyhane, steakhouse ve şarap evleri için.",
+    accent: "#7a1f2b",
+    surface: "#f6f0ee",
+  },
 ];
 
 export function normalizeRestaurantTheme(
@@ -202,7 +235,11 @@ export type AuroraPalette =
   | "zest-kirmizi"
   | "zest-turuncu"
   | "zest-yesil"
-  | "zest-mavi";
+  | "zest-mavi"
+  | "linen-fildisi"
+  | "linen-beyaz"
+  | "linen-zeytin"
+  | "linen-bordo";
 
 const AURORA_PALETTES: Partial<Record<RestaurantTheme, AuroraPalette>> = {
   aurora: "dark",
@@ -216,6 +253,10 @@ const AURORA_PALETTES: Partial<Record<RestaurantTheme, AuroraPalette>> = {
   "zest-turuncu": "zest-turuncu",
   "zest-yesil": "zest-yesil",
   "zest-mavi": "zest-mavi",
+  "linen-fildisi": "linen-fildisi",
+  "linen-beyaz": "linen-beyaz",
+  "linen-zeytin": "linen-zeytin",
+  "linen-bordo": "linen-bordo",
 };
 
 // Aurora temalarından biri değilse null döner.
@@ -235,16 +276,19 @@ export function isAuroraTheme(value: unknown): boolean {
    renklerini alır.
    --------------------------------------------------------- */
 
-export type MenuDesign = "aurora" | "zest";
+export type MenuDesign = "aurora" | "zest" | "linen";
 
 export const MENU_DESIGNS: readonly { value: MenuDesign; label: string; description: string }[] = [
   { value: "aurora", label: "Aurora", description: "Sinematik ve premium; her tür restoran için." },
   { value: "zest", label: "Zest", description: "Hızlı ve görsel; fast food, burgerci ve kafeler için." },
+  { value: "linen", label: "Linen", description: "Sakin ve zarif; fine dining, bistro ve meyhaneler için." },
 ];
 
 // Aurora ailesinden olmayan (klasik, Nova) temalarda null döner.
 export function getMenuDesign(value: unknown): MenuDesign | null {
   const theme = normalizeRestaurantTheme(value);
   if (!isAuroraTheme(theme)) return null;
-  return theme.startsWith("zest-") ? "zest" : "aurora";
+  if (theme.startsWith("zest-")) return "zest";
+  if (theme.startsWith("linen-")) return "linen";
+  return "aurora";
 }

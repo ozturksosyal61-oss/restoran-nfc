@@ -181,7 +181,7 @@ export function RestaurantSettings({
                       Aa
                     </span>
                     <span className="sys-theme-name">
-                      {item.label.replace(/^(AURORA|ZEST) - /, "")}
+                      {item.label.replace(/^(AURORA|ZEST|LINEN) - /, "")}
                     </span>
                   </button>
                 ))}

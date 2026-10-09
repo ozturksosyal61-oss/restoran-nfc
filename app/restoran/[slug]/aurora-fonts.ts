@@ -1,4 +1,4 @@
-import { Bricolage_Grotesque, Cormorant_Garamond, DM_Sans } from "next/font/google";
+import { Bricolage_Grotesque, Cormorant_Garamond, DM_Sans, Instrument_Serif, Manrope } from "next/font/google";
 
 // Aurora sayfalarının ortak yazı tipleri. Restoran kabuğuna eklenir;
 // tüm Aurora ekranları bu değişkenleri kullanır.
@@ -23,4 +23,27 @@ const zestDisplay = Bricolage_Grotesque({
   preload: false,
 });
 
-export const auroraFontVariables = `${display.variable} ${sans.variable} ${zestDisplay.variable}`;
+// Linen yazı tipleri: zarif serif başlık, sade gövde. Linen paletleri
+// Aurora değişkenlerini bunlara yönlendirir. Önceden yüklenmez.
+const linenDisplay = Instrument_Serif({
+  subsets: ["latin", "latin-ext"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-linen-display",
+  preload: false,
+});
+
+const linenSans = Manrope({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-linen-sans",
+  preload: false,
+});
+
+export const auroraFontVariables = [
+  display.variable,
+  sans.variable,
+  zestDisplay.variable,
+  linenDisplay.variable,
+  linenSans.variable,
+].join(" ");

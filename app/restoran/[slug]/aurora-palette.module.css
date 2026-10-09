@@ -355,3 +355,128 @@
   --au-order-bg: #f0f3fe;
   --au-order-line: rgba(39, 71, 201, 0.26);
 }
+
+/* =========================================================
+   LINEN — fine dining ve bistro tasarımı
+   Açık zemin, ince çizgiler, serif başlıklar; fotoğraftan çok
+   tipografi. Başlık Instrument Serif, gövde Manrope.
+   ========================================================= */
+
+.shell[data-palette^="linen-"] {
+  --font-aurora-display: var(--font-linen-display);
+  --font-aurora-sans: var(--font-linen-sans);
+
+  --au-raised: #ffffff;
+  --au-cta-sub: rgba(255, 255, 255, 0.72);
+  --au-secondary-bg: transparent;
+  --au-badge-ink: #ffffff;
+  --au-ok: #2f7a4d;
+  --au-ok-tile: rgba(47, 122, 77, 0.12);
+  --au-danger: #a33a2b;
+  --au-danger-bg: rgba(163, 58, 43, 0.08);
+  --au-warn: #8a5a12;
+  --au-warn-tile: rgba(176, 120, 40, 0.12);
+  --au-shadow: 0 1px 2px rgba(20, 20, 20, 0.04);
+  --au-float-shadow: 0 14px 30px -18px rgba(20, 20, 20, 0.35);
+  --au-scheme: light;
+}
+
+.shell[data-palette="linen-fildisi"] {
+  --au-bg: #f3f1ea;
+  --au-surface: #fbfaf6;
+  --au-field: #f8f6f0;
+  --au-ink: #1f2b25;
+  --au-muted: #56615a;
+  --au-faint: #8a928c;
+  --au-line: rgba(31, 43, 37, 0.15);
+  --au-tile: #e8e4d8;
+  --au-tile-ink: #1f2b25;
+  --au-accent: #74592f;
+  --au-cta-bg: #1f2b25;
+  --au-cta-ink: #f3f1ea;
+  --au-cta-tile: #74592f;
+  --au-cta-tile-ink: #f3f1ea;
+  --au-order-bg: #ece8dc;
+  --au-order-line: rgba(116, 89, 47, 0.3);
+  --au-track: rgba(31, 43, 37, 0.12);
+  --au-fill: #1f2b25;
+  --au-tab-on-bg: #1f2b25;
+  --au-tab-on-ink: #f3f1ea;
+  --au-badge-bg: #74592f;
+  --au-overlay: rgba(31, 43, 37, 0.45);
+}
+
+.shell[data-palette="linen-beyaz"] {
+  --au-bg: #ffffff;
+  --au-surface: #ffffff;
+  --au-field: #f7f7f5;
+  --au-ink: #141414;
+  --au-muted: #5a5a5a;
+  --au-faint: #8f8f8f;
+  --au-line: rgba(20, 20, 20, 0.14);
+  --au-tile: #f1f1ee;
+  --au-tile-ink: #141414;
+  --au-accent: #141414;
+  --au-cta-bg: #141414;
+  --au-cta-ink: #ffffff;
+  --au-cta-tile: #ffffff;
+  --au-cta-tile-ink: #141414;
+  --au-order-bg: #f4f4f1;
+  --au-order-line: rgba(20, 20, 20, 0.2);
+  --au-track: rgba(20, 20, 20, 0.1);
+  --au-fill: #141414;
+  --au-tab-on-bg: #141414;
+  --au-tab-on-ink: #ffffff;
+  --au-badge-bg: #141414;
+  --au-overlay: rgba(20, 20, 20, 0.42);
+}
+
+.shell[data-palette="linen-zeytin"] {
+  --au-bg: #eeefe6;
+  --au-surface: #f8f8f2;
+  --au-field: #f3f4ec;
+  --au-ink: #263018;
+  --au-muted: #555e47;
+  --au-faint: #8a917d;
+  --au-line: rgba(38, 48, 24, 0.15);
+  --au-tile: #e0e3d0;
+  --au-tile-ink: #263018;
+  --au-accent: #5a6630;
+  --au-cta-bg: #3a4526;
+  --au-cta-ink: #f4f5ec;
+  --au-cta-tile: #b8c17f;
+  --au-cta-tile-ink: #263018;
+  --au-order-bg: #e6e9d8;
+  --au-order-line: rgba(90, 102, 48, 0.3);
+  --au-track: rgba(38, 48, 24, 0.12);
+  --au-fill: #3a4526;
+  --au-tab-on-bg: #3a4526;
+  --au-tab-on-ink: #f4f5ec;
+  --au-badge-bg: #5a6630;
+  --au-overlay: rgba(38, 48, 24, 0.45);
+}
+
+.shell[data-palette="linen-bordo"] {
+  --au-bg: #f6f0ee;
+  --au-surface: #fcf9f8;
+  --au-field: #f9f4f2;
+  --au-ink: #3a1219;
+  --au-muted: #6b4a50;
+  --au-faint: #a08a8e;
+  --au-line: rgba(58, 18, 25, 0.14);
+  --au-tile: #efe1df;
+  --au-tile-ink: #5e1622;
+  --au-accent: #7a1f2b;
+  --au-cta-bg: #5e1622;
+  --au-cta-ink: #fbf5f3;
+  --au-cta-tile: #e3b9b0;
+  --au-cta-tile-ink: #3a1219;
+  --au-order-bg: #f2e5e2;
+  --au-order-line: rgba(122, 31, 43, 0.28);
+  --au-track: rgba(58, 18, 25, 0.12);
+  --au-fill: #5e1622;
+  --au-tab-on-bg: #5e1622;
+  --au-tab-on-ink: #fbf5f3;
+  --au-badge-bg: #7a1f2b;
+  --au-overlay: rgba(58, 18, 25, 0.45);
+}
