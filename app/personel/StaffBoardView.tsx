@@ -2,11 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import AdminIcon, { type AdminIconName } from "../admin/AdminIcon";
+import { useBoardSignal } from "../../lib/board-signal";
+import { DENIED_TEXT, IOS_INSTALL_TEXT, disablePush, enablePush, getPushState, refreshPush, type PushState } from "../../lib/push-client";
 import type { BoardOrder, BoardRequest, BoardSession, StaffBoard } from "../../lib/staff-board";
+import { printKitchenTicket } from "../../lib/kitchen-ticket";
 import StaffLogoutButton from "./StaffLogoutButton";
 
 const REFRESH_MS = 5000;
+// Anlık sinyal bağlıyken pano yalnızca yedek olarak bu aralıkla yenilenir.
+const LIVE_REFRESH_MS = 30000;
 const SOUND_KEY = "ozt_staff_sound";
+const PRINT_KEY = "ozt_staff_autoprint";
 
 const REQUEST_TEXT: Record<string, string> = {
   garson: "Garson çağırıyor",
@@ -87,12 +93,14 @@ function OrderCard({
   now,
   fresh,
   busy,
+  onPrint,
   children,
 }: {
   order: BoardOrder;
   now: number;
   fresh: boolean;
   busy: boolean;
+  onPrint?: (order: BoardOrder) => void;
   children?: React.ReactNode;
 }) {
   return (
@@ -105,6 +113,12 @@ function OrderCard({
         <span className="stf-card-meta">
           <span className="adm-num">#{order.number}</span>
           <Elapsed since={order.createdAt} now={now} />
+          {onPrint && (
+            <button type="button" className="stf-print" onClick={() => onPrint(order)} aria-label={`#${order.number} fişini yazdır`}>
+              <AdminIcon name="print" size={14} />
+              Fiş
+            </button>
+          )}
         </span>
       </div>
       <ul className="stf-items">
@@ -157,12 +171,14 @@ function KitchenView({
   fresh,
   busyId,
   act,
+  onPrint,
 }: {
   orders: BoardOrder[];
   now: number;
   fresh: Set<string>;
   busyId: number | null;
   act: Act;
+  onPrint: (order: BoardOrder) => void;
 }) {
   const waiting = orders.filter((order) => order.status === "pending");
   const cooking = orders.filter((order) => order.status === "accepted" || order.status === "preparing");
@@ -172,14 +188,14 @@ function KitchenView({
     <div className="stf-columns">
       <Column title="Yeni" count={waiting.length} tone="is-new" empty="Yeni sipariş yok.">
         {waiting.map((order) => (
-          <OrderCard key={order.id} order={order} now={now} fresh={fresh.has(`o${order.id}`)} busy={busyId === order.id}>
+          <OrderCard key={order.id} order={order} now={now} fresh={fresh.has(`o${order.id}`)} busy={busyId === order.id} onPrint={onPrint}>
             <ActionButton label="Kabul et" icon="check" busy={busyId === order.id} onClick={() => act("order:accept", order.id)} />
           </OrderCard>
         ))}
       </Column>
       <Column title="Hazırlanıyor" count={cooking.length} tone="is-cooking" empty="Hazırlanan sipariş yok.">
         {cooking.map((order) => (
-          <OrderCard key={order.id} order={order} now={now} fresh={false} busy={busyId === order.id}>
+          <OrderCard key={order.id} order={order} now={now} fresh={false} busy={busyId === order.id} onPrint={onPrint}>
             {order.status === "accepted" && (
               <ActionButton
                 label="Hazırlamaya başla"
@@ -359,10 +375,12 @@ function WaiterView({
 
 export default function StaffBoardView({
   initialBoard,
+  restaurantId,
   name,
   restaurantName,
 }: {
   initialBoard: StaffBoard;
+  restaurantId: number;
   name: string;
   restaurantName: string;
 }) {
@@ -372,11 +390,15 @@ export default function StaffBoardView({
   const [busyId, setBusyId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ ok: boolean; text: string } | null>(null);
   const [sound, setSound] = useState(false);
+  const [push, setPush] = useState<PushState>("unsupported");
+  const [autoPrint, setAutoPrint] = useState(false);
   const [fresh, setFresh] = useState<Set<string>>(new Set());
 
   const audioRef = useRef<AudioContext | null>(null);
   const wakeRef = useRef<{ release: () => Promise<void> } | null>(null);
   const seenRef = useRef<Set<string>>(new Set(alertIds(initialBoard)));
+  const autoPrintRef = useRef(false);
+  const printedRef = useRef<Set<number>>(new Set());
 
   const refresh = useCallback(async () => {
     try {
@@ -396,19 +418,33 @@ export default function StaffBoardView({
         setFresh(new Set(added));
         if (audioRef.current) beep(audioRef.current);
       }
+      // Mutfakta otomatik fiş: yeni gelen her sipariş bir kez basılır.
+      if (autoPrintRef.current && result.board.role === "mutfak") {
+        for (const order of result.board.orders) {
+          if (added.includes(`o${order.id}`) && !printedRef.current.has(order.id)) {
+            printedRef.current.add(order.id);
+            void printKitchenTicket(order, restaurantName);
+          }
+        }
+      }
       setBoard(result.board);
     } catch {
       setOnline(false);
     }
+  }, [restaurantName]);
+
+  // Sipariş ya da çağrı sinyali gelince pano hemen yenilenir.
+  const live = useBoardSignal(restaurantId, refresh);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), REFRESH_MS);
+    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setNow(Date.now());
-      void refresh();
-    }, REFRESH_MS);
+    const timer = window.setInterval(() => void refresh(), live ? LIVE_REFRESH_MS : REFRESH_MS);
     return () => window.clearInterval(timer);
-  }, [refresh]);
+  }, [refresh, live]);
 
   // Yeni kayıt vurgusu birkaç saniye sonra kalkar.
   useEffect(() => {
@@ -416,6 +452,62 @@ export default function StaffBoardView({
     const timer = window.setTimeout(() => setFresh(new Set()), 12000);
     return () => window.clearTimeout(timer);
   }, [fresh]);
+
+  // Otomatik fiş tercihi bu cihazda hatırlanır.
+  useEffect(() => {
+    let remembered = false;
+    try {
+      remembered = window.localStorage.getItem(PRINT_KEY) === "1";
+    } catch {
+      remembered = false;
+    }
+    autoPrintRef.current = remembered;
+    if (remembered) queueMicrotask(() => setAutoPrint(true));
+  }, []);
+
+  function toggleAutoPrint() {
+    const next = !autoPrint;
+    autoPrintRef.current = next;
+    setAutoPrint(next);
+    try {
+      window.localStorage.setItem(PRINT_KEY, next ? "1" : "0");
+    } catch {
+      // yok sayılır
+    }
+    setToast({
+      ok: true,
+      text: next
+        ? "Otomatik fiş açık: yeni siparişler bu cihazdan yazdırılacak."
+        : "Otomatik fiş kapatıldı. Siparişteki “Fiş” düğmesiyle elle yazdırabilirsiniz.",
+    });
+  }
+
+  const printTicket = useCallback(
+    (order: BoardOrder) => void printKitchenTicket(order, restaurantName),
+    [restaurantName]
+  );
+
+  // Telefona bildirim: ekran kapalıyken de yeni sipariş ve çağrı haber verilir.
+  useEffect(() => {
+    void getPushState().then(setPush);
+    void refreshPush();
+  }, []);
+
+  async function togglePush() {
+    if (push === "ios-install" || push === "denied") {
+      setToast({ ok: false, text: push === "denied" ? DENIED_TEXT : IOS_INSTALL_TEXT });
+      return;
+    }
+    if (push === "on") {
+      await disablePush();
+      setPush("off");
+      setToast({ ok: true, text: "Bu cihazda bildirimler kapatıldı." });
+      return;
+    }
+    const result = await enablePush();
+    setPush(await getPushState());
+    setToast({ ok: result.ok, text: result.message });
+  }
 
   async function enableSound(next: boolean) {
     setSound(next);
@@ -519,6 +611,30 @@ export default function StaffBoardView({
             <AdminIcon name="bell" size={15} />
             {sound ? "Ses açık" : "Sesi aç"}
           </button>
+          {kitchen && (
+            <button
+              type="button"
+              className={`adm-btn adm-btn-sm ${autoPrint ? "stf-sound-on" : ""}`}
+              onClick={toggleAutoPrint}
+              aria-pressed={autoPrint}
+              title="Yeni siparişlerin mutfak fişini bu cihazdan otomatik yazdır"
+            >
+              <AdminIcon name="print" size={15} />
+              {autoPrint ? "Otomatik fiş açık" : "Otomatik fiş"}
+            </button>
+          )}
+          {push !== "unsupported" && (
+            <button
+              type="button"
+              className={`adm-btn adm-btn-sm ${push === "on" ? "stf-sound-on" : ""}`}
+              onClick={() => void togglePush()}
+              aria-pressed={push === "on"}
+              title="Telefon kilitliyken de yeni sipariş ve çağrılardan haberdar olun"
+            >
+              <AdminIcon name="bell" size={15} />
+              {push === "on" ? "Bildirim açık" : "Bildirim aç"}
+            </button>
+          )}
           <StaffLogoutButton compact />
         </div>
       </header>
@@ -534,7 +650,7 @@ export default function StaffBoardView({
 
       <main className="stf-main">
         {board.role === "mutfak" ? (
-          <KitchenView orders={board.orders} now={now} fresh={fresh} busyId={busyId} act={act} />
+          <KitchenView orders={board.orders} now={now} fresh={fresh} busyId={busyId} act={act} onPrint={printTicket} />
         ) : (
           <WaiterView board={board} now={now} fresh={fresh} busyId={busyId} act={act} />
         )}

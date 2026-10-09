@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AdminIcon from "../AdminIcon";
+import { useBoardSignal } from "../../../lib/board-signal";
+import { IOS_INSTALL_TEXT, enablePush, getPushState, refreshPush } from "../../../lib/push-client";
 import { createClient } from "../../../lib/supabase/client";
+
+// Anlık sinyal bağlıyken yalnızca yedek kontrol yapılır; bağlı değilken eskisi gibi sık kontrol.
+const LIVE_CHECK_MS = 30000;
+const FALLBACK_CHECK_MS = 2000;
 
 type Props = {
   restaurantId: number;
@@ -60,109 +66,118 @@ export default function OrdersAutoRefresh({
   useEffect(() => {
     mountedRef.current = true;
 
-    async function checkOrders() {
-      if (reloadingRef.current) {
-        return;
-      }
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
-      const supabase = createClient();
-
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-        .order("id", {
-          ascending: false,
-        })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error(
-          "Sipariş kontrol hatası:",
-          error
-        );
-        return;
-      }
-
-      if (!mountedRef.current || !data) {
-        return;
-      }
-
-      const currentOrderId = Number(data.id);
-
-      // İlk kontrolde mevcut siparişi kaydet.
-      if (firstCheck.current) {
-        lastOrderId.current = currentOrderId;
-        firstCheck.current = false;
-
-        console.log(
-          "İlk sipariş ID:",
-          currentOrderId
-        );
-
-        return;
-      }
-
-      // ------------------------------------------------
-      // YENİ SİPARİŞ GELDİ
-      // ------------------------------------------------
-
-      if (
-        lastOrderId.current !== null &&
-        currentOrderId > lastOrderId.current
-      ) {
-        reloadingRef.current = true;
-
-        console.log(
-          "🔔 YENİ SİPARİŞ ALGILANDI:",
-          currentOrderId
-        );
-
-        setNewOrders((current) => {
-          if (current.includes(currentOrderId)) {
-            return current;
-          }
-
-          return [...current, currentOrderId];
-        });
-
-        // Tarayıcı bildirimi
-        if (
-          typeof Notification !== "undefined" &&
-          Notification.permission === "granted"
-        ) {
-          new Notification(
-            "🔔 Yeni Sipariş!",
-            {
-              body:
-                `Yeni bir sipariş geldi. Sipariş No: #${data.daily_number ?? currentOrderId}`,
-              icon: "/favicon.ico",
-            }
-          );
-        }
-
-        lastOrderId.current = currentOrderId;
-
-        // Önce Server Component'in yenilenmesini dene
-        window.location.reload();
-      }
+  const checkOrders = useCallback(async () => {
+    if (reloadingRef.current) {
+      return;
     }
 
-    // İlk kontrol
-    checkOrders();
+    const supabase = createClient();
 
-    // 2 saniyede bir kontrol
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .order("id", {
+        ascending: false,
+      })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error(
+        "Sipariş kontrol hatası:",
+        error
+      );
+      return;
+    }
+
+    if (!mountedRef.current || !data) {
+      return;
+    }
+
+    const currentOrderId = Number(data.id);
+
+    // İlk kontrolde mevcut siparişi kaydet.
+    if (firstCheck.current) {
+      lastOrderId.current = currentOrderId;
+      firstCheck.current = false;
+
+      console.log(
+        "İlk sipariş ID:",
+        currentOrderId
+      );
+
+      return;
+    }
+
+    // ------------------------------------------------
+    // YENİ SİPARİŞ GELDİ
+    // ------------------------------------------------
+
+    if (
+      lastOrderId.current !== null &&
+      currentOrderId > lastOrderId.current
+    ) {
+      reloadingRef.current = true;
+
+      console.log(
+        "🔔 YENİ SİPARİŞ ALGILANDI:",
+        currentOrderId
+      );
+
+      setNewOrders((current) => {
+        if (current.includes(currentOrderId)) {
+          return current;
+        }
+
+        return [...current, currentOrderId];
+      });
+
+      // Tarayıcı bildirimi
+      if (
+        typeof Notification !== "undefined" &&
+        Notification.permission === "granted"
+      ) {
+        new Notification(
+          "🔔 Yeni Sipariş!",
+          {
+            body:
+              `Yeni bir sipariş geldi. Sipariş No: #${data.daily_number ?? currentOrderId}`,
+            icon: "/favicon.ico",
+            // Telefona gelen bildirimle aynı etiket: aynı sipariş iki kez gösterilmez.
+            tag: `order-${currentOrderId}`,
+          }
+        );
+      }
+
+      lastOrderId.current = currentOrderId;
+
+      // Önce Server Component'in yenilenmesini dene
+      window.location.reload();
+    }
+  }, [restaurantId]);
+
+  // Yeni sipariş sinyali gelince hemen kontrol edilir.
+  const live = useBoardSignal(restaurantId, checkOrders);
+
+  useEffect(() => {
+    // İlk kontrol
+    void checkOrders();
+
     const interval = setInterval(
       checkOrders,
-      2000
+      live ? LIVE_CHECK_MS : FALLBACK_CHECK_MS
     );
 
     return () => {
-      mountedRef.current = false;
       clearInterval(interval);
     };
-  }, [restaurantId]);
+  }, [checkOrders, live]);
 
   // --------------------------------------------------
   // SESLİ UYARI
@@ -278,12 +293,27 @@ export default function OrdersAutoRefresh({
   // BİLDİRİMLERİ AÇ
   // --------------------------------------------------
 
+  // İzin daha önce verildiyse düğme açık görünür ve telefon kaydı tazelenir.
+  useEffect(() => {
+    if (
+      typeof Notification === "undefined" ||
+      Notification.permission !== "granted"
+    ) {
+      return;
+    }
+
+    void refreshPush().then(() => setNotificationEnabled(true));
+  }, []);
+
   async function enableNotifications() {
     if (
       typeof Notification === "undefined"
     ) {
+      const state = await getPushState();
       alert(
-        "Bu tarayıcı bildirimleri desteklemiyor."
+        state === "ios-install"
+          ? IOS_INSTALL_TEXT
+          : "Bu tarayıcı bildirimleri desteklemiyor."
       );
       return;
     }
@@ -294,6 +324,12 @@ export default function OrdersAutoRefresh({
 
       if (permission === "granted") {
         setNotificationEnabled(true);
+
+        // Telefon kilitliyken de bildirim gelsin (destekleyen cihazlarda).
+        const push = await enablePush();
+        if (!push.ok) {
+          console.log("Telefon bildirimi açılamadı:", push.message);
+        }
 
         new Notification(
           "🔔 Bildirimler Açıldı",

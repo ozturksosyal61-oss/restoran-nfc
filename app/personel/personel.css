@@ -276,6 +276,24 @@
   font-size: 13px;
 }
 
+.stf-print {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border: 1px solid var(--a-line-strong);
+  border-radius: 999px;
+  background: var(--a-surface);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.stf-print:hover {
+  border-color: currentColor;
+}
+
 .stf-elapsed {
   padding: 2px 9px;
   border-radius: 999px;

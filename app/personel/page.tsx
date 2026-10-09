@@ -35,6 +35,7 @@ export default async function StaffPage() {
   return (
     <StaffBoardView
       initialBoard={board}
+      restaurantId={check.session.restaurantId}
       name={check.session.name}
       restaurantName={check.session.restaurantName}
     />

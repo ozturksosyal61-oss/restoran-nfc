@@ -18,6 +18,8 @@ const sans = DM_Sans({
 export const metadata: Metadata = {
   title: "Personel ekranı",
   robots: { index: false },
+  manifest: "/panel.webmanifest",
+  appleWebApp: { capable: true, title: "OZT Panel", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

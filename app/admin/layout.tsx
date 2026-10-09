@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
@@ -27,6 +28,12 @@ const sans = DM_Sans({
 // Tüm admin sayfalarının ortak kabuğu: sol menü, restoran adı, paket.
 // Oturum yoksa (giriş sayfası) kabuk gösterilmez; yetki kontrolleri
 // her sayfanın kendi içinde kalır.
+// Panel ana ekrana eklenebilir; iPhone'da bildirim için gerekli.
+export const metadata: Metadata = {
+  manifest: "/panel.webmanifest",
+  appleWebApp: { capable: true, title: "OZT Panel", statusBarStyle: "black-translucent" },
+};
+
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   let restaurant: AdminShellRestaurant | null = null;
   let plan: string | null = null;
