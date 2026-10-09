@@ -75,7 +75,7 @@ export function BillingSettingsForm({
           <input id="iyz-secret" name="secretKey" type="password" className="adm-input" placeholder={hints.secretKey ? `Kayıtlı: ${hints.secretKey}` : ""} />
         </div>
         <div className="adm-field">
-          <label className="adm-label" htmlFor="iyz-merchant">Üye işyeri no (bildirim imzası için)</label>
+          <label className="adm-label" htmlFor="iyz-merchant">Üye işyeri no (zorunlu, bildirim imzası için)</label>
           <input id="iyz-merchant" name="merchantId" className="adm-input" inputMode="numeric" defaultValue={hints.merchantId ?? ""} />
         </div>
         <div className="adm-field">

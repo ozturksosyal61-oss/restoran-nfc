@@ -1,13 +1,26 @@
 import { NextResponse } from "next/server";
 import { logError } from "../../../lib/error-log";
+import { createSupabaseAdminClient } from "../../../lib/supabase-admin";
 
 // Tarayıcı hataları buraya gönderilir (lib/report-client-error.ts).
 // Herkese açıktır; bu yüzden boyut sınırlanır ve aynı bağlantıdan
-// dakikada en fazla 20 kayıt kabul edilir (sunucu örneği başına).
+// dakikada en fazla 20 kayıt kabul edilir (sunucu örneği başına). Ayrıca
+// tüm sunucular için ortak sınır: dakikada en fazla 60 yeni tarayıcı hatası.
 
 const WINDOW_MS = 60_000;
 const LIMIT = 20;
+const GLOBAL_NEW_PER_MINUTE = 60;
 const hits = new Map<string, { count: number; start: number }>();
+
+// Mesajı sürekli değiştirerek tabloyu doldurmaya karşı.
+async function globalLimitReached() {
+  const { count, error } = await createSupabaseAdminClient()
+    .from("error_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("source", "client")
+    .gte("first_seen", new Date(Date.now() - WINDOW_MS).toISOString());
+  return !error && (count ?? 0) >= GLOBAL_NEW_PER_MINUTE;
+}
 
 function allowed(key: string) {
   const now = Date.now();
@@ -37,6 +50,7 @@ export async function POST(request: Request) {
 
   const message = typeof body.message === "string" ? body.message.trim() : "";
   if (!message) return new NextResponse(null, { status: 400 });
+  if (await globalLimitReached()) return new NextResponse(null, { status: 429 });
 
   await logError({
     source: "client",

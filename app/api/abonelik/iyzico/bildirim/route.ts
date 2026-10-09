@@ -14,8 +14,8 @@ export async function POST(request: Request) {
   const credentials = billingCredentials(settings);
   if (!credentials) return new Response("NOT_CONFIGURED", { status: 503 });
 
-  // Mağaza no girilmişse imza zorunludur.
-  if (credentials.merchantId && !verifyWebhook(credentials, payload, request.headers.get("x-iyz-signature-v3"))) {
+  // İmza her zaman zorunludur (üye işyeri no girilmemişse bildirim reddedilir).
+  if (!verifyWebhook(credentials, payload, request.headers.get("x-iyz-signature-v3"))) {
     return new Response("BAD_SIGNATURE", { status: 401 });
   }
 

@@ -72,6 +72,8 @@ export async function saveBillingSettings(_prev: BillingAdminResult, formData: F
     if (mode === "test" && !sandbox) return { ok: false, message: "Test modunda iyzico test (sandbox-) anahtarı girilmeli." };
     if (mode === "live" && sandbox) return { ok: false, message: "Canlı modda test (sandbox-) anahtarı kullanılamaz." };
   }
+  // Üye işyeri no, iyzico bildirimlerinin imzasını doğrulamak için zorunludur.
+  if (credentials.apiKey && !credentials.merchantId) return { ok: false, message: "Üye işyeri numarasını girin (iyzico panelinde Ayarlar bölümünde yazar)." };
   if (credentials.merchantId && !/^\d{3,12}$/.test(credentials.merchantId)) return { ok: false, message: "Üye işyeri numarası yalnızca rakamlardan oluşur." };
 
   // Anahtar ya da mod değişirse iyzico'daki ürün / planlar yeniden oluşturulmalıdır.
