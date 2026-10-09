@@ -262,8 +262,8 @@
 }
 
 .chipOn {
-  background: var(--au-ink);
-  color: var(--au-surface);
+  background: var(--au-cta-bg);
+  color: var(--au-cta-ink) !important;
 }
 
 .chipOn small {
@@ -520,8 +520,8 @@
   padding: 0 10px;
   border: 0;
   border-radius: 14px;
-  background: var(--au-ink);
-  color: var(--au-surface) !important;
+  background: var(--au-cta-bg);
+  color: var(--au-cta-ink) !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -530,9 +530,10 @@
   font-weight: 700;
 }
 
+/* Sepette olan ürün: koyu düğme ve adet */
 .addHas {
-  background: var(--au-cta-bg);
-  color: var(--au-cta-ink) !important;
+  background: var(--au-ink);
+  color: var(--au-surface) !important;
 }
 
 .add:active {

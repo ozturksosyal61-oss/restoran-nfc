@@ -1,7 +1,7 @@
 import { requireSystemAdmin } from "../../../lib/system-admin";
 import { aiConfigured } from "../../../lib/ai";
 import { createSupabaseAdminClient } from "../../../lib/supabase-admin";
-import { RESTAURANT_THEMES } from "../../../lib/themes";
+import { SELECTABLE_THEMES } from "../../../lib/themes";
 import AdminIcon from "../../admin/AdminIcon";
 import DemoCreator from "./DemoCreator";
 import DemoList, { type DemoRow } from "./DemoList";
@@ -65,7 +65,7 @@ export default async function ProspectDemosPage({ searchParams }: { searchParams
       };
     });
 
-  const themes = RESTAURANT_THEMES.map((theme) => ({ value: theme.value, label: theme.label }));
+  const themes = SELECTABLE_THEMES.map((theme) => ({ value: theme.value, label: theme.label }));
 
   return (
     <main className="adm-page">

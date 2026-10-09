@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import AdminIcon from "../../../admin/AdminIcon";
-import { MENU_DESIGNS, MENU_LAYOUTS, RESTAURANT_THEMES, getMenuDesign, isAuroraTheme } from "../../../../lib/themes";
+import { MENU_DESIGNS, MENU_LAYOUTS, SELECTABLE_THEMES, getMenuDesign, isAuroraTheme } from "../../../../lib/themes";
 import { ResultNote } from "../../SystemUi";
 import {
   deleteRestaurant,
@@ -50,8 +50,8 @@ export function RestaurantSettings({
   const [selectedLayout, setSelectedLayout] = useState(menuLayout);
 
   // Sadece menü restoranları Aurora menüsünü kullanır.
-  const themeChoices =
-    type === "menu" ? RESTAURANT_THEMES.filter((item) => isAuroraTheme(item.value)) : RESTAURANT_THEMES;
+  // Emekli temalar (klasik, Nova vb.) seçilemez.
+  const themeChoices = SELECTABLE_THEMES;
 
   // Temalar tasarıma göre gruplanır: önce tasarım, altında renk paletleri.
   const themeGroups = [
@@ -61,12 +61,6 @@ export function RestaurantSettings({
       description: design.description,
       items: themeChoices.filter((item) => getMenuDesign(item.value) === design.value),
     })),
-    {
-      key: "diger",
-      title: "Diğer temalar",
-      description: "Eski klasik ve Nova temaları.",
-      items: themeChoices.filter((item) => getMenuDesign(item.value) === null),
-    },
   ].filter((group) => group.items.length > 0);
 
   return (

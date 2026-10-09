@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { linkLeadToRestaurant } from "../saha/actions";
 import AdminIcon from "../../admin/AdminIcon";
-import { RESTAURANT_THEMES, isAuroraTheme, normalizeRestaurantTheme } from "../../../lib/themes";
+import { RESTAURANT_THEMES, SELECTABLE_THEMES, isAuroraTheme, normalizeRestaurantTheme } from "../../../lib/themes";
 import { CredentialsBox } from "../SystemUi";
 import { FEATURE_INFO, featuresAddedIn, type Plan } from "../../../lib/plan";
 
@@ -113,9 +113,8 @@ export default function YeniRestoranPage() {
   const [created, setCreated] = useState<Created | null>(null);
 
   const isMenuOnly = form.restaurant_type === "starter";
-  const themeChoices = isMenuOnly
-    ? RESTAURANT_THEMES.filter((theme) => isAuroraTheme(theme.value))
-    : RESTAURANT_THEMES;
+  // Emekli temalar (klasik, Nova vb.) listelenmez.
+  const themeChoices = SELECTABLE_THEMES;
 
   function update<K extends keyof Form>(key: K, value: Form[K]) {
     setForm((current) => ({ ...current, [key]: value }));

@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import {
-  RESTAURANT_THEMES,
+  SELECTABLE_THEMES,
   isAuroraTheme,
   normalizeRestaurantTheme,
 } from "../../../../lib/themes";
@@ -88,8 +88,9 @@ export async function POST(request: Request) {
 
     const restaurantTheme = String(theme || "classic").toLowerCase();
 
-    // İzin listesi lib/themes.ts ile aynı (Aurora renk temaları dahil).
-    if (!RESTAURANT_THEMES.some((item) => item.value === restaurantTheme)) {
+    // Yalnızca seçilebilen temalar (Aurora, Zest, Linen, Luna); emekli
+    // temalarla yeni restoran açılmaz.
+    if (!SELECTABLE_THEMES.some((item) => item.value === restaurantTheme)) {
       return NextResponse.json(
         { error: "Geçersiz restoran teması." },
         { status: 400 }

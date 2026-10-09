@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseAdminClient } from "../../../lib/supabase-admin";
 import { generatePassword, requireSystemAdmin } from "../../../lib/system-admin";
-import { MENU_LAYOUTS, RESTAURANT_THEMES } from "../../../lib/themes";
+import { MENU_LAYOUTS, SELECTABLE_THEMES } from "../../../lib/themes";
 import { createSubscription, updateSubscription } from "../abonelikler/actions";
 
 // Sistem sahibinin restoran üzerindeki işlemleri. Her işlem önce sistem
@@ -65,8 +65,9 @@ export async function setRestaurantTheme(_prev: ActionResult, formData: FormData
   const theme = String(formData.get("theme") || "");
   if (!restaurantId) return { ok: false, message: "Geçersiz restoran." };
 
-  const meta = RESTAURANT_THEMES.find((item) => item.value === theme);
-  if (!meta) return { ok: false, message: "Geçersiz tema." };
+  // Emekli temalar (klasik, Nova vb.) artık seçilemez.
+  const meta = SELECTABLE_THEMES.find((item) => item.value === theme);
+  if (!meta) return { ok: false, message: "Bu tema artık kullanılmıyor. Aurora, Zest, Linen ya da Luna'dan birini seçin." };
 
   await requireSystemAdmin();
 

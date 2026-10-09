@@ -310,6 +310,22 @@ export function isAuroraTheme(value: unknown): boolean {
 }
 
 /* ---------------------------------------------------------
+   EMEKLİ TEMALAR
+   Klasik, Dark Modern, Luxury Gold, OZT App ve Nova yeni özelliklerin
+   bir kısmını desteklemez; artık seçilemez. Tanımlı kalırlar ki bu
+   temalardan birini taşıyan eski bir kayıt bozulmadan açılsın.
+   --------------------------------------------------------- */
+
+export function isRetiredTheme(value: unknown): boolean {
+  return !isAuroraTheme(value);
+}
+
+// Sistem panelinde ve yeni kayıtlarda seçilebilen temalar.
+export const SELECTABLE_THEMES: readonly RestaurantThemeMeta[] = RESTAURANT_THEMES.filter(
+  (item) => !isRetiredTheme(item.value)
+);
+
+/* ---------------------------------------------------------
    MENÜ TASARIMLARI
    Aurora ailesindeki her tema bir tasarıma ve bir renk paletine
    karşılık gelir. Ana sayfa ve menü tasarıma göre değişir; sipariş,

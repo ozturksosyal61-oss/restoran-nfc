@@ -7,7 +7,7 @@ import { aiConfigured, AI_NOT_CONFIGURED_MESSAGE } from "../../../lib/ai";
 import { extractMenu, MAX_PRODUCTS } from "../../../lib/menu-extract";
 import { createSupabaseAdminClient } from "../../../lib/supabase-admin";
 import { generatePassword, requireSystemAdmin } from "../../../lib/system-admin";
-import { RESTAURANT_THEMES, normalizeRestaurantTheme } from "../../../lib/themes";
+import { SELECTABLE_THEMES, normalizeRestaurantTheme } from "../../../lib/themes";
 
 // Müşteriye özel demo: işletmenin menü fotoğrafından birkaç dakikada o
 // işletmenin adıyla çalışan bir demo restoran kurar. Her işlem önce sistem
@@ -70,7 +70,7 @@ export async function createDemo(_prev: DemoResult, formData: FormData): Promise
   if (name.length < 2) return { ok: false, message: "İşletmenin adını yazın." };
 
   const theme = String(formData.get("theme") ?? "aurora");
-  if (!RESTAURANT_THEMES.some((item) => item.value === theme)) return { ok: false, message: "Geçersiz tema." };
+  if (!SELECTABLE_THEMES.some((item) => item.value === theme)) return { ok: false, message: "Geçersiz tema." };
 
   const days = Number(formData.get("days"));
   if (!DURATIONS.includes(days)) return { ok: false, message: "Demo süresini seçin." };

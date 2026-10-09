@@ -1,0 +1,283 @@
+/* Tasarımlar sayfası. Renk ve yazı tipleri ana sayfanın .page
+   token'larından gelir (page.module.css). */
+
+.heroInner {
+  max-width: var(--container);
+  margin: 0 auto;
+  display: grid;
+  gap: 22px;
+}
+
+.jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.jump a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 44px;
+  padding: 11px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  font-weight: 700;
+  transition: border-color 0.2s var(--ease);
+}
+
+.jump a:hover {
+  border-color: var(--gold);
+}
+
+.jump small {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+/* ---------- Tasarım bölümleri ---------- */
+
+.designs {
+  max-width: calc(var(--container) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.design {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: clamp(28px, 6vw, 72px);
+  padding: clamp(48px, 7vw, 88px) 0;
+  border-bottom: 1px solid var(--line);
+  scroll-margin-top: 80px;
+}
+
+/* Telefonlar solda: sütun genişlikleri de yer değiştirir. */
+.designReverse {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+}
+
+.designReverse .designCopy {
+  order: 2;
+}
+
+.designCopy {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.kicker {
+  color: var(--gold-deep);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.designName {
+  margin: 0;
+  font-size: clamp(40px, 5vw, 60px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.designText {
+  margin: 0;
+  max-width: 480px;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.highlights {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.highlights li {
+  position: relative;
+  padding-left: 22px;
+  font-weight: 600;
+}
+
+.highlights li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.62em;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--gold);
+}
+
+.paletteBlock {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.paletteLabel {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.paletteLabel strong {
+  color: var(--text);
+}
+
+.palettes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.swatch {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s var(--ease);
+}
+
+.swatch:hover {
+  transform: translateY(-1px);
+}
+
+.swatch:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.swatchOn {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
+.swatchDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+}
+
+/* ---------- Telefon çerçeveleri ---------- */
+
+.phones {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 3vw, 28px);
+  align-items: start;
+}
+
+.phoneFigure {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.phoneSecond {
+  margin-top: clamp(24px, 5vw, 56px);
+}
+
+.phoneFigure figcaption {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.phone {
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 390 / 760;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 8px solid var(--ink);
+  border-radius: 36px;
+  background: var(--ink);
+  box-shadow: var(--shadow-lg);
+  scrollbar-width: none;
+}
+
+.phone::-webkit-scrollbar {
+  display: none;
+}
+
+.phone:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.phone img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ---------- Ortak özellikler ---------- */
+
+.sharedLead {
+  max-width: 680px;
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.shared {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shared li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-weight: 600;
+}
+
+.sharedIcon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--green);
+}
+
+@media (max-width: 860px) {
+  .design,
+  .designReverse {
+    grid-template-columns: 1fr;
+  }
+
+  .designReverse .designCopy {
+    order: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swatch,
+  .jump a {
+    transition: none;
+  }
+}

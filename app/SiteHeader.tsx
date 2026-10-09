@@ -33,6 +33,7 @@ export default function SiteHeader({ onHome = false }: { onHome?: boolean }) {
           <TrackedLink href="/urunler" {...PRODUCTS_EVENT}>
             Ürünler
           </TrackedLink>
+          <Link href="/tasarimlar">Tasarımlar</Link>
           <a href={`${base}#paketler`}>Paketler</a>
           <a href={`${base}#sss`}>SSS</a>
           <a href={`${base}#iletisim`}>İletişim</a>
