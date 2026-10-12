@@ -455,9 +455,28 @@
     flex-wrap: wrap;
   }
 
+  /* Telefonda düzenli iki satır: üstte durum ve çıkış, altta ses ve bildirim. */
   .stf-bar-actions {
     width: 100%;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .stf-bar-actions > .stf-live {
+    order: 1;
+  }
+
+  .stf-bar-actions > .stf-logout {
+    order: 2;
+    justify-self: end;
+  }
+
+  .stf-bar-actions > .adm-btn:not(.stf-logout) {
+    order: 3;
+    justify-content: center;
+    min-height: 44px;
+    white-space: nowrap;
   }
 
   .stf-main {
@@ -471,10 +490,12 @@
   }
 }
 
-/* Garson: liste / masa haritası geçişi */
+/* Garson: liste / masa haritası geçişi.
+   Izgara yerine esnek kutu: Safari'de daralıp düğmeleri ezmez. */
 .stf-viewSwitch {
-  display: inline-grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  width: 100%;
+  max-width: 320px;
   gap: 4px;
   margin-bottom: 14px;
   padding: 4px;
@@ -484,8 +505,9 @@
 }
 
 .stf-viewSwitch button {
-  min-width: 110px;
-  min-height: 40px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
   border: 0;
   border-radius: 10px;
   background: transparent;

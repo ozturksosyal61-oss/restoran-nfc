@@ -31,7 +31,7 @@ const sans = DM_Sans({
 // Panel ana ekrana eklenebilir; iPhone'da bildirim için gerekli.
 export const metadata: Metadata = {
   manifest: "/panel.webmanifest",
-  appleWebApp: { capable: true, title: "OZT Panel", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "OZT Panel", statusBarStyle: "default" },
 };
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {

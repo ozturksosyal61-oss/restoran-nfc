@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: "Personel ekranı",
   robots: { index: false },
   manifest: "/panel.webmanifest",
-  appleWebApp: { capable: true, title: "OZT Panel", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "OZT Panel", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
