@@ -431,6 +431,19 @@ export default function RestaurantSettingsPage() {
       return;
     }
 
+    // Bağlantılar yalnızca http(s) adresi olabilir (veritabanı da denetler).
+    const links = [
+      ["Instagram", instagramUrl],
+      ["Google yorum", googleReviewUrl],
+      ["Logo", logoUrl],
+      ["Kapak", coverImageUrl],
+    ];
+    const badLink = links.find(([, value]) => value.trim() && !/^https?:\/\//i.test(value.trim()));
+    if (badLink) {
+      setError(`${badLink[0]} bağlantısı https:// ile başlamalı.`);
+      return;
+    }
+
     setSaving(true);
     setError("");
     setMessage("");

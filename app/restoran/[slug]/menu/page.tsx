@@ -1,3 +1,4 @@
+import { safeUrl } from "../../../../lib/menu-popup";
 import type { Metadata } from "next";
 import { restaurantMetadata } from "../../../../lib/restaurant-metadata";
 import { notFound, redirect } from "next/navigation";
@@ -1034,9 +1035,7 @@ export default async function RestaurantMenuPage({
 
               {restaurantData.instagram_url && (
                 <a
-                  href={
-                    restaurantData.instagram_url
-                  }
+                  href={safeUrl(restaurantData.instagram_url) ?? undefined}
                   target="_blank"
                   rel="noreferrer"
                   style={
@@ -1049,9 +1048,7 @@ export default async function RestaurantMenuPage({
 
               {restaurantData.google_review_url && (
                 <a
-                  href={
-                    restaurantData.google_review_url
-                  }
+                  href={safeUrl(restaurantData.google_review_url) ?? undefined}
                   target="_blank"
                   rel="noreferrer"
                   style={

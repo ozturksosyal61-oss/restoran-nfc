@@ -14,6 +14,75 @@ export async function POST(request: Request) {
   let createdUserId: string | null = null;
 
   try {
+    // Önce yetki: yalnızca sistem sahibi. Form kontrolleri ondan sonra.
+    const cookieStore = await cookies();
+
+    const supabaseSession = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                cookieStore.set(name, value, options);
+              });
+            } catch {
+              // Route Handler cookie yazma hatası görmezden gelinir.
+            }
+          },
+        },
+      }
+    );
+
+    const {
+      data: { user },
+    } = await supabaseSession.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Oturum bulunamadı. Lütfen tekrar giriş yapın." },
+        { status: 401 }
+      );
+    }
+
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    const { data: systemAdmin, error: systemAdminError } =
+      await supabaseAdmin
+        .from("system_admins")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (systemAdminError) {
+      console.error(systemAdminError);
+
+      return NextResponse.json(
+        { error: "Sistem sahibi yetkisi kontrol edilemedi." },
+        { status: 500 }
+      );
+    }
+
+    if (!systemAdmin) {
+      return NextResponse.json(
+        { error: "Bu işlem için sistem sahibi yetkisi gerekiyor." },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     const {
@@ -105,73 +174,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const cookieStore = await cookies();
-
-    const supabaseSession = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => {
-                cookieStore.set(name, value, options);
-              });
-            } catch {
-              // Route Handler cookie yazma hatası görmezden gelinir.
-            }
-          },
-        },
-      }
-    );
-
-    const {
-      data: { user },
-    } = await supabaseSession.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Oturum bulunamadı. Lütfen tekrar giriş yapın." },
-        { status: 401 }
-      );
-    }
-
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
-
-    const { data: systemAdmin, error: systemAdminError } =
-      await supabaseAdmin
-        .from("system_admins")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-    if (systemAdminError) {
-      console.error(systemAdminError);
-
-      return NextResponse.json(
-        { error: "Sistem sahibi yetkisi kontrol edilemedi." },
-        { status: 500 }
-      );
-    }
-
-    if (!systemAdmin) {
-      return NextResponse.json(
-        { error: "Bu işlem için sistem sahibi yetkisi gerekiyor." },
-        { status: 403 }
-      );
-    }
 
     const { data: existingRestaurant } = await supabaseAdmin
       .from("restaurants")

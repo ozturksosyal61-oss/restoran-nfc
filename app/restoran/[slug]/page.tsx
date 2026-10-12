@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { readMenuOnly, restaurantMenuPath } from "../../../lib/restaurant-type";
 import { getMenuDesign, isAuroraTheme } from "../../../lib/themes";
+import { safeUrl } from "../../../lib/menu-popup";
 import SiparisTakipLink from "./SiparisTakipLink";
 import NovaRestaurantHome from "./NovaRestaurantHome";
 import { hasPlanFeature } from "../../../lib/plan";
@@ -158,6 +159,11 @@ export default async function RestaurantPage({
   if (error || !restaurant) {
     notFound();
   }
+
+  // Restoranın girdiği bağlantılar yalnızca https ise gösterilir
+  // ("javascript:" gibi adreslerle müşteri tarayıcısında kod çalışmasın).
+  restaurant.instagram_url = safeUrl(restaurant.instagram_url);
+  restaurant.google_review_url = safeUrl(restaurant.google_review_url);
 
   // Çalışan değerlendirme Premium paketinde.
   const staffRatings = hasPlanFeature(restaurant.plan, "staff_ratings");
