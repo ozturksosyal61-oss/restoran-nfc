@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
+// Sipariş durumu kontrol aralığı; bu durumlarda kontrol durur.
+const POLL_MS = 8000;
+const FINAL_STATUSES = new Set(["delivered", "cancelled"]);
 import { useParams } from "next/navigation";
 import { createClient } from "../../../../../../lib/supabase/client";
 import { useRestaurantTheme } from "../../../RestaurantThemeContext";
@@ -386,10 +390,15 @@ export default function OrderTrackingPage() {
 
     // =====================================================
     // SİPARİŞ DURUMUNU GÜNCELLE
-    // RPC ÜZERİNDEN 2 SANİYEDE BİR KONTROL
+    // RPC ÜZERİNDEN 8 SANİYEDE BİR KONTROL. Sipariş teslim edilince ya
+    // da iptal olunca durur; sayfa arka plandayken beklemeye geçer, öne
+    // gelince hemen günceller.
     // =====================================================
 
-    const pollingInterval = window.setInterval(async () => {
+    let finished = false;
+    let pollTimer: number | undefined;
+
+    async function poll() {
       if (!mounted || !tableToken) return;
 
       try {
@@ -404,6 +413,12 @@ export default function OrderTrackingPage() {
           }
         );
 
+        // Sipariş artık görüntülenemiyorsa (hesap kapandı) kontrol durur;
+        // bağlantı hatasında denemeye devam edilir.
+        if (!error && !data?.order) {
+          finished = true;
+        }
+
         if (
           error ||
           !data ||
@@ -414,6 +429,10 @@ export default function OrderTrackingPage() {
         }
 
         const orderData = data.order;
+
+        if (FINAL_STATUSES.has(String(orderData.status))) {
+          finished = true;
+        }
 
         setOrder((currentOrder) => {
           if (
@@ -462,11 +481,33 @@ export default function OrderTrackingPage() {
           error
         );
       }
-    }, 2000);
+    }
+
+    function schedule() {
+      window.clearTimeout(pollTimer);
+      if (!mounted || finished || document.hidden) return;
+      pollTimer = window.setTimeout(async () => {
+        await poll();
+        schedule();
+      }, POLL_MS);
+    }
+
+    async function onVisibility() {
+      if (document.hidden || finished) {
+        window.clearTimeout(pollTimer);
+        return;
+      }
+      await poll();
+      schedule();
+    }
+
+    schedule();
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       mounted = false;
-      window.clearInterval(pollingInterval);
+      window.clearTimeout(pollTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [orderId, tableToken]);
 
