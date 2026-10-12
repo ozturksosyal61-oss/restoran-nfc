@@ -1,0 +1,519 @@
+/* =========================================================
+   SALON — canlı masa haritası
+   Durum renkleri tek yerde (status_*); masa kutusu, özet ve
+   panel etiketi aynı değişkenleri kullanır.
+   ========================================================= */
+
+.status_bos {
+  --st-bg: var(--a-surface);
+  --st-ink: var(--a-faint);
+  --st-line: var(--a-line-strong);
+}
+
+.status_dolu {
+  --st-bg: var(--a-accepted-bg);
+  --st-ink: var(--a-accepted);
+  --st-line: var(--a-accepted);
+}
+
+.status_siparis {
+  --st-bg: var(--a-new-bg);
+  --st-ink: var(--a-new);
+  --st-line: var(--a-new);
+}
+
+.status_hazir {
+  --st-bg: var(--a-ready-bg);
+  --st-ink: var(--a-ready);
+  --st-line: var(--a-ready);
+}
+
+.status_cagri {
+  --st-bg: #fde8e7;
+  --st-ink: #b42318;
+  --st-line: #b42318;
+}
+
+.status_hesap {
+  --st-bg: var(--a-preparing-bg);
+  --st-ink: var(--a-preparing);
+  --st-line: var(--a-preparing);
+}
+
+.status_odendi {
+  --st-bg: var(--a-done-bg);
+  --st-ink: var(--a-done);
+  --st-line: var(--a-done);
+}
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- Üst çubuk ---------- */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.zones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.zones button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--a-line);
+  border-radius: 999px;
+  background: var(--a-surface);
+  color: var(--a-ink-2);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.zones .zoneOn {
+  background: var(--a-primary);
+  border-color: var(--a-primary);
+  color: var(--a-primary-ink);
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  font-size: 13.5px;
+  color: var(--a-ink-2);
+}
+
+.summaryItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.summaryItem i {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--st-line);
+}
+
+.live {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--a-ready-bg);
+  color: var(--a-ready);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.liveOff {
+  background: #fde8e7;
+  color: #b42318;
+}
+
+/* ---------- Izgara ---------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 22px 18px;
+  padding: 14px 6px;
+}
+
+/* ---------- Salon yerleşimi (konumu girilmiş masalar) ---------- */
+
+.canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 420px;
+  border: 1px dashed var(--a-line-strong);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle, var(--a-line) 1px, transparent 1px) 0 0 / 22px 22px,
+    var(--a-sunken);
+  overflow: hidden;
+}
+
+.placed {
+  position: absolute;
+  width: 128px;
+  transform: translate(-50%, -50%);
+}
+
+.placed:has(.shape_uzun) {
+  width: 210px;
+}
+
+/* ---------- Masa ---------- */
+
+.table {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px;
+  border: 2px solid var(--st-line);
+  background: var(--st-bg);
+  color: var(--st-ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Sandalyeleri anımsatan kesikli halka */
+.table::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border: 2px dashed color-mix(in srgb, var(--st-line) 35%, transparent);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.table:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -14px rgba(27, 25, 21, 0.35);
+}
+
+.table:focus-visible {
+  outline: 3px solid var(--a-focus);
+  outline-offset: 8px;
+}
+
+.selected {
+  box-shadow: 0 0 0 4px var(--a-focus);
+}
+
+.shape_kare {
+  aspect-ratio: 1;
+  border-radius: 16px;
+}
+
+.shape_yuvarlak {
+  aspect-ratio: 1;
+  border-radius: 999px;
+}
+
+.shape_uzun {
+  aspect-ratio: 2.1 / 1;
+  border-radius: 14px;
+}
+
+.grid .shape_uzun {
+  grid-column: span 2;
+}
+
+.status_bos.table {
+  border-style: dashed;
+}
+
+.tableNumber {
+  color: var(--a-ink);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.tableStatus {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.tableMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 6px;
+  font-size: 12px;
+  color: var(--a-ink-2);
+}
+
+.tableMeta strong {
+  color: var(--a-ink);
+}
+
+.seats {
+  position: absolute;
+  bottom: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--a-faint);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.status_cagri.table,
+.status_hesap.table {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--st-line) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--st-line) 0%, transparent);
+  }
+}
+
+/* ---------- Masa paneli ---------- */
+
+.panelRoot {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(27, 25, 21, 0.35);
+  cursor: pointer;
+}
+
+.panel {
+  position: relative;
+  width: min(420px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 20px 28px;
+  background: var(--a-surface);
+  box-shadow: -18px 0 40px -24px rgba(27, 25, 21, 0.45);
+}
+
+.panelHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panelHead h2 {
+  margin: 8px 0 2px;
+  font-size: 26px;
+}
+
+.panelHead small {
+  color: var(--a-muted);
+}
+
+.statusPill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--st-bg);
+  color: var(--st-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.panelSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panelSection h3 {
+  margin: 0;
+  color: var(--a-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.requestRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fde8e7;
+}
+
+.requestRow span {
+  display: flex;
+  flex-direction: column;
+}
+
+.requestRow strong {
+  color: #b42318;
+}
+
+.requestRow small {
+  color: var(--a-muted);
+}
+
+.totals {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.totals div {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--a-sunken);
+}
+
+.totals dt {
+  color: var(--a-muted);
+  font-size: 12px;
+}
+
+.totals dd {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.due {
+  color: var(--a-new);
+}
+
+.orderCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--a-line);
+  border-radius: 14px;
+}
+
+.orderCard header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orderStatus {
+  flex: 1;
+  color: var(--a-muted);
+  font-size: 13px;
+}
+
+.orderTotal {
+  font-weight: 700;
+}
+
+.orderCard ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.orderCard li b {
+  margin-right: 4px;
+}
+
+.orderCard :global(.adm-btn) {
+  align-self: flex-start;
+}
+
+.emptyNote {
+  margin: 0;
+  color: var(--a-muted);
+}
+
+.panelLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  color: var(--a-accent);
+  font-weight: 600;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 70;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  box-shadow: 0 12px 30px -12px rgba(27, 25, 21, 0.45);
+}
+
+.toastOk {
+  background: var(--a-primary);
+  color: var(--a-primary-ink);
+}
+
+.toastError {
+  background: #b42318;
+  color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .panelRoot {
+    align-items: flex-end;
+  }
+
+  .panel {
+    width: 100%;
+    height: auto;
+    max-height: 86vh;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 34px 14px;
+    padding: 10px 4px;
+  }
+
+  .table {
+    padding: 6px;
+  }
+
+  .tableStatus,
+  .tableMeta {
+    font-size: 11px;
+  }
+
+  .tableNumber {
+    font-size: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .table {
+    transition: none;
+  }
+
+  .status_cagri.table,
+  .status_hesap.table {
+    animation: none;
+  }
+}

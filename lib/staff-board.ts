@@ -52,7 +52,7 @@ export type StaffBoard = KitchenBoard | WaiterBoard;
 const ACTIVE_STATUSES = ["pending", "accepted", "preparing", "ready"];
 const HOURS = 60 * 60 * 1000;
 
-function tableLabel(value: unknown) {
+export function tableLabel(value: unknown) {
   return value === null || value === undefined || value === "" ? "—" : String(value);
 }
 
@@ -251,8 +251,20 @@ export async function runStaffAction(
   action: StaffAction,
   id: number
 ): Promise<{ ok: boolean; message: string }> {
+  return runBoardAction(session.restaurantId, session.role, action, id);
+}
+
+// Personel ekranı ve yöneticinin masa haritası ortak kullanır. Çağıran taraf
+// yetkiyi (personel oturumu ya da restoran yöneticisi) doğrulamış olmalıdır;
+// her güncelleme restaurantId ile sınırlanır.
+export async function runBoardAction(
+  restaurantId: number,
+  role: StaffRole,
+  action: StaffAction,
+  id: number
+): Promise<{ ok: boolean; message: string }> {
   const admin = createSupabaseAdminClient();
-  const restaurantId = session.restaurantId;
+  const session = { role };
 
   if (action in ORDER_MOVES) {
     const move = ORDER_MOVES[action];

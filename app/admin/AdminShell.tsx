@@ -169,6 +169,7 @@ export default function AdminShell({
       items: [
         { href: "/admin", label: "Panel", icon: "dashboard" },
         { href: "/admin/orders", label: "Siparişler", icon: "orders", feature: "orders" },
+        { href: "/admin/salon", label: "Salon", icon: "table", feature: "orders" },
         { href: "/admin/ozet", label: "Dönem özeti", icon: "calendar" },
         { href: "/admin/raporlar", label: "Raporlar", icon: "chart", feature: "analytics" },
       ],
