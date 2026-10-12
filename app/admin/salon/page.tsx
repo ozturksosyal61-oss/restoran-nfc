@@ -28,7 +28,15 @@ export default async function SalonPage() {
         </div>
       </header>
 
-      <FloorView initialFloor={floor} restaurantId={admin.restaurantId} canAct={!admin.isDemo} />
+      <FloorView
+        initialFloor={floor}
+        restaurantId={admin.restaurantId}
+        canAct={!admin.isDemo}
+        loadUrl="/api/salon"
+        actionUrl="/api/salon/islem"
+        layoutUrl="/api/salon/yerlesim"
+        ordersHref="/admin/orders"
+      />
     </main>
   );
 }

@@ -6,6 +6,7 @@ import { useBoardSignal } from "../../lib/board-signal";
 import { DENIED_TEXT, IOS_INSTALL_TEXT, disablePush, enablePush, getPushState, refreshPush, type PushState } from "../../lib/push-client";
 import type { BoardOrder, BoardRequest, BoardSession, StaffBoard } from "../../lib/staff-board";
 import { printKitchenTicket } from "../../lib/kitchen-ticket";
+import FloorView from "../admin/salon/FloorView";
 import StaffLogoutButton from "./StaffLogoutButton";
 
 const REFRESH_MS = 5000;
@@ -13,6 +14,7 @@ const REFRESH_MS = 5000;
 const LIVE_REFRESH_MS = 30000;
 const SOUND_KEY = "ozt_staff_sound";
 const PRINT_KEY = "ozt_staff_autoprint";
+const VIEW_KEY = "ozt_staff_view";
 
 const REQUEST_TEXT: Record<string, string> = {
   garson: "Garson çağırıyor",
@@ -393,6 +395,8 @@ export default function StaffBoardView({
   const [sound, setSound] = useState(false);
   const [push, setPush] = useState<PushState>("unsupported");
   const [autoPrint, setAutoPrint] = useState(false);
+  // Garson: liste ya da masa haritası (tercih bu cihazda hatırlanır).
+  const [view, setView] = useState<"liste" | "masalar">("liste");
   const [fresh, setFresh] = useState<Set<string>>(new Set());
 
   const audioRef = useRef<AudioContext | null>(null);
@@ -453,6 +457,25 @@ export default function StaffBoardView({
     const timer = window.setTimeout(() => setFresh(new Set()), 12000);
     return () => window.clearTimeout(timer);
   }, [fresh]);
+
+  useEffect(() => {
+    let saved: string | null = null;
+    try {
+      saved = window.localStorage.getItem(VIEW_KEY);
+    } catch {
+      saved = null;
+    }
+    if (saved === "masalar") queueMicrotask(() => setView("masalar"));
+  }, []);
+
+  function chooseView(next: "liste" | "masalar") {
+    setView(next);
+    try {
+      window.localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      // yok sayılır
+    }
+  }
 
   // Otomatik fiş tercihi bu cihazda hatırlanır.
   useEffect(() => {
@@ -651,8 +674,26 @@ export default function StaffBoardView({
       )}
 
       <main className="stf-main">
+        {!kitchen && (
+          <div className="stf-viewSwitch" role="tablist" aria-label="Görünüm">
+            <button type="button" role="tab" aria-selected={view === "liste"} className={view === "liste" ? "is-on" : ""} onClick={() => chooseView("liste")}>
+              Liste
+            </button>
+            <button type="button" role="tab" aria-selected={view === "masalar"} className={view === "masalar" ? "is-on" : ""} onClick={() => chooseView("masalar")}>
+              Masalar
+            </button>
+          </div>
+        )}
         {board.role === "mutfak" ? (
           <KitchenView orders={board.orders} now={now} fresh={fresh} busyId={busyId} act={act} onPrint={printTicket} />
+        ) : view === "masalar" ? (
+          <FloorView
+            initialFloor={null}
+            restaurantId={restaurantId}
+            canAct
+            loadUrl="/api/personel/salon"
+            actionUrl="/api/personel/islem"
+          />
         ) : (
           <WaiterView board={board} now={now} fresh={fresh} busyId={busyId} act={act} />
         )}
