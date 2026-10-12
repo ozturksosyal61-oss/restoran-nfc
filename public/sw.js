@@ -25,6 +25,8 @@ self.addEventListener("push", (event) => {
       return self.registration.showNotification(data.title || "OZT Digital", {
         body: data.body || "",
         tag: data.tag,
+        // Aynı çağrı tekrarlandıysa bildirim yeniden ses / titreşimle gelir.
+        renotify: Boolean(data.tag && data.renotify),
         icon: "/panel-icon",
         badge: "/panel-icon",
         data: { url },

@@ -58,7 +58,8 @@ function beep(context: AudioContext | null) {
 function alertIds(board: StaffBoard) {
   if (board.role === "mutfak") return board.orders.filter((order) => order.status === "pending").map((order) => `o${order.id}`);
   return [
-    ...board.requests.map((request) => `r${request.id}`),
+    // Tekrar çağrıldıysa yeni uyarı sayılır (ses ve vurgu yeniden).
+    ...board.requests.map((request) => `r${request.id}${request.lastCalledAt ? `-${request.lastCalledAt}` : ""}`),
     ...board.orders.filter((order) => order.status === "ready").map((order) => `d${order.id}`),
   ];
 }
@@ -343,7 +344,7 @@ function WaiterView({
             key={request.id}
             request={request}
             now={now}
-            fresh={fresh.has(`r${request.id}`)}
+            fresh={fresh.has(`r${request.id}${request.lastCalledAt ? `-${request.lastCalledAt}` : ""}`)}
             busy={busyId === request.id}
             act={act}
           />

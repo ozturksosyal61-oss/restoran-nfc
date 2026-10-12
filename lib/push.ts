@@ -8,7 +8,7 @@ import { createSupabaseAdminClient } from "./supabase-admin";
 export type PushRole = "yonetici" | "garson" | "mutfak";
 export type PushEvent = "order:new" | "order:ready" | "request:new";
 
-type Message = { title: string; body: string; tag: string; roles: PushRole[] };
+type Message = { title: string; body: string; tag: string; roles: PushRole[]; renotify?: boolean };
 
 const STAFF_URL = "/personel";
 const ADMIN_URL = "/admin/orders";
@@ -43,11 +43,24 @@ async function buildMessage(event: PushEvent, id: number, restaurantId: number):
     const table = data.restaurant_tables as unknown as { table_number?: unknown } | { table_number?: unknown }[] | null;
     const number = Array.isArray(table) ? table[0]?.table_number : table?.table_number;
     const bill = data.request_type === "hesap";
+
+    // Müşteri aynı çağrıyı tekrar bastıysa (last_called_at; sütun yoksa yok sayılır).
+    const { data: recall } = await admin
+      .from("service_requests")
+      .select("created_at, last_called_at")
+      .eq("id", id)
+      .maybeSingle();
+    const again = Boolean(
+      recall?.last_called_at &&
+        new Date(recall.last_called_at).getTime() - new Date(recall.created_at).getTime() > 5000
+    );
+
     return {
       title: bill ? "💳 Hesap istendi" : "🔔 Garson çağrısı",
-      body: `${tableText(number)} ${bill ? "hesap istiyor" : "garson çağırıyor"}.`,
+      body: `${tableText(number)} ${again ? "tekrar " : ""}${bill ? "hesap istiyor" : "garson çağırıyor"}.`,
       tag: `request-${data.id}`,
       roles: ["garson", "yonetici"],
+      renotify: again,
     };
   }
 
@@ -143,6 +156,7 @@ export async function sendPushEvent(event: PushEvent, id: number, restaurantId: 
             title: message.title,
             body: message.body,
             tag: message.tag,
+            renotify: message.renotify ?? false,
             url: row.role === "yonetici" ? ADMIN_URL : STAFF_URL,
           }),
           { TTL: 600, urgency: "high" }

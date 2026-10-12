@@ -25,6 +25,8 @@ export type BoardRequest = {
   type: string;
   status: string;
   createdAt: string;
+  // Müşteri aynı çağrıyı tekrar bastıysa son basış zamanı.
+  lastCalledAt: string | null;
 };
 
 export type BoardSession = {
@@ -99,16 +101,32 @@ async function loadOrders(restaurantId: number, statuses: string[], sinceHours: 
 }
 
 async function loadRequests(restaurantId: number): Promise<BoardRequest[]> {
-  const { data } = await createSupabaseAdminClient()
-    .from("service_requests")
-    .select("id, request_type, status, created_at, restaurant_tables(table_number)")
-    .eq("restaurant_id", restaurantId)
-    .in("status", ["pending", "acknowledged"])
-    .gte("created_at", new Date(Date.now() - 12 * HOURS).toISOString())
-    .order("created_at", { ascending: true })
-    .limit(100);
+  const query = (columns: string) =>
+    createSupabaseAdminClient()
+      .from("service_requests")
+      .select(columns)
+      .eq("restaurant_id", restaurantId)
+      .in("status", ["pending", "acknowledged"])
+      .gte("created_at", new Date(Date.now() - 12 * HOURS).toISOString())
+      .order("created_at", { ascending: true })
+      .limit(100);
 
-  return (data ?? []).map((row) => {
+  // last_called_at sütunu henüz yoksa (migration bekliyor) onsuz okunur.
+  const first = await query("id, request_type, status, created_at, last_called_at, restaurant_tables(table_number)");
+  const { data } = first.error
+    ? await query("id, request_type, status, created_at, restaurant_tables(table_number)")
+    : first;
+
+  const rows = (data ?? []) as unknown as {
+    id: unknown;
+    request_type: unknown;
+    status: unknown;
+    created_at: unknown;
+    last_called_at?: unknown;
+    restaurant_tables: unknown;
+  }[];
+
+  return rows.map((row) => {
     const table = row.restaurant_tables as unknown as { table_number?: unknown } | { table_number?: unknown }[] | null;
     const number = Array.isArray(table) ? table[0]?.table_number : table?.table_number;
     return {
@@ -117,6 +135,7 @@ async function loadRequests(restaurantId: number): Promise<BoardRequest[]> {
       type: String(row.request_type ?? "garson"),
       status: String(row.status),
       createdAt: String(row.created_at),
+      lastCalledAt: row.last_called_at ? String(row.last_called_at) : null,
     };
   });
 }
