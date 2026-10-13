@@ -21,6 +21,7 @@ import { trackMenuView, trackProductView } from "../../../../lib/menu-tracking";
 import { hasPlanFeature } from "../../../../lib/plan";
 import type { MenuData } from "../../../../lib/menu-data";
 import { applyPromotions, readMenuPromotions, type ProductPromo } from "../../../../lib/menu-promotions";
+import { matchesDiet, usefulFilters, type DietFilterKey } from "../../../../lib/product-tags";
 import { useCart } from "./CartContext";
 
 // Müşteri menüsünün tasarımdan bağımsız mantığı: veri, masa kodu, dil,
@@ -82,6 +83,9 @@ export type MenuProduct = {
   calories?: number | null;
   // Aktif kampanya varsa price indirimli fiyattır.
   promo?: ProductPromo | null;
+  // Kalıcı etiketler ve satışlardan "Çok satan" (lib/product-tags).
+  tags?: string[];
+  bestSeller?: boolean;
 };
 
 export type MenuRestaurant = {
@@ -136,6 +140,8 @@ export function useMenuController({
   const [loadError, setLoadError] = useState("");
 
   const [search, setSearch] = useState("");
+  // Beslenme filtresi (Pro): seçilenlerin hepsine uyan ürünler gösterilir.
+  const [diet, setDiet] = useState<DietFilterKey[]>([]);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
   const [sheet, setSheet] = useState<"cart" | "service" | "language" | null>(null);
@@ -343,6 +349,17 @@ export function useMenuController({
     [products, language]
   );
 
+  const dietFilters = useMemo(
+    () => (initialData?.dietFilter ? usefulFilters(products) : []),
+    [initialData?.dietFilter, products]
+  );
+
+  function toggleDiet(filter: DietFilterKey) {
+    setDiet((current) =>
+      current.includes(filter) ? current.filter((item) => item !== filter) : [...current, filter]
+    );
+  }
+
   const sections = useMemo(() => {
     // Arama hem seçili dilde hem Türkçe adlarda çalışır.
     const original = new Map(products.map((product) => [product.id, product]));
@@ -352,6 +369,7 @@ export function useMenuController({
         category,
         items: shownProducts.filter((product) => {
           if (product.category_id !== category.id) return false;
+          if (diet.some((filter) => !matchesDiet(product.tags, filter))) return false;
           if (!query) return true;
           const source = original.get(product.id);
           return [
@@ -367,7 +385,7 @@ export function useMenuController({
         }),
       }))
       .filter((section) => section.items.length > 0);
-  }, [shownCategories, shownProducts, products, query]);
+  }, [shownCategories, shownProducts, products, query, diet]);
 
   function chooseLanguage(next: DisplayLanguage) {
     setLanguage(next);
@@ -390,13 +408,15 @@ export function useMenuController({
   const currentLanguageShort =
     languageOptions.find((option) => option.code === language)?.short ?? "TR";
 
+  // Beslenme filtresi açıksa yalnızca uyan ürünler sayılır (boş kategori şeritte görünmez).
   const categoryCounts = useMemo(() => {
     const counts = new Map<number, number>();
     for (const product of products) {
+      if (diet.some((filter) => !matchesDiet(product.tags, filter))) continue;
       counts.set(product.category_id, (counts.get(product.category_id) ?? 0) + 1);
     }
     return counts;
-  }, [products]);
+  }, [products, diet]);
 
   // Kampanyalı ürünler: popüler işaretlenenler önce.
   const deals = useMemo(
@@ -572,6 +592,10 @@ export function useMenuController({
     loadError,
     search,
     setSearch,
+    diet,
+    setDiet,
+    toggleDiet,
+    dietFilters,
     activeCategory,
     setActiveCategory,
     openProduct,

@@ -2,7 +2,9 @@
 
 import AuroraIcon from "../AuroraIcon";
 import { formatLira } from "../aurora-utils";
-import { isRtl, type MenuStrings } from "../../../../lib/menu-i18n";
+import { isRtl, type DisplayLanguage, type MenuStrings } from "../../../../lib/menu-i18n";
+import { cardBadges, tagLabel } from "../../../../lib/product-tags";
+import { DietFilter, DietIcons } from "./ProductTags";
 import type { MenuData } from "../../../../lib/menu-data";
 import { MenuOverlays } from "./AuroraMenu";
 import { useMenuController, type MenuProduct } from "./useMenuController";
@@ -23,31 +25,43 @@ function Price({ product }: { product: MenuProduct }) {
 
 function Item({
   t,
+  language,
   product,
   quantity,
   onOpen,
   onAdd,
 }: {
   t: MenuStrings;
+  language: DisplayLanguage;
   product: MenuProduct;
   quantity: number;
   onOpen: () => void;
   // Yoksa (sadece menü) sepete ekleme düğmesi gösterilmez.
   onAdd?: () => void;
 }) {
+  const badges = cardBadges(product);
+
   return (
     <article className={styles.item}>
       <button type="button" className={styles.itemMain} onClick={onOpen}>
         <span className={styles.itemText}>
           <span className={styles.itemHead}>
-            <strong>{product.name}</strong>
+            <strong>
+              {product.name}
+              <DietIcons product={product} language={language} />
+            </strong>
             <span className={styles.leader} aria-hidden="true" />
             <Price product={product} />
           </span>
           {product.description?.trim() && <span className={styles.itemDesc}>{product.description}</span>}
-          {(product.promo || product.calories != null) && (
+          {(product.promo || badges.length > 0 || product.calories != null) && (
             <span className={styles.itemMeta}>
               {product.promo && <em>{product.promo.label}</em>}
+              {badges.map((tag) => (
+                <em key={tag} className={styles.tagMark}>
+                  {tagLabel(tag, language)}
+                </em>
+              ))}
               {product.calories != null && <span>{product.calories.toLocaleString(t.locale)} kcal</span>}
             </span>
           )}
@@ -177,6 +191,8 @@ export default function LinenMenu({
           )}
         </label>
 
+        <DietFilter menu={menu} />
+
         {restaurant.is_open === false && (
           <div className={`${styles.notice} ${styles.noticeWarn}`} role="status">
             <AuroraIcon name="clock" />
@@ -260,6 +276,7 @@ export default function LinenMenu({
               <Item
                 key={product.id}
                 t={t}
+                language={language}
                 product={product}
                 quantity={quantities.get(product.id) ?? 0}
                 onOpen={() => viewProduct(product)}

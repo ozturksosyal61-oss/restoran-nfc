@@ -1,0 +1,109 @@
+/* Ürün etiketleri: dört tasarımda ortak. Renkler menü paletinden gelir. */
+
+.icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-inline-start: 6px;
+  vertical-align: -2px;
+  color: var(--au-ok, var(--au-accent));
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.spicy {
+  gap: 0;
+  color: var(--au-danger, #c2410c);
+}
+
+.spicy svg + svg {
+  margin-inline-start: -5px;
+}
+
+/* Beslenme filtresi */
+
+.filter {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter::-webkit-scrollbar {
+  display: none;
+}
+
+.pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--au-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--au-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.pillOn {
+  border-color: var(--au-tab-on-bg);
+  background: var(--au-tab-on-bg);
+  color: var(--au-tab-on-ink);
+}
+
+.notSpicy {
+  position: relative;
+  display: inline-flex;
+}
+
+.notSpicy::after {
+  content: "";
+  position: absolute;
+  inset: 50% -2px auto;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: rotate(-40deg);
+}
+
+/* Ürün detayı */
+
+.detailItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detailItem .icon {
+  color: var(--au-ok, var(--au-accent));
+}
+
+.detailItem .spicy {
+  color: var(--au-danger, #c2410c);
+}
+
+.notice {
+  margin: 8px 0 0;
+  color: var(--au-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill {
+    transition: none;
+  }
+}

@@ -2,7 +2,9 @@
 
 import AuroraIcon from "../AuroraIcon";
 import { formatLira } from "../aurora-utils";
-import { isRtl, type MenuStrings } from "../../../../lib/menu-i18n";
+import { isRtl, type DisplayLanguage, type MenuStrings } from "../../../../lib/menu-i18n";
+import { cardBadges, tagLabel } from "../../../../lib/product-tags";
+import { DietFilter, DietIcons } from "./ProductTags";
 import type { MenuData } from "../../../../lib/menu-data";
 import { MenuOverlays } from "./AuroraMenu";
 import { useMenuController, type MenuProduct } from "./useMenuController";
@@ -23,18 +25,23 @@ function Price({ product }: { product: MenuProduct }) {
 
 function ProductCard({
   t,
+  language,
   product,
   quantity,
   onOpen,
   onAdd,
 }: {
   t: MenuStrings;
+  language: DisplayLanguage;
   product: MenuProduct;
   quantity: number;
   onOpen: () => void;
   // Yoksa (sadece menü) sepete ekleme düğmesi gösterilmez.
   onAdd?: () => void;
 }) {
+  // Fotoğraf köşesinde tek rozet: kampanya, yoksa ilk ürün etiketi.
+  const badge = product.promo ? product.promo.label : cardBadges(product, 1).map((tag) => tagLabel(tag, language))[0];
+
   return (
     <article className={`${styles.card} ${onAdd ? "" : styles.readOnly}`}>
       <button type="button" className={styles.cardMain} onClick={onOpen}>
@@ -47,10 +54,15 @@ function ProductCard({
               {product.name.trim().charAt(0).toLocaleUpperCase("tr-TR")}
             </span>
           )}
-          {product.promo && <span className={styles.cardBadge}>{product.promo.label}</span>}
+          {badge && (
+            <span className={`${styles.cardBadge} ${product.promo ? "" : styles.cardBadgeTag}`}>{badge}</span>
+          )}
         </span>
         <span className={styles.cardText}>
-          <strong>{product.name}</strong>
+          <strong>
+            {product.name}
+            <DietIcons product={product} language={language} />
+          </strong>
           {product.description?.trim() && <span className={styles.cardDesc}>{product.description}</span>}
           <span className={styles.cardPrice}>
             <Price product={product} />
@@ -192,6 +204,8 @@ export default function ZestMenu({
           )}
         </label>
 
+        <DietFilter menu={menu} />
+
         {restaurant.is_open === false && (
           <div className={`${styles.notice} ${styles.noticeWarn}`} role="status">
             <AuroraIcon name="clock" />
@@ -293,6 +307,7 @@ export default function ZestMenu({
                 <ProductCard
                   key={product.id}
                   t={t}
+                  language={language}
                   product={product}
                   quantity={quantities.get(product.id) ?? 0}
                   onOpen={() => viewProduct(product)}

@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import AuroraIcon, { type AuroraIconName } from "../AuroraIcon";
 import { formatLira, splitList, type TableRequestType } from "../aurora-utils";
-import { isRtl, localize, type MenuStrings } from "../../../../lib/menu-i18n";
+import { isRtl, localize, type DisplayLanguage, type MenuStrings } from "../../../../lib/menu-i18n";
+import { cardBadges, tagLabel } from "../../../../lib/product-tags";
+import { DietFilter, DietIcons, ProductTagDetails } from "./ProductTags";
 import type { MenuData } from "../../../../lib/menu-data";
 import styles from "./AuroraMenu.module.css";
 import {
@@ -274,6 +276,8 @@ export default function AuroraMenu({
             </label>
           </div>
 
+          <DietFilter menu={menu} className={styles.dietRow} />
+
           {restaurant.is_open === false &&
             (menuOnly ? (
               <div className={`${styles.notice} ${styles.noticeWarn}`} role="status">
@@ -385,6 +389,7 @@ export default function AuroraMenu({
                   <ProductRow
                     key={product.id}
                     t={t}
+                    language={language}
                     product={product}
                     quantity={quantities.get(product.id) ?? 0}
                     onOpen={() => {
@@ -516,6 +521,7 @@ export function MenuOverlays({ menu }: { menu: MenuController }) {
           <ProductDialog
             key={openProduct.id}
             t={t}
+            language={language}
             product={localize(openProduct, language)}
             inCart={quantities.get(openProduct.id) ?? 0}
             onClose={() => setOpenProduct(null)}
@@ -653,26 +659,42 @@ function PriceLine({ product }: { product: Product }) {
 
 function ProductRow({
   t,
+  language,
   product,
   quantity,
   onOpen,
   onAdd,
 }: {
   t: MenuStrings;
+  language: DisplayLanguage;
   product: Product;
   quantity: number;
   onOpen: () => void;
   // Yoksa (sadece menü) sepete ekleme düğmesi gösterilmez.
   onAdd?: () => void;
 }) {
+  const badges = cardBadges(product);
+
   return (
     <article
       className={`${styles.product} ${product.image_url ? "" : styles.productNoImage} ${onAdd ? "" : styles.productReadOnly}`}
     >
       <button type="button" className={styles.productMain} onClick={onOpen}>
         <span className={styles.productText}>
-          {product.promo && <span className={styles.promoBadge}>{product.promo.label}</span>}
-          <strong>{product.name}</strong>
+          {(product.promo || badges.length > 0) && (
+            <span className={styles.badgeRow}>
+              {product.promo && <span className={styles.promoBadge}>{product.promo.label}</span>}
+              {badges.map((tag) => (
+                <span key={tag} className={styles.tagBadge}>
+                  {tagLabel(tag, language)}
+                </span>
+              ))}
+            </span>
+          )}
+          <strong>
+            {product.name}
+            <DietIcons product={product} language={language} />
+          </strong>
           {product.description?.trim() && (
             <span className={styles.productDesc}>{product.description}</span>
           )}
@@ -745,12 +767,14 @@ function Sheet({
 
 function ProductDialog({
   t,
+  language,
   product,
   inCart,
   onClose,
   onAdd,
 }: {
   t: MenuStrings;
+  language: DisplayLanguage;
   product: Product;
   inCart: number;
   onClose: () => void;
@@ -825,6 +849,13 @@ function ProductDialog({
           {product.calories != null && (
             <p className={styles.kcalLine}>{t.approxCalories(product.calories.toLocaleString(t.locale))}</p>
           )}
+
+          <ProductTagDetails
+            product={product}
+            language={language}
+            kickerClass={styles.kicker}
+            listClass={styles.tags}
+          />
 
           {ingredients.length > 0 && (
             <div>

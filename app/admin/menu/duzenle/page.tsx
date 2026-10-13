@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createSupabaseServerClient } from "../../../../lib/supabase-server";
-import EditProductForm from "./EditProductForm";
+import EditProductForm, { type EditableProduct } from "./EditProductForm";
 
 export default async function EditProductPage({
   searchParams,
@@ -100,31 +100,21 @@ export default async function EditProductPage({
       (category) => category.id
     );
 
-  const {
-    data: product,
-    error: productError,
-  } = await supabase
-    .from("products")
-    .select(`
-      id,
-      category_id,
-      name,
-      description,
-      ingredients,
-      allergens,
-      price,
-      image_url,
-      is_available
-    `)
-    .eq(
-      "id",
-      Number(productId)
-    )
-    .in(
-      "category_id",
-      categoryIds
-    )
-    .single();
+  const columns =
+    "id, category_id, name, description, ingredients, allergens, price, image_url, is_available";
+
+  const readProduct = (select: string) =>
+    supabase
+      .from("products")
+      .select(select)
+      .eq("id", Number(productId))
+      .in("category_id", categoryIds)
+      .single();
+
+  // Etiket sütunları (20261031) henüz yoksa etiketsiz okunur; form etiket bölümünü göstermez.
+  let { data: product, error: productError } = await readProduct(`${columns}, tags, new_until`);
+  const tagsSupported = !productError;
+  if (productError) ({ data: product, error: productError } = await readProduct(columns));
 
   // Ürün bu restorana ait değilse gösterme
   if (
@@ -140,8 +130,9 @@ export default async function EditProductPage({
 
   return (
     <EditProductForm
-      product={product}
+      product={product as unknown as EditableProduct}
       categories={categories}
+      tagsSupported={tagsSupported}
     />
   );
 }

@@ -484,6 +484,13 @@
   font-weight: 600;
 }
 
+/* Ürün etiketi: kampanyadan sakin, çerçeveli */
+.rowTagSoft {
+  border: 1px solid var(--au-line);
+  background: transparent;
+  color: var(--au-ink);
+}
+
 .kcal {
   color: var(--au-muted);
   font-size: 12px;

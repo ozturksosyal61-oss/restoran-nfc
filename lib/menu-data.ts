@@ -3,6 +3,7 @@ import { hasPlanFeature } from "./plan";
 import { normalizeLanguages, type MenuLanguage } from "./menu-i18n";
 import { readMenuOnly } from "./restaurant-type";
 import { applyPromotions, readMenuPromotions, type ProductPromo } from "./menu-promotions";
+import { activeTags, todayInTurkey } from "./product-tags";
 
 // Aurora menüsünün verisi sunucuda TEK sorguyla hazırlanır (restoran,
 // kategoriler, ürünler, çeviriler, kalori). Böylece telefon veritabanına
@@ -23,6 +24,9 @@ export type MenuProduct = {
   calories?: number | null;
   // Aktif kampanya varsa price indirimli fiyattır.
   promo?: ProductPromo | null;
+  // Kalıcı etiketler (süresi geçen "Yeni" çıkarılmış) ve satışlardan "Çok satan".
+  tags?: string[];
+  bestSeller?: boolean;
 };
 export type MenuData = {
   restaurant: { id: number; name: string; logo_url: string | null; is_open: boolean | null };
@@ -31,9 +35,15 @@ export type MenuData = {
   categories: MenuCategory[];
   products: MenuProduct[];
   languages: MenuLanguage[];
+  // Beslenme filtresi (Pro).
+  dietFilter?: boolean;
 };
 
-type RawProduct = MenuProduct & { sort_order?: number | null; is_available?: boolean | null };
+type RawProduct = MenuProduct & {
+  sort_order?: number | null;
+  is_available?: boolean | null;
+  new_until?: string | null;
+};
 type RawCategory = MenuCategory & { sort_order?: number | null; products?: RawProduct[] | null };
 type RawRestaurant = {
   id: number;
@@ -51,6 +61,9 @@ const FULL =
   "id, name, logo_url, is_open, theme, plan, menu_only, menu_languages, " +
   "categories(id, name, sort_order, translations, products(id, category_id, name, description, price, image_url, ingredients, allergens, sort_order, is_available, translations, calories))";
 
+// Etiket sütunları (20261031) henüz yoksa FULL'a düşülür.
+const TAGGED = FULL.replace("translations, calories))", "translations, calories, tags, new_until))");
+
 const BASIC =
   "id, name, logo_url, is_open, theme, plan, " +
   "categories(id, name, sort_order, products(id, category_id, name, description, price, image_url, ingredients, allergens, sort_order, is_available))";
@@ -62,7 +75,8 @@ export async function loadMenuData(slug: string): Promise<MenuData | null> {
   const read = (columns: string) =>
     supabase.from("restaurants").select(columns).eq("slug", slug).eq("is_active", true).maybeSingle();
 
-  let { data, error } = await read(FULL);
+  let { data, error } = await read(TAGGED);
+  if (error) ({ data, error } = await read(FULL));
   const legacy = Boolean(error);
   if (error) ({ data, error } = await read(BASIC));
   if (error || !data) return null;
@@ -70,7 +84,9 @@ export async function loadMenuData(slug: string): Promise<MenuData | null> {
   const raw = data as unknown as RawRestaurant;
   if (legacy) raw.menu_only = await readMenuOnly(supabase, Number(raw.id));
   const showCalories = hasPlanFeature(raw.plan, "calories");
+  const smartTags = hasPlanFeature(raw.plan, "smart_tags");
   const categories = [...(raw.categories ?? [])].sort(bySort);
+  const today = todayInTurkey();
 
   let products: MenuProduct[] = [];
   for (const category of categories) {
@@ -87,12 +103,24 @@ export async function loadMenuData(slug: string): Promise<MenuData | null> {
         allergens: product.allergens ?? null,
         translations: product.translations,
         calories: showCalories ? product.calories ?? null : null,
+        tags: activeTags(product.tags, product.new_until, today),
       });
     }
   }
 
   // Kampanyalar: indirimli fiyat ve etiket (sipariş de bu fiyatla alınır).
   products = applyPromotions(products, await readMenuPromotions(supabase, Number(raw.id)));
+
+  // "Çok satan": son 30 günün satışları (Pro). Fonksiyon yoksa rozet çıkmaz.
+  if (smartTags && products.length > 0) {
+    const { data: best, error: bestError } = await supabase.rpc("public_menu_best_sellers", {
+      p_restaurant_id: Number(raw.id),
+    });
+    if (!bestError && Array.isArray(best)) {
+      const ids = new Set(best.map((value) => Number(value)));
+      products = products.map((product) => (ids.has(product.id) ? { ...product, bestSeller: true } : product));
+    }
+  }
 
   return {
     restaurant: { id: Number(raw.id), name: raw.name, logo_url: raw.logo_url ?? null, is_open: raw.is_open ?? null },
@@ -106,5 +134,6 @@ export async function loadMenuData(slug: string): Promise<MenuData | null> {
     })),
     products,
     languages: hasPlanFeature(raw.plan, "languages") ? normalizeLanguages(raw.menu_languages) : [],
+    dietFilter: smartTags,
   };
 }

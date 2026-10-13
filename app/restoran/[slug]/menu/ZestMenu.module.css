@@ -463,6 +463,13 @@
   font-weight: 700;
 }
 
+/* Kampanya yoksa ürün etiketi (Yeni, Şefin önerisi, Çok satan…) */
+.cardBadgeTag {
+  background: var(--au-surface);
+  color: var(--au-ink);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
 .cardText {
   display: flex;
   flex-direction: column;

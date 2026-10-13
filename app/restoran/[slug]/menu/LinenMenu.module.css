@@ -424,6 +424,11 @@
   color: var(--au-accent);
 }
 
+/* Ürün etiketi: kampanyadan sakin, mürekkep renginde */
+.itemMeta .tagMark {
+  color: var(--au-ink);
+}
+
 .thumb {
   position: relative;
   width: 64px;

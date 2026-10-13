@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/client";
 import { compressImage } from "../../../../lib/image-compress";
 import ProductFormView from "../ProductFormView";
+import { normalizeTags, type ProductTag } from "../../../../lib/product-tags";
+
+export type EditableProduct = Product;
 
 type Product = {
   id: number;
@@ -16,6 +19,8 @@ type Product = {
   price: number;
   image_url: string | null;
   is_available: boolean;
+  tags?: string[] | null;
+  new_until?: string | null;
 };
 
 type Category = {
@@ -26,9 +31,12 @@ type Category = {
 export default function EditProductForm({
   product,
   categories,
+  tagsSupported = false,
 }: {
   product: Product;
   categories: Category[];
+  // Etiket sütunları veritabanında varsa.
+  tagsSupported?: boolean;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -58,6 +66,10 @@ export default function EditProductForm({
   const [isAvailable, setIsAvailable] = useState(
     product.is_available !== false
   );
+
+  const [tags, setTags] = useState<ProductTag[]>(normalizeTags(product.tags));
+
+  const [newUntil, setNewUntil] = useState(product.new_until || "");
 
   const [image, setImage] = useState<File | null>(null);
 
@@ -167,6 +179,13 @@ export default function EditProductForm({
 
             is_available:
               isAvailable,
+
+            ...(tagsSupported
+              ? {
+                  tags,
+                  new_until: tags.includes("new") && newUntil ? newUntil : null,
+                }
+              : {}),
           })
           .eq(
             "id",
@@ -268,6 +287,10 @@ export default function EditProductForm({
       onImage={setImage}
       isAvailable={isAvailable}
       onAvailable={setIsAvailable}
+      tags={tagsSupported ? tags : undefined}
+      onTags={tagsSupported ? setTags : undefined}
+      newUntil={newUntil}
+      onNewUntil={tagsSupported ? setNewUntil : undefined}
       error={error}
       onError={setError}
       loading={loading}

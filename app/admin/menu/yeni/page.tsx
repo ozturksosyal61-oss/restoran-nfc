@@ -5,6 +5,7 @@ import ProductFormView from "../ProductFormView";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/client";
 import { compressImage } from "../../../../lib/image-compress";
+import type { ProductTag } from "../../../../lib/product-tags";
 
 type Category = {
   id: number;
@@ -26,6 +27,11 @@ export default function NewProductPage() {
 
   const [image, setImage] = useState<File | null>(null);
 
+  // Etiket sütunları (20261031) varsa etiket bölümü gösterilir.
+  const [tagsSupported, setTagsSupported] = useState(false);
+  const [tags, setTags] = useState<ProductTag[]>([]);
+  const [newUntil, setNewUntil] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -46,6 +52,9 @@ export default function NewProductPage() {
       }
 
       setCategories(data || []);
+
+      const { error: tagsError } = await supabase.from("products").select("tags").limit(1);
+      setTagsSupported(!tagsError);
     }
 
     loadCategories();
@@ -137,6 +146,13 @@ export default function NewProductPage() {
             price: Number(price),
 
             image_url: imageUrl,
+
+            ...(tagsSupported
+              ? {
+                  tags,
+                  new_until: tags.includes("new") && newUntil ? newUntil : null,
+                }
+              : {}),
           });
 
       if (insertError) {
@@ -195,6 +211,10 @@ export default function NewProductPage() {
       onPrice={setPrice}
       image={image}
       onImage={setImage}
+      tags={tagsSupported ? tags : undefined}
+      onTags={tagsSupported ? setTags : undefined}
+      newUntil={newUntil}
+      onNewUntil={tagsSupported ? setNewUntil : undefined}
       error={error}
       onError={setError}
       loading={loading}

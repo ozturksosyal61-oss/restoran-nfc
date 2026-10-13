@@ -18,6 +18,7 @@ export type PlanFeature =
   | "feedback"
   | "menu_stats"
   | "campaigns"
+  | "product_tags"
   // Pro
   | "nfc"
   | "tables"
@@ -26,6 +27,7 @@ export type PlanFeature =
   | "analytics"
   | "languages"
   | "table_games"
+  | "smart_tags"
   // Premium
   | "online_payment"
   | "multi_user"
@@ -56,6 +58,7 @@ export const FEATURE_INFO: Record<PlanFeature, { plan: Plan; label: string }> = 
   feedback: { plan: "starter", label: "Geri bildirim ve Google yorum yönlendirmesi" },
   menu_stats: { plan: "starter", label: "Menü istatistikleri" },
   campaigns: { plan: "starter", label: "Kampanyalar: indirimli fiyat ve kampanya etiketi" },
+  product_tags: { plan: "starter", label: "Ürün etiketleri: Yeni, Şefin önerisi, Acılı, Vegan, Glutensiz…" },
 
   nfc: { plan: "pro", label: "Masaya özel QR ve NFC" },
   tables: { plan: "pro", label: "Masa yönetimi" },
@@ -64,6 +67,7 @@ export const FEATURE_INFO: Record<PlanFeature, { plan: Plan; label: string }> = 
   analytics: { plan: "pro", label: "Satış raporları ve dönem özeti" },
   languages: { plan: "pro", label: "Çok dilli menü" },
   table_games: { plan: "pro", label: "Masa oyunları: sipariş beklerken masaca oyun" },
+  smart_tags: { plan: "pro", label: "Otomatik \"Çok satan\" rozeti ve menüde beslenme filtresi" },
 
   online_payment: { plan: "premium", label: "Masadan kartla ödeme, hesap bölüşme, bahşiş" },
   multi_user: { plan: "premium", label: "Çalışanlar, garson ve mutfak ekranları" },

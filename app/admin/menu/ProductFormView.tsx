@@ -4,6 +4,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import AdminIcon from "../AdminIcon";
 import { useAdminMenuOnly } from "../AdminShell";
+import ProductTagPicker from "./ProductTagPicker";
+import type { ProductTag } from "../../../lib/product-tags";
 
 // Yeni ürün ve ürün düzenleme sayfalarının ortak form görünümü.
 // Kaydetme mantığı her sayfanın kendisinde kalır.
@@ -33,6 +35,10 @@ export default function ProductFormView({
   onImage,
   isAvailable,
   onAvailable,
+  tags,
+  onTags,
+  newUntil = "",
+  onNewUntil,
   error,
   onError,
   loading,
@@ -57,6 +63,11 @@ export default function ProductFormView({
   onImage: (file: File | null) => void;
   isAvailable?: boolean;
   onAvailable?: (value: boolean) => void;
+  // Yoksa (etiket sütunları henüz eklenmemiş) etiket bölümü gösterilmez.
+  tags?: ProductTag[];
+  onTags?: (tags: ProductTag[]) => void;
+  newUntil?: string;
+  onNewUntil?: (value: string) => void;
   error: string;
   onError: (message: string) => void;
   loading: boolean;
@@ -246,6 +257,21 @@ export default function ProductFormView({
                   : "JPG, PNG veya WEBP · otomatik küçültülür · kare fotoğraf en iyi görünür"}
               </span>
             </section>
+
+            {tags && onTags && onNewUntil && (
+              <section className="adm-card" aria-labelledby="urun-etiket">
+                <div className="adm-card-head">
+                  <h2 id="urun-etiket">Etiketler</h2>
+                </div>
+                <ProductTagPicker
+                  tags={tags}
+                  onTags={onTags}
+                  newUntil={newUntil}
+                  onNewUntil={onNewUntil}
+                  disabled={loading}
+                />
+              </section>
+            )}
 
             {onAvailable && (
               <section className="adm-card" aria-label="Menüde görünürlük">

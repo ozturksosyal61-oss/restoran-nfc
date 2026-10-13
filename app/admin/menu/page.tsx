@@ -4,6 +4,7 @@ import Link from "next/link";
 import ProductMoveButton from "./ProductMoveButton";
 import AdminIcon from "../AdminIcon";
 import PhotoOptimizer from "./PhotoOptimizer";
+import { activeTags, tagLabel } from "../../../lib/product-tags";
 
 export default async function AdminMenuPage() {
   const supabase = await createSupabaseServerClient();
@@ -54,16 +55,32 @@ export default async function AdminMenuPage() {
      ÜRÜNLER
      ===================================================== */
 
-  const { data: products } =
-    categoryIds.length > 0
-      ? await supabase
-          .from("products")
-          .select(
-            "id, category_id, name, description, price, image_url, ingredients, allergens, is_available, sort_order"
-          )
-          .in("category_id", categoryIds)
-          .order("sort_order", { ascending: true })
-      : { data: [] };
+  const productColumns =
+    "id, category_id, name, description, price, image_url, ingredients, allergens, is_available, sort_order";
+
+  const readProducts = (columns: string) =>
+    supabase.from("products").select(columns).in("category_id", categoryIds).order("sort_order", { ascending: true });
+
+  type ProductRow = {
+    id: number;
+    category_id: number;
+    name: string;
+    description: string | null;
+    price: number;
+    image_url: string | null;
+    is_available: boolean | null;
+    sort_order: number;
+    tags?: string[] | null;
+    new_until?: string | null;
+  };
+
+  // Etiket sütunları (20261031) henüz yoksa etiketsiz okunur.
+  let products: ProductRow[] = [];
+  if (categoryIds.length > 0) {
+    let result = await readProducts(`${productColumns}, tags, new_until`);
+    if (result.error) result = await readProducts(productColumns);
+    products = (result.data ?? []) as unknown as ProductRow[];
+  }
 
   /* =====================================================
      EKRAN
@@ -88,6 +105,10 @@ export default async function AdminMenuPage() {
           <Link className="adm-btn" href="/admin/menu/kategori">
             <AdminIcon name="category" size={16} />
             Kategoriler
+          </Link>
+          <Link className="adm-btn" href="/admin/menu/etiketler">
+            <AdminIcon name="promo" size={16} />
+            Etiketler
           </Link>
           <Link className="adm-btn adm-btn-primary" href="/admin/menu/yeni">
             <AdminIcon name="plus" size={16} />
@@ -205,6 +226,7 @@ export default async function AdminMenuPage() {
                       const previousProduct = categoryProducts[productIndex - 1];
                       const nextProduct = categoryProducts[productIndex + 1];
                       const hidden = product.is_available === false;
+                      const tags = activeTags(product.tags, product.new_until);
 
                       return (
                         <div key={product.id} className={`adm-row adm-product ${hidden ? "is-hidden" : ""}`}>
@@ -223,6 +245,13 @@ export default async function AdminMenuPage() {
                               {hidden && <span className="adm-badge s-delivered">Gizli</span>}
                             </strong>
                             {product.description && <small>{product.description}</small>}
+                            {tags.length > 0 && (
+                              <span className="adm-row-tags">
+                                {tags.map((tag) => (
+                                  <span key={tag}>{tagLabel(tag)}</span>
+                                ))}
+                              </span>
+                            )}
                           </span>
 
                           <span className="adm-num adm-product-price">
