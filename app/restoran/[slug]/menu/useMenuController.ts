@@ -264,7 +264,7 @@ export function useMenuController({
         let nextTable: Table | null = null;
 
         if (token) {
-          const { data: tableData } = await supabase.rpc("get_public_table", {
+          const { data: tableData, error: tableError } = await supabase.rpc("get_public_table", {
             p_restaurant_id: restaurantData.id,
             p_public_token: token,
           });
@@ -279,7 +279,8 @@ export function useMenuController({
             } catch {
               // Tarayıcı depolaması kapalı olabilir.
             }
-          } else if (urlToken) {
+          } else if (!tableError) {
+            // Kod geçersiz ya da masa oturumu sona ermiş (süre doldu / hesap kapandı).
             try {
               window.localStorage.removeItem("ozt_table_token");
             } catch {

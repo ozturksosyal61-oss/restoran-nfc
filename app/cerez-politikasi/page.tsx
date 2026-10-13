@@ -50,8 +50,8 @@ export default function CookiePolicyPage() {
                     </tr>
                     <tr>
                       <td>ozt_table_token</td>
-                      <td>Okuttuğunuz masanın hatırlanması</td>
-                      <td>Siz silene kadar</td>
+                      <td>Okuttuğunuz masanın hatırlanması (süreli masa oturumu kodu)</td>
+                      <td>Kod en geç 16 saatte, hesap kapanınca ya da 4 saat kullanılmayınca geçersiz olur; kayıt siz silene kadar kalır</td>
                     </tr>
                     <tr>
                       <td>ozt_menu_language</td>
