@@ -1,38 +1,12 @@
 import { redirect } from "next/navigation";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminRestaurant } from "../../../lib/admin-restaurant";
 import { hasPlanFeature } from "../../../lib/plan";
-import { buildInsights, type FeedbackSummary } from "../../../lib/report-insights";
+import { buildInsights } from "../../../lib/report-insights";
 import { resolveSummary, summaryOptions, type SummaryKind } from "../../../lib/report-periods";
 import { readMenuOnly } from "../../../lib/restaurant-type";
-import { loadMenuStats, loadSalesReport } from "../raporlar/data";
+import { loadFeedback, loadMenuStats, loadSalesReport } from "../raporlar/data";
 import SummaryView from "./SummaryView";
-
-// Dönemdeki müşteri geri bildirimleri; tablo yoksa özet bu bölümü atlar.
-async function loadFeedback(
-  supabase: SupabaseClient,
-  restaurantId: number,
-  from: Date,
-  to: Date
-): Promise<FeedbackSummary | null> {
-  const { data, error } = await supabase
-    .from("customer_feedback")
-    .select("rating, went_to_google, is_resolved")
-    .eq("restaurant_id", restaurantId)
-    .gte("created_at", from.toISOString())
-    .lt("created_at", to.toISOString())
-    .limit(5000);
-
-  if (error) return null;
-
-  const rows = data ?? [];
-  return {
-    count: rows.length,
-    average: rows.length > 0 ? rows.reduce((sum, row) => sum + Number(row.rating), 0) / rows.length : 0,
-    toGoogle: rows.filter((row) => row.went_to_google).length,
-    openComplaints: rows.filter((row) => Number(row.rating) <= 3 && !row.is_resolved).length,
-  };
-}
+import ReportEmailCard from "./ReportEmailCard";
 
 export default async function SummaryPage({
   searchParams,
@@ -49,9 +23,11 @@ export default async function SummaryPage({
   const options = summaryOptions(kind);
   const period = resolveSummary(kind, params.donem);
 
-  const [{ data: restaurant }, menuOnly] = await Promise.all([
+  const [{ data: restaurant }, menuOnly, { data: reportSettings, error: reportSettingsError }] = await Promise.all([
     supabase.from("restaurants").select("name, plan").eq("id", restaurantId).maybeSingle(),
     readMenuOnly(supabase, restaurantId),
+    // Haftalık rapor e-postası (20261101); sütunlar yoksa kart gösterilmez.
+    supabase.from("restaurants").select("report_email_enabled, report_email").eq("id", restaurantId).maybeSingle(),
   ]);
 
   const analytics = hasPlanFeature(restaurant?.plan, "analytics");
@@ -81,6 +57,15 @@ export default async function SummaryPage({
       previousMenu={previousMenu}
       feedback={feedback}
       insights={insights}
+      emailCard={
+        !reportSettingsError && reportSettings ? (
+          <ReportEmailCard
+            enabled={reportSettings.report_email_enabled !== false}
+            email={(reportSettings.report_email as string | null) ?? null}
+            loginEmail={admin.user.email ?? null}
+          />
+        ) : null
+      }
     />
   );
 }

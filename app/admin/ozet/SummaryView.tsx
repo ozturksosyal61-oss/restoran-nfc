@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import AdminIcon, { type AdminIconName } from "../AdminIcon";
 import type { FeedbackSummary, Insight } from "../../../lib/report-insights";
 import type { SummaryKind, SummaryPeriod } from "../../../lib/report-periods";
@@ -64,6 +65,7 @@ export default function SummaryView({
   previousMenu,
   feedback,
   insights,
+  emailCard,
 }: {
   restaurantName: string;
   kind: SummaryKind;
@@ -77,6 +79,8 @@ export default function SummaryView({
   previousMenu: MenuStats | null;
   feedback: FeedbackSummary | null;
   insights: Insight[];
+  // Haftalık rapor e-postası ayarı (sütunlar yoksa gösterilmez).
+  emailCard?: ReactNode;
 }) {
   const kindWord = kind === "ay" ? "Aylık" : "Haftalık";
   const averageOrder = sales && sales.orders > 0 ? sales.revenue / sales.orders : 0;
@@ -222,6 +226,8 @@ export default function SummaryView({
           />
         )}
       </div>
+
+      {emailCard}
 
       <p className="adm-hint adm-rep-note">
         <AdminIcon name="info" size={14} />

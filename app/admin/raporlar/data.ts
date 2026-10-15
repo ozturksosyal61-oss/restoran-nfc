@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { FeedbackSummary } from "../../../lib/report-insights";
 
 export type SalesReport = {
   revenue: number;
@@ -80,3 +81,29 @@ export const PAYMENT_LABELS: Record<string, string> = {
 
 // İş günü 05:00'te başladığı için saatler 05'ten sıralanır.
 export const BUSINESS_HOURS = [...Array.from({ length: 19 }, (_, i) => i + 5), 0, 1, 2, 3, 4];
+
+// Dönemdeki müşteri geri bildirimleri; tablo yoksa özet bu bölümü atlar.
+export async function loadFeedback(
+  supabase: SupabaseClient,
+  restaurantId: number,
+  from: Date,
+  to: Date
+): Promise<FeedbackSummary | null> {
+  const { data, error } = await supabase
+    .from("customer_feedback")
+    .select("rating, went_to_google, is_resolved")
+    .eq("restaurant_id", restaurantId)
+    .gte("created_at", from.toISOString())
+    .lt("created_at", to.toISOString())
+    .limit(5000);
+
+  if (error) return null;
+
+  const rows = data ?? [];
+  return {
+    count: rows.length,
+    average: rows.length > 0 ? rows.reduce((sum, row) => sum + Number(row.rating), 0) / rows.length : 0,
+    toGoogle: rows.filter((row) => row.went_to_google).length,
+    openComplaints: rows.filter((row) => Number(row.rating) <= 3 && !row.is_resolved).length,
+  };
+}
