@@ -60,7 +60,7 @@ export default async function SummaryPage({
       emailCard={
         !reportSettingsError && reportSettings ? (
           <ReportEmailCard
-            enabled={reportSettings.report_email_enabled !== false}
+            enabled={reportSettings.report_email_enabled === true}
             email={(reportSettings.report_email as string | null) ?? null}
             loginEmail={admin.user.email ?? null}
           />

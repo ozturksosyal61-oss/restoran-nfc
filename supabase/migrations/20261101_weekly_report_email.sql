@@ -3,7 +3,7 @@
 --
 --   * Her pazartesi 09:00'da (Vercel zamanlanmış görevi, /api/rapor/haftalik)
 --     restoran sahibine geçen haftanın özeti e-postayla gider.
---   * restaurants.report_email_enabled: rapor açık mı (varsayılan açık;
+--   * restaurants.report_email_enabled: rapor açık mı (varsayılan kapalı: 20261102;
 --     e-postadaki "almak istemiyorum" bağlantısı ve panel kapatır).
 --   * restaurants.report_email: alıcı; boşsa yöneticinin giriş e-postası.
 --   * restaurants.report_email_sent_week: son gönderilen haftanın pazartesisi

@@ -12,7 +12,7 @@ export async function findReportSubscription(token: string | undefined | null) {
     .select("id, name, report_email_enabled")
     .eq("report_unsubscribe_token", token)
     .maybeSingle();
-  return data ? { id: Number(data.id), name: String(data.name), enabled: data.report_email_enabled !== false } : null;
+  return data ? { id: Number(data.id), name: String(data.name), enabled: data.report_email_enabled === true } : null;
 }
 
 export async function stopWeeklyReport(token: string | undefined | null) {

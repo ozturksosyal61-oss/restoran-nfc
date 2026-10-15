@@ -22,7 +22,7 @@ export default function ReportEmailCard({
       <div className="adm-card-head">
         <div>
           <h2 id="rapor-eposta">Haftalık rapor e-postası</h2>
-          <p>Her pazartesi sabah geçen haftanın özeti e-postanıza gelir.</p>
+          <p>Açarsanız her pazartesi sabah geçen haftanın özeti e-postanıza gelir.</p>
         </div>
       </div>
 
