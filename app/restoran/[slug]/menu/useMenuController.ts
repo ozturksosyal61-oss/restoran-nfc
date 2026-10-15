@@ -6,7 +6,6 @@ import { createClient } from "../../../../lib/supabase/client";
 import {
   readLastOrderId,
   readSavedTableToken,
-  sendTableRequest,
   type TableRequestType,
 } from "../aurora-utils";
 import {
@@ -23,6 +22,7 @@ import type { MenuData } from "../../../../lib/menu-data";
 import { applyPromotions, readMenuPromotions, type ProductPromo } from "../../../../lib/menu-promotions";
 import { matchesDiet, usefulFilters, type DietFilterKey } from "../../../../lib/product-tags";
 import { useCart } from "./CartContext";
+import { useTableService } from "../TableService";
 
 // Müşteri menüsünün tasarımdan bağımsız mantığı: veri, masa kodu, dil,
 // arama, kampanyalar, sepet ve garson / hesap çağrısı. Her menü tasarımı
@@ -86,6 +86,7 @@ export type MenuProduct = {
   // Kalıcı etiketler ve satışlardan "Çok satan" (lib/product-tags).
   tags?: string[];
   bestSeller?: boolean;
+  allergen_codes?: string[] | null;
 };
 
 export type MenuRestaurant = {
@@ -149,10 +150,14 @@ export function useMenuController({
   const [language, setLanguage] = useState<DisplayLanguage>("tr");
   const t = menuStrings(language);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [pendingRequest, setPendingRequest] = useState<TableRequestType | null>(null);
-  const [sentRequests, setSentRequests] = useState<TableRequestType[]>([]);
 
   const chipsRef = useRef<HTMLDivElement>(null);
+
+  const service = useTableService(restaurant ? Number(restaurant.id) : null, table?.token ?? null);
+  const pendingRequest = service.sending;
+  const sentRequests = (["garson", "hesap"] as const).filter((type) => service.info(type).active);
+  // Aktif çağrı 3 dakika dolmadan yeniden gönderilemez.
+  const blockedRequests = sentRequests.filter((type) => !service.info(type).canCall);
 
   // Yükleme bittiğinde sepetin güncel hâline bakmak için.
   const cartRef = useRef(cart);
@@ -546,20 +551,19 @@ export function useMenuController({
     if (restaurant) trackProductView(restaurant.id, product.id, language);
   }
 
+  // Garson / hesap: durum sunucudan (TableService); aktif çağrı varken
+  // 3 dakika tekrar gönderilmez, göndermeden önce onay sorulur.
   async function requestService(type: TableRequestType) {
-    if (!restaurant || !table || pendingRequest) return;
+    if (!restaurant || !table) return;
 
-    setPendingRequest(type);
-    const ok = await sendTableRequest(restaurant.id, table.token, type);
-    setPendingRequest(null);
+    const result = await service.request(type, `${type === "garson" ? t.callWaiter : t.askBill}?`);
 
-    if (ok) {
-      setSentRequests((current) => (current.includes(type) ? current : [...current, type]));
+    if (result === "sent") {
       setToast({
         text: type === "garson" ? t.waiterSent : t.billSent,
         tone: "ok",
       });
-    } else {
+    } else if (result === "failed") {
       setToast({
         text: t.requestFailed,
         tone: "error",
@@ -610,6 +614,7 @@ export function useMenuController({
     setToast,
     pendingRequest,
     sentRequests,
+    blockedRequests,
     chipsRef,
     query,
     shownCategories,

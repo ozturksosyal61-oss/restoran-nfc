@@ -5,6 +5,7 @@ import AuroraIcon, { type AuroraIconName } from "../AuroraIcon";
 import { formatLira, splitList, type TableRequestType } from "../aurora-utils";
 import { isRtl, localize, type DisplayLanguage, type MenuStrings } from "../../../../lib/menu-i18n";
 import { cardBadges, tagLabel } from "../../../../lib/product-tags";
+import { allergenLabel, normalizeAllergens } from "../../../../lib/allergens";
 import { DietFilter, DietIcons, ProductTagDetails } from "./ProductTags";
 import type { MenuData } from "../../../../lib/menu-data";
 import styles from "./AuroraMenu.module.css";
@@ -51,6 +52,7 @@ export default function AuroraMenu({
     t,
     pendingRequest,
     sentRequests,
+    blockedRequests,
     chipsRef,
     query,
     shownCategories,
@@ -104,6 +106,7 @@ export default function AuroraMenu({
     table,
     pendingRequest,
     sentRequests,
+    blockedRequests,
     onRequest: requestService,
   };
 
@@ -491,6 +494,7 @@ export function MenuOverlays({ menu }: { menu: MenuController }) {
     setSheet,
     pendingRequest,
     sentRequests,
+    blockedRequests,
     quantities,
     addProduct,
     requestService,
@@ -575,6 +579,7 @@ export function MenuOverlays({ menu }: { menu: MenuController }) {
                   doneTitle={t.waiterCalled}
                   done={sentRequests.includes("garson")}
                   pending={pendingRequest === "garson"}
+                  blocked={blockedRequests.includes("garson")}
                   onClick={() => requestService("garson")}
                 />
                 <ServiceItem
@@ -585,6 +590,7 @@ export function MenuOverlays({ menu }: { menu: MenuController }) {
                   doneTitle={t.billAsked}
                   done={sentRequests.includes("hesap")}
                   pending={pendingRequest === "hesap"}
+                  blocked={blockedRequests.includes("hesap")}
                   onClick={() => requestService("hesap")}
                 />
                 {lastOrderHref && (
@@ -783,7 +789,10 @@ function ProductDialog({
 }) {
   const [quantity, setQuantity] = useState(1);
   const ingredients = splitList(product.ingredients);
-  const allergens = splitList(product.allergens);
+  // Kodlar varsa her dilde sözlükten; yoksa (eski veri) serbest metin.
+  const allergens = Array.isArray(product.allergen_codes)
+    ? normalizeAllergens(product.allergen_codes).map((code) => allergenLabel(code, language))
+    : splitList(product.allergens);
   const price = Number(product.price);
 
   return (
@@ -1052,6 +1061,7 @@ function ServiceItem({
   doneTitle,
   done,
   pending,
+  blocked,
   onClick,
 }: {
   t: MenuStrings;
@@ -1061,6 +1071,8 @@ function ServiceItem({
   doneTitle: string;
   done: boolean;
   pending: boolean;
+  // Aktif çağrı 3 dakika dolmadan yeniden gönderilemez.
+  blocked: boolean;
   onClick: () => void;
 }) {
   return (
@@ -1068,7 +1080,7 @@ function ServiceItem({
       type="button"
       className={`${styles.serviceItem} ${done ? styles.serviceDone : ""}`}
       onClick={onClick}
-      disabled={pending}
+      disabled={pending || blocked}
     >
       <span className={styles.serviceTile}>
         <AuroraIcon name={done ? "check" : icon} />
@@ -1113,12 +1125,14 @@ function SideServiceButtons({
   table,
   pendingRequest,
   sentRequests,
+  blockedRequests,
   onRequest,
 }: {
   t: MenuStrings;
   table: Table | null;
   pendingRequest: TableRequestType | null;
   sentRequests: TableRequestType[];
+  blockedRequests: TableRequestType[];
   onRequest: (type: TableRequestType) => void;
 }) {
   if (!table) {
@@ -1140,7 +1154,7 @@ function SideServiceButtons({
             type="button"
             className={`${styles.sideButton} ${done ? styles.sideButtonDone : ""}`}
             onClick={() => onRequest(button.type)}
-            disabled={pendingRequest === button.type}
+            disabled={pendingRequest === button.type || blockedRequests.includes(button.type)}
           >
             <AuroraIcon name={done ? "check" : button.icon} size={16} />
             {pendingRequest === button.type ? t.sending : done ? button.done : button.title}

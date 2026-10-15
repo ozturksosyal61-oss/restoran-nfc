@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import AuroraIcon from "../AuroraIcon";
-import { formatLira, sendTableRequest } from "../aurora-utils";
+import { formatLira } from "../aurora-utils";
+import { serviceStatusText, useTableService } from "../TableService";
 import styles from "../AuroraFlow.module.css";
 import { orderNumber } from "../../../../lib/order-number";
 import type { OnlinePayment } from "./pay-utils";
@@ -30,10 +31,12 @@ type Bill = {
   orders: BillOrder[];
   order_total: number;
   due_total: number;
+  // İşletmenin henüz onaylamadığı siparişlerin toplamı (ödenemez).
+  unconfirmed_total?: number;
 };
 
 const STATUS_TEXT: Record<string, string> = {
-  pending: "Bekliyor",
+  pending: "Onay bekliyor",
   accepted: "Onaylandı",
   preparing: "Hazırlanıyor",
   ready: "Hazır",
@@ -66,8 +69,11 @@ export default function AuroraBill({
   onRetry: () => void;
   online?: OnlinePayment;
 }) {
-  const [requesting, setRequesting] = useState(false);
-  const [requested, setRequested] = useState(false);
+  // Hesap isteği durumu sunucudan; diğer ekranlarla aynı.
+  const service = useTableService(restaurantId, tableToken || null);
+  const billRequest = service.info("hesap");
+  const requesting = service.sending === "hesap";
+  const requested = billRequest.active;
   const [requestError, setRequestError] = useState("");
 
   const tableQuery = tableToken ? `?masa=${encodeURIComponent(tableToken)}` : "";
@@ -76,15 +82,11 @@ export default function AuroraBill({
   const menuHref = `${base}/menu${tableQuery}`;
 
   async function requestBill() {
-    if (!restaurantId || !tableToken || requesting) return;
-
-    setRequesting(true);
     setRequestError("");
-    const ok = await sendTableRequest(restaurantId, tableToken, "hesap");
-    setRequesting(false);
-
-    if (ok) setRequested(true);
-    else setRequestError("Hesap isteği gönderilemedi. Tekrar deneyin ya da bir görevliye seslenin.");
+    const result = await service.request("hesap");
+    if (result === "failed") {
+      setRequestError("Hesap isteği gönderilemedi. Tekrar deneyin ya da bir görevliye seslenin.");
+    }
   }
 
   const header = (
@@ -133,7 +135,12 @@ export default function AuroraBill({
     );
   }
 
-  if (!bill?.open || bill.orders.length === 0) {
+  // Reddedilen siparişler hesapta görünmez; onay bekleyenler ayrı ve ödenemez.
+  const orders = (bill?.orders ?? []).filter((order) => order.status !== "cancelled");
+  const confirmed = orders.filter((order) => order.status !== "pending");
+  const awaiting = orders.filter((order) => order.status === "pending");
+
+  if (!bill?.open || orders.length === 0) {
     return (
       <div className={styles.page}>
         <div className={styles.column}>
@@ -154,9 +161,15 @@ export default function AuroraBill({
   }
 
   // Kartla yapılan kısmi ödemeler henüz siparişe işlenmez; kalan tutardan düşülür.
+  // Yalnızca onaylanmış siparişler ödenir (veritabanı eskiyse burada da süzülür).
   const onlinePaid = online?.paid ?? 0;
-  const due = online ? Math.min(bill.due_total, online.due) : bill.due_total;
-  const paid = Math.max(0, bill.order_total - due);
+  const confirmedDue = confirmed
+    .filter((order) => !["paid", "refunded"].includes(order.payment_status))
+    .reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
+  const confirmedTotal = confirmed.reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
+  const awaitingTotal = awaiting.reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
+  const due = Math.min(bill.due_total, confirmedDue, online ? online.due : Infinity);
+  const paid = Math.max(0, confirmedTotal - due);
   const canPayOnline = Boolean(online?.enabled && tableToken) && due > 0;
   const canRequest = Boolean(restaurantId && tableToken) && due > 0;
   const payHref = `${base}/odeme/kart${tableQuery}`;
@@ -179,10 +192,10 @@ export default function AuroraBill({
               Masa <b>{bill.table_number}</b>
             </span>
             <span>
-              <b>{bill.orders.length}</b> sipariş
+              <b>{confirmed.length}</b> sipariş
             </span>
             <span>
-              Toplam <b>{formatLira(bill.order_total)}</b>
+              Toplam <b>{formatLira(confirmedTotal)}</b>
             </span>
             {paid > 0 && (
               <span>
@@ -197,11 +210,23 @@ export default function AuroraBill({
           </div>
         </section>
 
-        {bill.orders.map((order) => {
+        {[...confirmed, ...awaiting].map((order, index) => {
           const isPaid = order.payment_status === "paid";
+          const isAwaiting = order.status === "pending";
+          const firstAwaiting = isAwaiting && index === confirmed.length;
 
           return (
-            <section key={order.id} className={styles.block} aria-label={`Sipariş ${order.id}`}>
+            <div key={order.id} style={{ display: "contents" }}>
+            {firstAwaiting && (
+              <div className={styles.awaitingHead}>
+                <span className={styles.kicker}>Onay bekliyor · {formatLira(awaitingTotal)}</span>
+                <small>Bu siparişler işletme onayladıktan sonra hesaba eklenir ve ödenebilir.</small>
+              </div>
+            )}
+            <section
+              className={`${styles.block} ${isAwaiting ? styles.blockAwaiting : ""}`}
+              aria-label={`Sipariş ${orderNumber(order)}`}
+            >
               <div className={styles.orderHead}>
                 <span>
                   <strong>Sipariş {orderNumber(order)}</strong>
@@ -231,6 +256,7 @@ export default function AuroraBill({
 
               {order.note && <p className={styles.orderNote}>Not: {order.note}</p>}
             </section>
+            </div>
           );
         })}
 
@@ -260,13 +286,13 @@ export default function AuroraBill({
               type="button"
               className={requested || canPayOnline ? `${styles.ghost} ${requested ? styles.ghostDone : ""}` : styles.cta}
               onClick={requestBill}
-              disabled={requesting}
+              disabled={requesting || (requested && !billRequest.canCall)}
             >
               <AuroraIcon name={requested ? "check" : "receipt"} />
               {requesting
                 ? "Gönderiliyor…"
                 : requested
-                  ? "Hesap istendi"
+                  ? serviceStatusText("hesap", billRequest)
                   : canPayOnline
                     ? "Garsona öde"
                     : "Hesabı iste"}

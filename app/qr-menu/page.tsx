@@ -114,9 +114,9 @@ const content: SeoContent = {
         {
           kind: "list",
           items: [
-            "**Başlangıç:** Sipariş almayan kafe ve restoranlar için QR dijital menü; kampanyalar, ürün etiketleri, menü istatistikleri ve Google yorum yönlendirmesi.",
+            "**Başlangıç:** Sipariş almayan kafe ve restoranlar için QR dijital menü; kampanyalar, ürün etiketleri, kalori ve alerjen bilgisi, menü istatistikleri ve Google yorum yönlendirmesi.",
             "**Pro:** Başlangıç'taki her şeye ek olarak masaya özel QR ve NFC, masadan sipariş, garson çağırma, hesap isteme, satış raporları, çok dilli menü ve masa oyunları.",
-            "**Premium:** Pro'daki her şeye ek olarak masadan kartla ödeme, garson ve mutfak ekranları, Excel rapor, kalori bilgisi ve yapay zekâ özellikleri.",
+            "**Premium:** Pro'daki her şeye ek olarak masadan kartla ödeme, garson ve mutfak ekranları, Excel rapor ve yapay zekâ özellikleri.",
           ],
         },
         { kind: "link", text: "**[Paketleri ve fiyatları incele](/#paketler)**" },

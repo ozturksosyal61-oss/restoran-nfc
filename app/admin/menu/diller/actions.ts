@@ -10,6 +10,7 @@ import {
   isMenuLanguage,
   languageMeta,
   normalizeLanguages,
+  isTranslationCurrent,
   readTranslations,
   sourceFingerprint,
   type MenuLanguage,
@@ -112,16 +113,51 @@ type TranslatedItem = {
   name: string;
   description?: string;
   ingredients?: string;
-  allergens?: string;
 };
+
+// Modelin çeviriye karıştırdığı not / düşünce metinleri ("wait", "Let's",
+// "translated", "Im Original steht", "Allergens:" vb.). Bunlardan birini
+// içeren çeviri kaydedilmez.
+const JUNK = /(allerg|alerjen|\bwait\b|let'?s\b|context|translat|übersetz|original|strictly|note:|\|)/i;
+
+function jobKey(job: Job) {
+  return `${job.kind === "category" ? "c" : "p"}${job.row.id}`;
+}
+
+// Çeviri kaynakla uyumlu mu: zorunlu alan dolu, not sızmamış, aşırı uzun değil.
+// Alerjenler çevrilmez (lib/allergens sabit sözlüğü kullanılır).
+function cleanTranslation(job: Job, item: TranslatedItem | undefined): TranslatedFields | null {
+  const name = item?.name?.trim();
+  if (!name) return null;
+
+  const fields: [keyof TranslatedItem, string | null | undefined][] = [
+    ["name", job.row.name],
+    ["description", job.row.description],
+    ["ingredients", job.row.ingredients],
+  ];
+
+  for (const [field, source] of fields) {
+    const value = typeof item?.[field] === "string" ? (item[field] as string).trim() : "";
+    if (!value) continue;
+    if (JUNK.test(value)) return null;
+    const sourceLength = source?.trim().length ?? 0;
+    if (sourceLength > 0 && value.length > sourceLength * 3 + 40) return null;
+  }
+
+  return {
+    name: name.slice(0, 200),
+    description: job.row.description?.trim() ? item?.description?.trim().slice(0, 2000) || null : null,
+    ingredients: job.row.ingredients?.trim() ? item?.ingredients?.trim().slice(0, 1000) || null : null,
+    allergens: null,
+  };
+}
 
 async function translateChunk(language: MenuLanguage, jobs: Job[]) {
   const items = jobs.map((job) => ({
-    key: `${job.kind === "category" ? "c" : "p"}${job.row.id}`,
+    key: jobKey(job),
     name: job.row.name,
     ...(job.row.description?.trim() ? { description: job.row.description.trim() } : {}),
     ...(job.row.ingredients?.trim() ? { ingredients: job.row.ingredients.trim() } : {}),
-    ...(job.row.allergens?.trim() ? { allergens: job.row.allergens.trim() } : {}),
   }));
 
   const meta = languageMeta(language);
@@ -132,7 +168,9 @@ async function translateChunk(language: MenuLanguage, jobs: Job[]) {
       "Keep it natural and appetising, the way a good local menu in that language would read. " +
       "Keep well-known Turkish dish names (e.g. Adana Kebap, İskender, Lahmacun, Künefe, Mantı) in their original form " +
       "and add a short explanation only in the description when one exists. " +
-      "ingredients and allergens are comma-separated lists; translate each item and keep them comma-separated. " +
+      "ingredients is a comma-separated list; translate each item and keep it comma-separated. " +
+      "Each field must contain only the translated text of that same field: never add allergens, notes, " +
+      "explanations, alternatives, the original text or your reasoning. " +
       "Do not invent information, prices or ingredients. Return every key you receive exactly once.",
     content: [
       {
@@ -156,9 +194,9 @@ async function translateChunk(language: MenuLanguage, jobs: Job[]) {
               name: { type: "string" },
               description: { type: "string" },
               ingredients: { type: "string" },
-              allergens: { type: "string" },
             },
             required: ["key", "name"],
+            additionalProperties: false,
           },
         },
       },
@@ -245,7 +283,7 @@ export async function translateMenu(_prev: LanguageResult, formData: FormData): 
     const pending = allJobs.filter((job) => {
       if (redo) return true;
       const entry = readTranslations(job.row.translations)[language];
-      return !entry?.name || entry.src !== sourceFingerprint(job.row);
+      return !entry?.name || !isTranslationCurrent(entry, job.row);
     });
     for (let i = 0; i < pending.length; i += CHUNK_SIZE) {
       tasks.push({ language, jobs: pending.slice(i, i + CHUNK_SIZE) });
@@ -275,18 +313,30 @@ export async function translateMenu(_prev: LanguageResult, formData: FormData): 
           const items = await translateChunk(language, task.jobs);
           const byKey = new Map(items.map((item) => [item.key, item]));
           let count = 0;
+          const retry: Job[] = [];
 
           for (const job of task.jobs) {
-            const item = byKey.get(`${job.kind === "category" ? "c" : "p"}${job.row.id}`);
-            if (!item?.name?.trim()) continue;
-
-            await saveTranslation(admin.supabase, job, language, {
-              name: item.name.trim().slice(0, 200),
-              description: item.description?.trim().slice(0, 2000) || null,
-              ingredients: item.ingredients?.trim().slice(0, 1000) || null,
-              allergens: item.allergens?.trim().slice(0, 1000) || null,
-            });
+            const fields = cleanTranslation(job, byKey.get(jobKey(job)));
+            if (!fields) {
+              retry.push(job);
+              continue;
+            }
+            await saveTranslation(admin.supabase, job, language, fields);
             count++;
+          }
+
+          // Bozuk ya da eksik gelenler bir kez daha istenir; yine bozuksa kaydedilmez.
+          if (retry.length > 0) {
+            const again = new Map((await translateChunk(language, retry)).map((item) => [item.key, item]));
+            for (const job of retry) {
+              const fields = cleanTranslation(job, again.get(jobKey(job)));
+              if (!fields) {
+                console.error("ÇEVİRİ REDDEDİLDİ:", language, jobKey(job));
+                continue;
+              }
+              await saveTranslation(admin.supabase, job, language, fields);
+              count++;
+            }
           }
           return count;
         })

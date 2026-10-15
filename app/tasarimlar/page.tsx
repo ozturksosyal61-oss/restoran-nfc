@@ -103,7 +103,8 @@ const SHARED = [
   "Masadan sipariş ve sipariş takibi (Pro ve Premium)",
   "Garson çağırma ve hesap isteme (Pro ve Premium)",
   "Çok dilli menü ve masa oyunları (Pro ve Premium)",
-  "Masadan kartla ödeme ve kalori bilgisi (Premium)",
+  "Kalori ve alerjen bilgisi (tüm paketler)",
+  "Masadan kartla ödeme (Premium)",
 ];
 
 export default function DesignsPage() {

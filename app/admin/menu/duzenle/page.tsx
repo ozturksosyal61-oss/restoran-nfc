@@ -111,9 +111,15 @@ export default async function EditProductPage({
       .in("category_id", categoryIds)
       .single();
 
-  // Etiket sütunları (20261031) henüz yoksa etiketsiz okunur; form etiket bölümünü göstermez.
-  let { data: product, error: productError } = await readProduct(`${columns}, tags, new_until`);
-  const tagsSupported = !productError;
+  // Yeni sütunlar (etiketler 20261031, alerjen kodları 20261104) yoksa
+  // eksik olanlar olmadan okunur; form ilgili bölümü göstermez.
+  let { data: product, error: productError } = await readProduct(`${columns}, tags, new_until, allergen_codes`);
+  let tagsSupported = !productError;
+  const allergensSupported = !productError;
+  if (productError) {
+    ({ data: product, error: productError } = await readProduct(`${columns}, tags, new_until`));
+    tagsSupported = !productError;
+  }
   if (productError) ({ data: product, error: productError } = await readProduct(columns));
 
   // Ürün bu restorana ait değilse gösterme
@@ -133,6 +139,7 @@ export default async function EditProductPage({
       product={product as unknown as EditableProduct}
       categories={categories}
       tagsSupported={tagsSupported}
+      allergensSupported={allergensSupported}
     />
   );
 }

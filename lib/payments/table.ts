@@ -36,6 +36,8 @@ export type TableState = {
   remaining?: number;
   items?: TableItem[];
   split?: { of: number; total: number; share: number; parts_taken: number } | null;
+  // İşletmenin henüz onaylamadığı siparişler (ödenemez, 20261104).
+  unconfirmed_total?: number;
 };
 
 export type TablePaymentInfo = {

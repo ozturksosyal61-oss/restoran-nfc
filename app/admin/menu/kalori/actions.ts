@@ -105,7 +105,8 @@ export async function estimateCalories(_prev: CalorieResult, formData: FormData)
   if (!admin) return { ok: false, message: "Oturum bulunamadı. Lütfen tekrar giriş yapın." };
   if (admin.isDemo) return { ok: false, message: DEMO_BLOCKED_MESSAGE };
   {
-    const planError = await planGate(admin, "calories");
+    // Elle kalori girişi her pakette; yapay zekâ ile tahmin Premium'da.
+    const planError = await planGate(admin, "ai");
     if (planError) return { ok: false, message: planError };
   }
   if (!aiConfigured()) return { ok: false, message: AI_NOT_CONFIGURED_MESSAGE };

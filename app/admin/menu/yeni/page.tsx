@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/client";
 import { compressImage } from "../../../../lib/image-compress";
 import type { ProductTag } from "../../../../lib/product-tags";
+import { allergenText, type AllergenCode } from "../../../../lib/allergens";
 
 type Category = {
   id: number;
@@ -31,6 +32,8 @@ export default function NewProductPage() {
   const [tagsSupported, setTagsSupported] = useState(false);
   const [tags, setTags] = useState<ProductTag[]>([]);
   const [newUntil, setNewUntil] = useState("");
+  const [allergensSupported, setAllergensSupported] = useState(false);
+  const [allergenCodes, setAllergenCodes] = useState<AllergenCode[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -55,6 +58,9 @@ export default function NewProductPage() {
 
       const { error: tagsError } = await supabase.from("products").select("tags").limit(1);
       setTagsSupported(!tagsError);
+
+      const { error: allergenError } = await supabase.from("products").select("allergen_codes").limit(1);
+      setAllergensSupported(!allergenError);
     }
 
     loadCategories();
@@ -140,8 +146,11 @@ export default function NewProductPage() {
             ingredients:
               ingredients.trim() || null,
 
-            allergens:
-              allergens.trim() || null,
+            allergens: allergensSupported
+              ? allergenText(allergenCodes) || null
+              : allergens.trim() || null,
+
+            ...(allergensSupported ? { allergen_codes: allergenCodes } : {}),
 
             price: Number(price),
 
@@ -215,6 +224,8 @@ export default function NewProductPage() {
       onTags={tagsSupported ? setTags : undefined}
       newUntil={newUntil}
       onNewUntil={tagsSupported ? setNewUntil : undefined}
+      allergenCodes={allergensSupported ? allergenCodes : undefined}
+      onAllergenCodes={allergensSupported ? setAllergenCodes : undefined}
       error={error}
       onError={setError}
       loading={loading}

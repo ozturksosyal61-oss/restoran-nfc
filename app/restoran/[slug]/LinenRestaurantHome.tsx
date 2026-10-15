@@ -3,6 +3,7 @@ import { formatHours, untilLabel } from "../../../lib/restaurant-hours";
 import { ActiveOrderCard, ActiveOrderProvider, OrderTabLink } from "./AuroraActiveOrder";
 import type AuroraRestaurantHome from "./AuroraRestaurantHome";
 import TableGamesCard from "./TableGamesCard";
+import { TableServiceCard } from "./TableService";
 import styles from "./LinenRestaurantHome.module.css";
 
 // Linen tasarımının restoran ana sayfası (fine dining ve bistro). Aurora
@@ -32,23 +33,17 @@ function Icon({ name }: { name: keyof typeof iconPaths }) {
 }
 
 function ServiceButton({
-  action,
-  restaurantSlug,
+  restaurantId,
   tableToken,
   icon,
   title,
-  doneTitle,
   subtitle,
-  done,
 }: {
-  action: (formData: FormData) => Promise<void>;
-  restaurantSlug: string;
+  restaurantId: number;
   tableToken: string | null;
   icon: keyof typeof iconPaths;
   title: string;
-  doneTitle: string;
   subtitle: string;
-  done: boolean;
 }) {
   // Masa kodu olmadan garson / hesap talebi gönderilemez.
   if (!tableToken) {
@@ -61,14 +56,18 @@ function ServiceButton({
   }
 
   return (
-    <form action={action} className={styles.serviceForm}>
-      <input type="hidden" name="slug" value={restaurantSlug} />
-      <input type="hidden" name="masa" value={tableToken} />
-      <button type="submit" className={`${styles.serviceButton} ${done ? styles.serviceDone : ""}`}>
-        <strong><Icon name={done ? "check" : icon} />{done ? doneTitle : title}</strong>
-        <small>{done ? "Talebiniz iletildi" : subtitle}</small>
-      </button>
-    </form>
+    <TableServiceCard
+      restaurantId={restaurantId}
+      token={tableToken}
+      type={icon === "bell" ? "garson" : "hesap"}
+      title={title}
+      subtitle={subtitle}
+      icon={<Icon name={icon} />}
+      doneIcon={<Icon name="check" />}
+      cardClass={styles.serviceButton}
+      doneClass={styles.serviceDone}
+      iconInTitle
+    />
   );
 }
 
@@ -80,8 +79,6 @@ export default function LinenRestaurantHome({
   averageRating,
   garsonStatus,
   hesapStatus,
-  callWaiter,
-  requestBill,
 }: Props) {
   const base = `/restoran/${restaurant.slug}`;
   const tableToken = table?.public_token ?? null;
@@ -197,24 +194,18 @@ export default function LinenRestaurantHome({
 
           <div className={styles.serviceGrid}>
             <ServiceButton
-              action={callWaiter}
-              restaurantSlug={restaurant.slug}
+              restaurantId={Number(restaurant.id)}
               tableToken={tableToken}
               icon="bell"
               title="Garson çağır"
-              doneTitle="Garson çağrıldı"
               subtitle="masanıza gelsin"
-              done={garsonStatus === "ok"}
             />
             <ServiceButton
-              action={requestBill}
-              restaurantSlug={restaurant.slug}
+              restaurantId={Number(restaurant.id)}
               tableToken={tableToken}
               icon="receipt"
               title="Hesap iste"
-              doneTitle="Hesap istendi"
               subtitle="adisyon getirilsin"
-              done={hesapStatus === "ok"}
             />
           </div>
 

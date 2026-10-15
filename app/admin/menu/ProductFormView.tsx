@@ -6,6 +6,7 @@ import AdminIcon from "../AdminIcon";
 import { useAdminMenuOnly } from "../AdminShell";
 import ProductTagPicker from "./ProductTagPicker";
 import type { ProductTag } from "../../../lib/product-tags";
+import { ALLERGEN_CODES, allergenLabel, type AllergenCode } from "../../../lib/allergens";
 
 // Yeni ürün ve ürün düzenleme sayfalarının ortak form görünümü.
 // Kaydetme mantığı her sayfanın kendisinde kalır.
@@ -39,6 +40,8 @@ export default function ProductFormView({
   onTags,
   newUntil = "",
   onNewUntil,
+  allergenCodes,
+  onAllergenCodes,
   error,
   onError,
   loading,
@@ -68,6 +71,9 @@ export default function ProductFormView({
   onTags?: (tags: ProductTag[]) => void;
   newUntil?: string;
   onNewUntil?: (value: string) => void;
+  // Standart alerjen listesi (sütun yoksa eski serbest metin alanı gösterilir).
+  allergenCodes?: AllergenCode[];
+  onAllergenCodes?: (codes: AllergenCode[]) => void;
   error: string;
   onError: (message: string) => void;
   loading: boolean;
@@ -197,20 +203,53 @@ export default function ProductFormView({
                 <span className="adm-hint">Virgülle ayırın; menüde etiket olarak görünür.</span>
               </div>
 
-              <div className="adm-field">
-                <label className="adm-label" htmlFor="urun-alerjen">
-                  Alerjenler <em>· isteğe bağlı</em>
-                </label>
-                <textarea
-                  id="urun-alerjen"
-                  className="adm-textarea"
-                  value={allergens}
-                  onChange={(event) => onAllergens(event.target.value)}
-                  placeholder="Gluten, süt ürünü, yumurta"
-                  rows={3}
-                />
-                <span className="adm-hint">Menüde uyarı rengiyle ayrıca gösterilir.</span>
-              </div>
+              {allergenCodes && onAllergenCodes ? (
+                <div className="adm-field adm-field-full">
+                  <span className="adm-label">Alerjenler</span>
+                  <div className="adm-tag-picks" role="group" aria-label="Alerjenler">
+                    {ALLERGEN_CODES.map((code) => {
+                      const on = allergenCodes.includes(code);
+                      return (
+                        <button
+                          key={code}
+                          type="button"
+                          className={`adm-chip ${on ? "is-active" : ""}`}
+                          aria-pressed={on}
+                          disabled={loading}
+                          onClick={() =>
+                            onAllergenCodes(
+                              ALLERGEN_CODES.filter((item) =>
+                                item === code ? !on : allergenCodes.includes(item)
+                              )
+                            )
+                          }
+                        >
+                          {allergenLabel(code)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <span className="adm-hint">
+                    14 yasal alerjenden ürünün içerdiklerini seçin; menüde her dilde gösterilir. Hiçbiri seçili
+                    değilse menüde alerjen bölümü görünmez.
+                  </span>
+                </div>
+              ) : (
+                <div className="adm-field">
+                  <label className="adm-label" htmlFor="urun-alerjen">
+                    Alerjenler <em>· isteğe bağlı</em>
+                  </label>
+                  <textarea
+                    id="urun-alerjen"
+                    className="adm-textarea"
+                    value={allergens}
+                    onChange={(event) => onAllergens(event.target.value)}
+                    placeholder="Gluten, süt ürünü, yumurta"
+                    rows={3}
+                  />
+                  <span className="adm-hint">Menüde uyarı rengiyle ayrıca gösterilir.</span>
+                </div>
+              )}
             </div>
           </section>
 

@@ -4,6 +4,7 @@ import {
   ActiveOrderProvider,
   OrderTabLink,
 } from "./AuroraActiveOrder";
+import { TableServiceCard } from "./TableService";
 import styles from "./AuroraRestaurantHome.module.css";
 import TableGamesCard from "./TableGamesCard";
 
@@ -97,23 +98,17 @@ function Icon({ name }: { name: keyof typeof iconPaths }) {
    ========================================================= */
 
 function ServiceCard({
-  action,
-  restaurantSlug,
+  restaurantId,
   tableToken,
   icon,
   title,
-  doneTitle,
   subtitle,
-  done,
 }: {
-  action: (formData: FormData) => Promise<void>;
-  restaurantSlug: string;
+  restaurantId: number;
   tableToken: string | null;
   icon: keyof typeof iconPaths;
   title: string;
-  doneTitle: string;
   subtitle: string;
-  done: boolean;
 }) {
   // Masa kodu olmadan garson / hesap talebi gönderilemez.
   if (!tableToken) {
@@ -127,15 +122,18 @@ function ServiceCard({
   }
 
   return (
-    <form action={action} className={styles.serviceForm}>
-      <input type="hidden" name="slug" value={restaurantSlug} />
-      <input type="hidden" name="masa" value={tableToken} />
-      <button type="submit" className={`${styles.serviceCard} ${done ? styles.serviceDone : ""}`}>
-        <span className={styles.tile}><Icon name={done ? "check" : icon} /></span>
-        <strong>{done ? doneTitle : title}</strong>
-        <small>{done ? "Talebiniz iletildi" : subtitle}</small>
-      </button>
-    </form>
+    <TableServiceCard
+      restaurantId={restaurantId}
+      token={tableToken}
+      type={icon === "bell" ? "garson" : "hesap"}
+      title={title}
+      subtitle={subtitle}
+      icon={<Icon name={icon} />}
+      doneIcon={<Icon name="check" />}
+      cardClass={styles.serviceCard}
+      doneClass={styles.serviceDone}
+      tileClass={styles.tile}
+    />
   );
 }
 
@@ -151,8 +149,6 @@ export default function AuroraRestaurantHome({
   averageRating,
   garsonStatus,
   hesapStatus,
-  callWaiter,
-  requestBill,
 }: AuroraProps) {
   const base = `/restoran/${restaurant.slug}`;
   const tableToken = table?.public_token ?? null;
@@ -277,24 +273,18 @@ export default function AuroraRestaurantHome({
 
             <div className={styles.serviceGrid}>
               <ServiceCard
-                action={callWaiter}
-                restaurantSlug={restaurant.slug}
+                restaurantId={Number(restaurant.id)}
                 tableToken={tableToken}
                 icon="bell"
                 title="Garson Çağır"
-                doneTitle="Garson çağrıldı"
                 subtitle="Masanıza gelsin"
-                done={garsonStatus === "ok"}
               />
               <ServiceCard
-                action={requestBill}
-                restaurantSlug={restaurant.slug}
+                restaurantId={Number(restaurant.id)}
                 tableToken={tableToken}
                 icon="receipt"
                 title="Hesap İste"
-                doneTitle="Hesap istendi"
                 subtitle="Adisyon getirilsin"
-                done={hesapStatus === "ok"}
               />
             </div>
 

@@ -119,7 +119,7 @@ const panelFeatures: { icon: keyof typeof iconPaths; title: string; text: string
   {
     icon: "flame",
     title: "Kalori bilgisi",
-    text: "Her ürünün yaklaşık kalorisi otomatik hesaplanır ve menüde fiyatın yanında görünür. Premium.",
+    text: "Her ürünün kalorisi ve alerjenleri menüde gösterilir (tüm paketler). Kaloriyi yapay zekâyla otomatik hesaplatmak Premium'da.",
   },
 ];
 
@@ -276,9 +276,9 @@ export default async function DemoPage({
           <div className={styles.menuOnlyText}>
             <h3>Sipariş almıyorsanız: yalnızca dijital menü</h3>
             <p>
-              Tek QR kodla açılan şık bir dijital menü; kampanyalar, ürün etiketleri, menü istatistikleri ve Google
-              yorum yönlendirmesi. Masadan sipariş, garson çağırma ve çok dilli menü Pro, kalori bilgisi Premium
-              paketinde. Kurulumu en hızlı paketimiz.
+              Tek QR kodla açılan şık bir dijital menü; kampanyalar, ürün etiketleri, kalori ve alerjen bilgisi,
+              menü istatistikleri ve Google yorum yönlendirmesi. Masadan sipariş, garson çağırma ve çok dilli menü
+              Pro paketinde. Kurulumu en hızlı paketimiz.
             </p>
           </div>
           <Link href="/#paketler" className={home.btnSecondary}>

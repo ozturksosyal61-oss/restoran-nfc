@@ -13,7 +13,8 @@ export function splitList(value: string | null | undefined) {
   return (value || "")
     .split(/[,;\n،؛]+/)
     .map((part) => part.trim().replace(/\.+$/, ""))
-    .filter(Boolean);
+    // "—", "-" gibi "yok" anlamındaki işaretler liste öğesi değildir.
+    .filter((part) => part && !/^[-–—\s]+$/.test(part));
 }
 
 export function readSavedTableToken() {

@@ -27,6 +27,8 @@ export type MenuProduct = {
   // Kalıcı etiketler (süresi geçen "Yeni" çıkarılmış) ve satışlardan "Çok satan".
   tags?: string[];
   bestSeller?: boolean;
+  // Standart alerjen kodları (lib/allergens); yoksa eski serbest metin gösterilir.
+  allergen_codes?: string[] | null;
 };
 export type MenuData = {
   restaurant: { id: number; name: string; logo_url: string | null; is_open: boolean | null };
@@ -61,8 +63,10 @@ const FULL =
   "id, name, logo_url, is_open, theme, plan, menu_only, menu_languages, " +
   "categories(id, name, sort_order, translations, products(id, category_id, name, description, price, image_url, ingredients, allergens, sort_order, is_available, translations, calories))";
 
-// Etiket sütunları (20261031) henüz yoksa FULL'a düşülür.
+// Etiket sütunları (20261031) ve alerjen kodları (20261104) yoksa bir
+// alttaki sorguya düşülür.
 const TAGGED = FULL.replace("translations, calories))", "translations, calories, tags, new_until))");
+const ALLERGENS = FULL.replace("translations, calories))", "translations, calories, tags, new_until, allergen_codes))");
 
 const BASIC =
   "id, name, logo_url, is_open, theme, plan, " +
@@ -75,7 +79,8 @@ export async function loadMenuData(slug: string): Promise<MenuData | null> {
   const read = (columns: string) =>
     supabase.from("restaurants").select(columns).eq("slug", slug).eq("is_active", true).maybeSingle();
 
-  let { data, error } = await read(TAGGED);
+  let { data, error } = await read(ALLERGENS);
+  if (error) ({ data, error } = await read(TAGGED));
   if (error) ({ data, error } = await read(FULL));
   const legacy = Boolean(error);
   if (error) ({ data, error } = await read(BASIC));
@@ -104,6 +109,7 @@ export async function loadMenuData(slug: string): Promise<MenuData | null> {
         translations: product.translations,
         calories: showCalories ? product.calories ?? null : null,
         tags: activeTags(product.tags, product.new_until, today),
+        allergen_codes: Array.isArray(product.allergen_codes) ? product.allergen_codes : null,
       });
     }
   }

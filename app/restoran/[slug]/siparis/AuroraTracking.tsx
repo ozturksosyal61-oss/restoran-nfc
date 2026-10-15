@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import AuroraIcon, { type AuroraIconName } from "../AuroraIcon";
-import { formatLira, sendTableRequest, type TableRequestType } from "../aurora-utils";
+import { formatLira, type TableRequestType } from "../aurora-utils";
+import { serviceStatusText, useTableService } from "../TableService";
 import styles from "../AuroraFlow.module.css";
 import TableGamesCard from "../TableGamesCard";
 import { orderNumber } from "../../../../lib/order-number";
@@ -110,8 +111,9 @@ export default function AuroraTracking({
   reviewError: string;
   onSubmitReview: () => void;
 }) {
-  const [pending, setPending] = useState<TableRequestType | null>(null);
-  const [sent, setSent] = useState<TableRequestType[]>([]);
+  // Garson / hesap durumu sunucudan; ana sayfa ve menüyle aynı.
+  const service = useTableService(restaurantId ?? null, tableToken ?? null);
+  const pending = service.sending;
   const [requestError, setRequestError] = useState("");
 
   const tableQuery = tableToken ? `?masa=${encodeURIComponent(tableToken)}` : "";
@@ -160,16 +162,9 @@ export default function AuroraTracking({
   });
 
   async function request(type: TableRequestType) {
-    if (!restaurantId || !tableToken || pending) return;
-
-    setPending(type);
     setRequestError("");
-    const ok = await sendTableRequest(restaurantId, tableToken, type);
-    setPending(null);
-
-    if (ok) {
-      setSent((current) => (current.includes(type) ? current : [...current, type]));
-    } else {
+    const result = await service.request(type);
+    if (result === "failed") {
       setRequestError("Talep gönderilemedi. Tekrar deneyin ya da bir görevliye seslenin.");
     }
   }
@@ -407,17 +402,19 @@ export default function AuroraTracking({
             <RequestButton
               icon="bell"
               label="Garson çağır"
-              doneLabel="Garson çağrıldı"
+              doneLabel={serviceStatusText("garson", service.info("garson"))}
               pending={pending === "garson"}
-              done={sent.includes("garson")}
+              done={service.info("garson").active}
+              blocked={!service.info("garson").canCall}
               onClick={() => request("garson")}
             />
             <RequestButton
               icon="receipt"
               label="Hesap iste"
-              doneLabel="Hesap istendi"
+              doneLabel={serviceStatusText("hesap", service.info("hesap"))}
               pending={pending === "hesap"}
-              done={sent.includes("hesap")}
+              done={service.info("hesap").active}
+              blocked={!service.info("hesap").canCall}
               onClick={() => request("hesap")}
             />
           </div>
@@ -433,6 +430,7 @@ function RequestButton({
   doneLabel,
   pending,
   done,
+  blocked,
   onClick,
 }: {
   icon: AuroraIconName;
@@ -440,6 +438,7 @@ function RequestButton({
   doneLabel: string;
   pending: boolean;
   done: boolean;
+  blocked: boolean;
   onClick: () => void;
 }) {
   return (
@@ -447,7 +446,7 @@ function RequestButton({
       type="button"
       className={`${styles.ghost} ${done ? styles.ghostDone : ""}`}
       onClick={onClick}
-      disabled={pending}
+      disabled={pending || blocked}
     >
       <AuroraIcon name={done ? "check" : icon} />
       {pending ? "Gönderiliyor…" : done ? doneLabel : label}

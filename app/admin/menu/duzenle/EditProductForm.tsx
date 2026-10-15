@@ -6,6 +6,7 @@ import { createClient } from "../../../../lib/supabase/client";
 import { compressImage } from "../../../../lib/image-compress";
 import ProductFormView from "../ProductFormView";
 import { normalizeTags, type ProductTag } from "../../../../lib/product-tags";
+import { allergenText, normalizeAllergens, type AllergenCode } from "../../../../lib/allergens";
 
 export type EditableProduct = Product;
 
@@ -21,6 +22,7 @@ type Product = {
   is_available: boolean;
   tags?: string[] | null;
   new_until?: string | null;
+  allergen_codes?: string[] | null;
 };
 
 type Category = {
@@ -32,11 +34,13 @@ export default function EditProductForm({
   product,
   categories,
   tagsSupported = false,
+  allergensSupported = false,
 }: {
   product: Product;
   categories: Category[];
   // Etiket sütunları veritabanında varsa.
   tagsSupported?: boolean;
+  allergensSupported?: boolean;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -70,6 +74,8 @@ export default function EditProductForm({
   const [tags, setTags] = useState<ProductTag[]>(normalizeTags(product.tags));
 
   const [newUntil, setNewUntil] = useState(product.new_until || "");
+
+  const [allergenCodes, setAllergenCodes] = useState<AllergenCode[]>(normalizeAllergens(product.allergen_codes));
 
   const [image, setImage] = useState<File | null>(null);
 
@@ -168,8 +174,11 @@ export default function EditProductForm({
             ingredients:
               ingredients.trim() || null,
 
-            allergens:
-              allergens.trim() || null,
+            allergens: allergensSupported
+              ? allergenText(allergenCodes) || null
+              : allergens.trim() || null,
+
+            ...(allergensSupported ? { allergen_codes: allergenCodes } : {}),
 
             price:
               Number(price),
@@ -291,6 +300,8 @@ export default function EditProductForm({
       onTags={tagsSupported ? setTags : undefined}
       newUntil={newUntil}
       onNewUntil={tagsSupported ? setNewUntil : undefined}
+      allergenCodes={allergensSupported ? allergenCodes : undefined}
+      onAllergenCodes={allergensSupported ? setAllergenCodes : undefined}
       error={error}
       onError={setError}
       loading={loading}

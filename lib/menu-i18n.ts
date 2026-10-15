@@ -45,17 +45,32 @@ export type TranslatableSource = {
   allergens?: string | null;
 };
 
-// Türkçe metinden kısa bir parmak izi. Ürün değişince çeviri eskir.
-export function sourceFingerprint(item: TranslatableSource) {
-  const text = [item.name, item.description, item.ingredients, item.allergens]
-    .map((part) => (part ?? "").trim())
-    .join("␟");
+function hashParts(parts: (string | null | undefined)[]) {
+  const text = parts.map((part) => (part ?? "").trim()).join("␟");
 
   let hash = 5381;
   for (let i = 0; i < text.length; i++) {
     hash = ((hash << 5) + hash + text.charCodeAt(i)) | 0;
   }
   return (hash >>> 0).toString(36);
+}
+
+// Türkçe metinden kısa bir parmak izi. Ürün değişince çeviri eskir.
+// Alerjenler dahil değildir: artık çevrilmez, sabit sözlükten gösterilir
+// (lib/allergens); alerjen seçimi değişince çeviri eskimez.
+export function sourceFingerprint(item: TranslatableSource) {
+  return hashParts([item.name, item.description, item.ingredients]);
+}
+
+// 20261104 öncesi çevirilerin parmak izi (alerjen metni dahil).
+function legacyFingerprint(item: TranslatableSource) {
+  return hashParts([item.name, item.description, item.ingredients, item.allergens]);
+}
+
+// Çeviri, Türkçe metnin güncel hâliyle yapılmış mı?
+export function isTranslationCurrent(entry: { src?: string } | null | undefined, item: TranslatableSource) {
+  if (!entry?.src) return false;
+  return entry.src === sourceFingerprint(item) || entry.src === legacyFingerprint(item);
 }
 
 export function readTranslations(value: unknown): Translations {
@@ -71,7 +86,7 @@ export function currentTranslation(
 ): TranslatedFields | null {
   const entry = readTranslations(item.translations)[language];
   if (!entry?.name?.trim()) return null;
-  if (entry.src !== sourceFingerprint(item)) return null;
+  if (!isTranslationCurrent(entry, item)) return null;
   return entry;
 }
 

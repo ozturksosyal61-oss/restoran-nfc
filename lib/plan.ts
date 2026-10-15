@@ -19,6 +19,7 @@ export type PlanFeature =
   | "menu_stats"
   | "campaigns"
   | "product_tags"
+  | "calories"
   // Pro
   | "nfc"
   | "tables"
@@ -33,7 +34,6 @@ export type PlanFeature =
   | "multi_user"
   | "staff_ratings"
   | "advanced_reports"
-  | "calories"
   | "ai";
 
 const PLAN_ORDER: Plan[] = ["starter", "pro", "premium"];
@@ -59,6 +59,9 @@ export const FEATURE_INFO: Record<PlanFeature, { plan: Plan; label: string }> = 
   menu_stats: { plan: "starter", label: "Menü istatistikleri" },
   campaigns: { plan: "starter", label: "Kampanyalar: indirimli fiyat ve kampanya etiketi" },
   product_tags: { plan: "starter", label: "Ürün etiketleri: Yeni, Şefin önerisi, Acılı, Vegan, Glutensiz…" },
+  // Kalori ve alerjen gösterimi yasal bilgilendirme olabileceği için her pakette;
+  // yapay zekâ ile kalori tahmini "ai" (Premium) kapsamında.
+  calories: { plan: "starter", label: "Kalori ve alerjen bilgileri" },
 
   nfc: { plan: "pro", label: "Masaya özel QR ve NFC" },
   tables: { plan: "pro", label: "Masa yönetimi" },
@@ -73,7 +76,6 @@ export const FEATURE_INFO: Record<PlanFeature, { plan: Plan; label: string }> = 
   multi_user: { plan: "premium", label: "Çalışanlar, garson ve mutfak ekranları" },
   staff_ratings: { plan: "premium", label: "Çalışan değerlendirme" },
   advanced_reports: { plan: "premium", label: "Excel rapor ve ürün satış analizi" },
-  calories: { plan: "premium", label: "Kalori bilgileri" },
   ai: { plan: "premium", label: "Yapay zekâ: fotoğraftan menü aktarma, otomatik çeviri, kalori tahmini" },
 };
 

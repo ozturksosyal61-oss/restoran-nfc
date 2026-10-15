@@ -341,6 +341,11 @@ export default function TablePayFlow({ slug, restaurantName }: { slug: string; r
                 Şu an ödeniyor <b>{formatLira(pendingOthers)}</b>
               </span>
             )}
+            {Number(state.unconfirmed_total ?? 0) > 0 && (
+              <span>
+                Onay bekleyen <b>{formatLira(Number(state.unconfirmed_total))}</b> · onaylanınca ödenebilir
+              </span>
+            )}
           </div>
         </section>
 
