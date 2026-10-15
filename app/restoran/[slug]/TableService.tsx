@@ -2,7 +2,9 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { createClient } from "../../../lib/supabase/client";
+import type { DisplayLanguage } from "../../../lib/menu-i18n";
 import { sendTableRequest, type TableRequestType } from "./aurora-utils";
+import { confirmService } from "./ServiceConfirm";
 
 // Garson çağırma ve hesap isteme: tüm müşteri ekranlarında (ana sayfa, menü,
 // sipariş takibi, hesap) aynı durum. Durum sunucudan okunur
@@ -29,11 +31,6 @@ export type ServiceInfo = {
   // Son çağrıdan bu yana geçen dakika.
   minutes: number;
   canCall: boolean;
-};
-
-const CONFIRM: Record<TableRequestType, string> = {
-  garson: "Garson çağrılsın mı?",
-  hesap: "Hesap istensin mi?",
 };
 
 function useServiceState(restaurantId: number | null, token: string | null) {
@@ -85,10 +82,11 @@ function useServiceState(restaurantId: number | null, token: string | null) {
   // Onay sorulur, gönderilir ve durum yenilenir.
   // "skipped": vazgeçildi ya da henüz tekrar çağrılamaz.
   const request = useCallback(
-    async (type: TableRequestType, confirmMessage?: string): Promise<"sent" | "failed" | "skipped"> => {
+    async (type: TableRequestType, language: DisplayLanguage = "tr"): Promise<"sent" | "failed" | "skipped"> => {
       if (!restaurantId || !token || sending) return "skipped";
       if (!info(type).canCall) return "skipped";
-      if (!window.confirm(confirmMessage ?? CONFIRM[type])) return "skipped";
+      // Tasarımın paletiyle alttan açılan onay penceresi (ServiceConfirm).
+      if (!(await confirmService(type, language))) return "skipped";
 
       setSending(type);
       const ok = await sendTableRequest(restaurantId, token, type);

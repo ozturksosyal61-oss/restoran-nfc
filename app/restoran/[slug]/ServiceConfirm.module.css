@@ -1,0 +1,116 @@
+/* Garson / hesap onayı. Renk ve yazı tipleri restoran paletinden (--au-*). */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--au-overlay, rgba(0, 0, 0, 0.55));
+  animation: fade 0.18s ease;
+}
+
+.sheet {
+  outline: none;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(480px, 100%);
+  padding: 10px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  border-radius: 24px 24px 0 0;
+  background: var(--au-surface, #fff);
+  color: var(--au-ink, #111);
+  font-family: var(--font-aurora-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  text-align: center;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.25);
+  animation: rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.handle {
+  width: 40px;
+  height: 4px;
+  margin-bottom: 6px;
+  border-radius: 999px;
+  background: var(--au-line, rgba(0, 0, 0, 0.15));
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--au-accent, #666) 16%, transparent);
+  color: var(--au-accent, currentColor);
+}
+
+.icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.sheet h2 {
+  margin: 4px 0 0;
+  font-family: "OztLira", var(--font-aurora-display), Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.sheet p {
+  margin: 0 0 8px;
+  color: var(--au-muted, #666);
+  font-size: 15px;
+}
+
+.confirm,
+.cancel {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 16px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirm {
+  background: var(--au-cta-bg, #111);
+  color: var(--au-cta-ink, #fff);
+}
+
+.cancel {
+  min-height: 48px;
+  background: transparent;
+  color: var(--au-muted, #666);
+}
+
+.confirm:focus-visible,
+.cancel:focus-visible {
+  outline: 3px solid var(--au-accent, #333);
+  outline-offset: 2px;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .sheet {
+    animation: none;
+  }
+}

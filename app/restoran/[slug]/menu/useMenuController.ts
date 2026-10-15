@@ -587,7 +587,7 @@ export function useMenuController({
   async function requestService(type: TableRequestType) {
     if (!restaurant || !table) return;
 
-    const result = await service.request(type, `${type === "garson" ? t.callWaiter : t.askBill}?`);
+    const result = await service.request(type, language);
 
     if (result === "sent") {
       setToast({
