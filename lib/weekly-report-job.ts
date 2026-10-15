@@ -75,14 +75,12 @@ export async function runWeeklyReports(options: {
   }
 
   const admin = createSupabaseAdminClient();
-  let query = admin
-    .from("restaurants")
-    .select(COLUMNS)
-    .eq("is_active", true)
-    .eq("is_demo", false);
+  let query = admin.from("restaurants").select(COLUMNS).eq("is_active", true);
 
+  // Belirli restoran istenmişse (paneldeki deneme) demo ve kapalı ayar da gönderilir;
+  // zamanlanmış gönderim yalnızca raporu açık, gerçek restoranlara gider.
   if (options.restaurantIds?.length) query = query.in("id", options.restaurantIds);
-  else query = query.eq("report_email_enabled", true);
+  else query = query.eq("report_email_enabled", true).eq("is_demo", false);
 
   const { data, error } = await query;
   if (error) {

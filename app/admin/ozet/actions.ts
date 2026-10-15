@@ -52,8 +52,13 @@ export async function sendTestReport(_: ReportEmailState, __?: FormData): Promis
 
   const result = await runWeeklyReports({ restaurantIds: [admin.restaurantId], force: true, to });
   if (result.sent === 0) {
-    console.error("Deneme raporu gönderilemedi:", result.errors);
-    return { tone: "error", text: "Gönderilemedi. Lütfen biraz sonra tekrar deneyin." };
+    console.error("Deneme raporu gönderilemedi:", result);
+    const reason = result.errors.find((error) => error.startsWith("Resend"))
+      ? "E-posta servisi isteği reddetti; gönderici alan adı ve API anahtarını kontrol edin."
+      : result.candidates === 0
+        ? "Restoran bilgisi bulunamadı."
+        : "Lütfen biraz sonra tekrar deneyin.";
+    return { tone: "error", text: `Gönderilemedi. ${reason}` };
   }
 
   return { tone: "ok", text: `Geçen haftanın raporu ${to} adresine gönderildi.` };
