@@ -86,7 +86,7 @@ const tryList = [
   },
   {
     title: "Bizi değerlendirin",
-    text: "Memnun kalan misafir Google yorumuna davet edilir, şikâyeti olan önce işletmeye yazar.",
+    text: "Misafirleriniz deneyimlerini puanlar ve yorum bırakır; dilerlerse Google'da da yorum yapmaya davet edilir.",
   },
 ];
 
@@ -99,27 +99,27 @@ const panelFeatures: { icon: keyof typeof iconPaths; title: string; text: string
   {
     icon: "chart",
     title: "Ciro ve hesap raporları",
-    text: "Günlük, haftalık, aylık ciro; en çok satan ürünler ve yoğun saatler. Excel'e tek tıkla aktarılır.",
+    text: "Günlük, haftalık, aylık ciro; en çok satan ürünler ve yoğun saatler (Pro). Excel'e tek tıkla aktarma Premium'da.",
   },
   {
     icon: "eye",
     title: "Menü istatistikleri",
-    text: "Menünüz kaç kez açıldı, hangi ürüne en çok bakıldı, hangisine hiç dokunulmadı.",
+    text: "Menünüz kaç kez açıldı, hangi ürüne en çok bakıldı, hangisine hiç dokunulmadı. Tüm paketlerde.",
   },
   {
     icon: "globe",
     title: "Otomatik çeviri",
-    text: "Menü yapay zekâyla İngilizce, Almanca, Rusça, Arapça ve Fransızcaya çevrilir; isterseniz düzeltirsiniz.",
+    text: "Menü yapay zekâyla İngilizce, Almanca, Rusça, Arapça ve Fransızcaya çevrilir; isterseniz düzeltirsiniz. Premium.",
   },
   {
     icon: "camera",
     title: "Fotoğraftan menü aktarma",
-    text: "Basılı menünüzün fotoğrafını yükleyin; ürünler ve fiyatlar dakikalar içinde sisteme girilir.",
+    text: "Basılı menünüzün fotoğrafını yükleyin; ürünler ve fiyatlar dakikalar içinde sisteme girilir. Premium.",
   },
   {
     icon: "flame",
     title: "Kalori bilgisi",
-    text: "Her ürünün yaklaşık kalorisi otomatik hesaplanır ve menüde fiyatın yanında görünür.",
+    text: "Her ürünün yaklaşık kalorisi otomatik hesaplanır ve menüde fiyatın yanında görünür. Premium.",
   },
 ];
 
@@ -272,11 +272,19 @@ export default async function DemoPage({
         </ol>
 
         <div className={styles.menuOnlyNote}>
-          <span className={styles.menuOnlyTag}>Sadece menü paketi</span>
-          <p>
-            Sipariş ve garson çağırma istemeyen işletmeler için: tek QR kodla açılan, çok dilli ve kalorili dijital
-            menü. Kurulumu en hızlı paketimiz.
-          </p>
+          <span className={styles.menuOnlyTag}>Başlangıç paketi</span>
+          <div className={styles.menuOnlyText}>
+            <h3>Sipariş almıyorsanız: yalnızca dijital menü</h3>
+            <p>
+              Tek QR kodla açılan şık bir dijital menü; kampanyalar, ürün etiketleri, menü istatistikleri ve Google
+              yorum yönlendirmesi. Masadan sipariş, garson çağırma ve çok dilli menü Pro, kalori bilgisi Premium
+              paketinde. Kurulumu en hızlı paketimiz.
+            </p>
+          </div>
+          <Link href="/#paketler" className={home.btnSecondary}>
+            Paketleri incele
+            <Icon name="arrow" className={home.btnIcon} />
+          </Link>
         </div>
       </section>
 
@@ -342,7 +350,7 @@ export default async function DemoPage({
       <SiteFooter />
 
       {/* MOBİL SABİT CTA */}
-      <div className={home.mobileBar}>
+      <div className={home.mobileBar} data-mobile-bar>
         <Link href="/#paketler" className={home.mobileBarSecondary}>
           Paketler
         </Link>

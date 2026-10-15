@@ -34,7 +34,7 @@ export default function KvkkPage() {
             <>
               <p>
                 <strong>Tanıtım sitesi ziyaretçileri, işletme yetkilileri ve abonelik işlemleri</strong> bakımından veri
-                sorumlusu {COMPANY.owner}&apos;dür ({COMPANY.brand}).
+                sorumlusu {COMPANY.legalName} unvanlı şahıs işletmesidir.
               </p>
               <p>
                 <strong>Restoran müşterileri</strong> (menüyü görüntüleyen, sipariş veren, garson çağıran, ödeme yapan

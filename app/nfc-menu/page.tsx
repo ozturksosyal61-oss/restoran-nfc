@@ -9,7 +9,7 @@ const content: SeoContent = {
   breadcrumb: "NFC Menü",
   h1: "NFC Menü: Telefonu Yaklaştır, Menü Açılsın",
   intro:
-    "NFC menü, restoran ve kafeler için en hızlı menü deneyimidir. Müşteriniz telefonunu masadaki stanta ya da karta yaklaştırır, menünüz tek dokunuşla açılır. Kamera açmak, kod hizalamak yok. OZT Digital NFC menü ürünleri aynı zamanda QR kod da içerir; böylece her müşteri menüye ulaşabilir.",
+    "NFC menü, restoran ve kafeler için en hızlı menü deneyimidir. Müşteriniz telefonunu masadaki standa ya da karta yaklaştırır, menünüz tek dokunuşla açılır. Kamera açmak, kod hizalamak yok. OZT Digital NFC menü ürünleri aynı zamanda QR kod da içerir; böylece her müşteri menüye ulaşabilir.",
   heroActions: [
     { label: "NFC Ürünlerini İncele", href: "/urunler" },
     { label: "Demoyu İncele", href: "/demo" },
@@ -28,7 +28,7 @@ const content: SeoContent = {
         },
         {
           kind: "p",
-          text: "NFC menüde masadaki stant ya da kartın içinde küçük bir NFC etiketi bulunur. Müşteri telefonunu etikete yaklaştırdığında, o masaya ait dijital menü telefonda otomatik olarak açılır.",
+          text: "NFC menüde masadaki stand ya da kartın içinde küçük bir NFC etiketi bulunur. Müşteri telefonunu etikete yaklaştırdığında, o masaya ait dijital menü telefonda otomatik olarak açılır.",
         },
       ],
     },
@@ -40,7 +40,7 @@ const content: SeoContent = {
           items: [
             {
               h3: "1. Telefonu yaklaştırın",
-              text: "Müşteri, NFC destekli telefonunu masadaki stant ya da karta yaklaştırır.",
+              text: "Müşteri, NFC destekli telefonunu masadaki stand ya da karta yaklaştırır.",
             },
             {
               h3: "2. Menü anında açılır",
@@ -78,7 +78,7 @@ const content: SeoContent = {
       blocks: [
         {
           kind: "p",
-          text: "Her ürün işletmenizin logosu, adı ve masa numarasıyla özelleştirilir ve dijital menü sistemiyle birlikte teslim edilir.",
+          text: "Her ürün işletmenizin logosu, adı ve masa numarasıyla özelleştirilir ve dijital menü sistemiyle birlikte teslim edilir. Masaya özel QR ve NFC bağlantısı Pro ve Premium paketlerde yer alır; masa ürünlerinin fiyatı teklif üzerine belirlenir.",
         },
         {
           kind: "products",
@@ -86,7 +86,7 @@ const content: SeoContent = {
           items: [
             {
               title: "Premium NFC Menü Standı",
-              text: "Masada dik duran, şık siyah stant. NFC etiketi ve QR kod bir arada.",
+              text: "Masada dik duran, şık siyah stand. NFC etiketi ve QR kod bir arada.",
               image: "/products/menu-stand-black.png",
               alt: "Masada dik duran siyah premium NFC menü standı",
             },
@@ -97,7 +97,7 @@ const content: SeoContent = {
               alt: "Masa numaralı kompakt siyah NFC menü kartı",
             },
             {
-              title: "Gold Metal QR Menü Plağı",
+              title: "Gold Metal QR Menü Plakası",
               text: "Dayanıklı, lüks görünümlü metal plaka.",
               image: "/products/gold-metal-qr-menu-plaque.png",
               alt: "Lüks görünümlü gold metal QR menü plakası",
@@ -115,7 +115,7 @@ const content: SeoContent = {
           items: [
             "**Daha hızlı deneyim:** Müşteri saniyeler içinde menüde olur; kod hizalama derdi yok.",
             "**Modern ve şık görünüm:** Masanızdaki ürün, işletmenizin kalitesini yansıtır.",
-            "**Masaya özel bağlantı:** Her etiket kendi masasına bağlıdır; siparişler ve garson çağrıları doğru masadan gelir.",
+            "**Masaya özel bağlantı:** Her etiket kendi masasına bağlıdır; siparişler ve garson çağrıları doğru masadan gelir (Pro ve Premium).",
             "**Hijyenik:** Elden ele dolaşan basılı menü yerine her müşteri kendi telefonunu kullanır.",
             "**Her zaman güncel:** Menü dijital olduğu için fiyat ve ürün değişikliği için etiketi değiştirmeniz gerekmez.",
           ],
@@ -142,7 +142,7 @@ const content: SeoContent = {
     },
     {
       q: "NFC menü ürünleri işletmeme özel mi hazırlanıyor?",
-      a: "Evet. Stant, kart ve plakalar işletmenizin logosu, adı ve masa numarasıyla özelleştirilir.",
+      a: "Evet. Stand, kart ve plakalar işletmenizin logosu, adı ve masa numarasıyla özelleştirilir.",
     },
   ],
   cta: {

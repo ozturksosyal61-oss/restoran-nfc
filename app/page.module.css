@@ -1116,6 +1116,57 @@ a:hover .productName .btnIcon {
   font-size: 30px !important;
 }
 
+.planPrice {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 12px !important;
+}
+
+.planPrice strong {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.planPrice span {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.planFeatured .planPrice span {
+  color: var(--muted-dark);
+}
+
+/* "Bu paketi istiyorum" altındaki ikincil bağlantı */
+.planDemo {
+  align-self: center;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.planFeatured .planDemo {
+  color: var(--muted-dark);
+}
+
+.planDemo:hover {
+  color: var(--gold-deep);
+}
+
+.planNote {
+  max-width: 640px;
+  margin: 28px auto 0 !important;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
 .planText {
   min-height: 3.2em;
   margin-top: 10px !important;

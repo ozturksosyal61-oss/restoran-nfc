@@ -96,13 +96,14 @@ const DESIGNS: ShowcaseDesign[] = [
   },
 ];
 
+// Paketler: lib/plan.ts ile aynı.
 const SHARED = [
-  "Masadan sipariş ve sipariş takibi",
-  "Garson çağırma ve hesap isteme",
-  "Masadan kartla ödeme (Pro ve Premium)",
-  "Çok dilli menü ve kalori bilgisi",
-  "Kampanyalar ve duyuru penceresi",
-  "Masa oyunları ve müşteri değerlendirmesi",
+  "Kampanyalar, ürün etiketleri ve duyuru penceresi (tüm paketler)",
+  "Müşteri değerlendirmesi ve Google yorum yönlendirmesi (tüm paketler)",
+  "Masadan sipariş ve sipariş takibi (Pro ve Premium)",
+  "Garson çağırma ve hesap isteme (Pro ve Premium)",
+  "Çok dilli menü ve masa oyunları (Pro ve Premium)",
+  "Masadan kartla ödeme ve kalori bilgisi (Premium)",
 ];
 
 export default function DesignsPage() {
@@ -124,7 +125,7 @@ export default function DesignsPage() {
             Restoranınıza uygun <em>menü tasarımını</em> seçin
           </h1>
           <p className={seo.intro}>
-            Dört farklı tasarım, her biri için birden fazla renk paleti. Aşağıdaki ekranlar demo restoranımızın
+            Dört farklı tasarım ve toplam 19 renk paleti. Aşağıdaki ekranlar demo restoranımızın
             gerçek görüntüleri: telefon çerçevesinin içinde kaydırarak inceleyebilir, renk paletini değiştirerek
             işletmenize en uygun görünümü bulabilirsiniz.
           </p>

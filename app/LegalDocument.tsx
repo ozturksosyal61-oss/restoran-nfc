@@ -24,9 +24,7 @@ export function CompanyCard() {
     <dl className={styles.company}>
       <div>
         <dt>Hizmet sağlayıcı</dt>
-        <dd>
-          {COMPANY.owner} ({COMPANY.brand})
-        </dd>
+        <dd>{COMPANY.legalName}</dd>
       </div>
       <div>
         <dt>Adres</dt>
@@ -38,6 +36,12 @@ export function CompanyCard() {
           <dd>{COMPANY.taxInfo}</dd>
         </div>
       )}
+      <div>
+        <dt>Telefon</dt>
+        <dd>
+          <a href={COMPANY.phoneHref}>{COMPANY.phone}</a>
+        </dd>
+      </div>
       <div>
         <dt>E-posta</dt>
         <dd>

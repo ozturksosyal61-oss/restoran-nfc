@@ -68,6 +68,14 @@
   color: #fff;
 }
 
+.whatsappIcon {
+  background: #25d366;
+}
+
+.phoneIcon {
+  background: var(--ink);
+}
+
 .instagramIcon svg {
   width: 26px;
   height: 26px;

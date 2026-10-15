@@ -1,10 +1,14 @@
 import Link from "next/link";
 import CookieSettingsLink from "./CookieSettingsLink";
+import WhatsAppButton from "./WhatsAppButton";
+import { COMPANY } from "../lib/legal";
+import { whatsappUrl } from "../lib/contact";
 import { siteFontClass } from "./site-fonts";
 import home from "./page.module.css";
 import styles from "./SiteFooter.module.css";
 
-// Tanıtım sitesinin ortak alt bilgisi: çözüm sayfaları ve yasal belgeler.
+// Tanıtım sitesinin ortak alt bilgisi: çözüm sayfaları, iletişim, yasal
+// belgeler ve firma bilgisi. Sabit WhatsApp düğmesi de buradan çizilir.
 // Renk değişkenleri kendi içinde tanımlı; ana sayfa dışındaki sayfalarda da
 // aynı görünür.
 
@@ -51,10 +55,24 @@ export default function SiteFooter() {
             <Link href="/veri-isleme-sozlesmesi">Veri İşleme Sözleşmesi</Link>
             <CookieSettingsLink />
           </nav>
+
+          <nav className={styles.column} aria-label="İletişim">
+            <strong>İletişim</strong>
+            <a href={whatsappUrl()} target="_blank" rel="noopener noreferrer">
+              WhatsApp: {COMPANY.phone}
+            </a>
+            <a href={COMPANY.phoneHref}>Telefon: {COMPANY.phone}</a>
+            <Link href="/#iletisim">İletişim formu</Link>
+          </nav>
         </div>
       </div>
 
+      <p className={styles.company}>
+        {COMPANY.legalName} · {COMPANY.address} · {COMPANY.taxInfo}
+      </p>
       <small className={home.copyright}>© {new Date().getFullYear()} OZT Digital. Tüm hakları saklıdır.</small>
+
+      <WhatsAppButton />
     </footer>
   );
 }

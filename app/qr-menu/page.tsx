@@ -28,7 +28,7 @@ const content: SeoContent = {
         },
         {
           kind: "p",
-          text: "OZT Digital'de her masa için ayrı bir QR kod oluşturulur. Böylece müşteri menüyü açtığında sistem hangi masada oturduğunu bilir; sipariş, garson çağırma ve hesap isteme gibi işlemler doğrudan o masaya bağlanır.",
+          text: "OZT Digital'in Pro ve Premium paketlerinde her masa için ayrı bir QR kod oluşturulur. Böylece müşteri menüyü açtığında sistem hangi masada oturduğunu bilir; sipariş, garson çağırma ve hesap isteme gibi işlemler doğrudan o masaya bağlanır.",
         },
       ],
     },
@@ -40,7 +40,7 @@ const content: SeoContent = {
           items: [
             {
               h3: "1. Müşteri QR kodu okutur",
-              text: "Masadaki stant, kart ya da metal plaka üzerindeki QR kod telefon kamerasıyla okutulur. Ek bir uygulama gerekmez.",
+              text: "Masadaki stand, kart ya da metal plaka üzerindeki QR kod telefon kamerasıyla okutulur. Ek bir uygulama gerekmez.",
             },
             {
               h3: "2. Menü telefonda açılır",
@@ -63,9 +63,9 @@ const content: SeoContent = {
             "**Baskı maliyeti biter:** Fiyat değiştiğinde menü bastırmanız gerekmez. Panelden güncellediğiniz anda tüm masalarda yeni fiyat görünür.",
             "**Her zaman güncel menü:** Biten ürünü gizleyin, yeni ürün ekleyin, kampanya etiketi koyun. Değişiklikler anında yayında.",
             "**Fotoğraflı ve açıklamalı ürünler:** Müşteri ne sipariş edeceğini görerek seçer.",
-            "**Çok dilli menü:** Yabancı misafirleriniz menüyü kendi dilinde görüntüleyebilir (Pro ve üzeri).",
+            "**Çok dilli menü:** Yabancı misafirleriniz menüyü kendi dilinde görüntüleyebilir (Pro ve Premium).",
             "**Menü istatistikleri:** Hangi ürünlerin daha çok ilgi gördüğünü panelden takip edin.",
-            "**Google yorumlarına yönlendirme:** Memnun müşterileri işletmenizin Google sayfasına yönlendirin.",
+            "**Değerlendirme ve Google yorumu:** Misafirleriniz deneyimlerini puanlar ve yorum bırakır; dilerlerse Google'da da yorum yapmaya davet edilir.",
           ],
         },
       ],
@@ -94,7 +94,7 @@ const content: SeoContent = {
               alt: "Masa numaralı siyah NFC ve QR menü kartı",
             },
             {
-              title: "Gold Metal QR Menü Plağı:",
+              title: "Gold Metal QR Menü Plakası:",
               text: "Dayanıklı, şık metal plaka.",
               image: "/products/gold-metal-qr-menu-plaque.png",
               alt: "Gold renkli metal QR menü plakası",
@@ -114,12 +114,12 @@ const content: SeoContent = {
         {
           kind: "list",
           items: [
-            "**Başlangıç:** Sadece şık bir QR dijital menü isteyen, sipariş almayan kafe ve restoranlar için.",
-            "**Pro:** Masaya özel QR ve NFC, masadan sipariş, garson çağırma, hesap isteme ve satış raporları.",
-            "**Premium:** Masadan kartla ödeme, garson ve mutfak ekranları ve yapay zekâ özellikleri ile tam restoran sistemi.",
+            "**Başlangıç:** Sipariş almayan kafe ve restoranlar için QR dijital menü; kampanyalar, ürün etiketleri, menü istatistikleri ve Google yorum yönlendirmesi.",
+            "**Pro:** Başlangıç'taki her şeye ek olarak masaya özel QR ve NFC, masadan sipariş, garson çağırma, hesap isteme, satış raporları, çok dilli menü ve masa oyunları.",
+            "**Premium:** Pro'daki her şeye ek olarak masadan kartla ödeme, garson ve mutfak ekranları, Excel rapor, kalori bilgisi ve yapay zekâ özellikleri.",
           ],
         },
-        { kind: "link", text: "**[Paketleri ve demoyu incele](/demo)**" },
+        { kind: "link", text: "**[Paketleri ve fiyatları incele](/#paketler)**" },
       ],
     },
   ],

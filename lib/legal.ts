@@ -6,9 +6,14 @@
 export const COMPANY = {
   brand: "OZT Digital",
   owner: "Turan Öztürk",
-  // Şahıs işletmesi; vergi numarası eklenince aşağıya yazılır.
-  taxInfo: null as string | null,
-  address: "Üsküdar, İstanbul",
+  // Şahıs işletmesi unvanı.
+  legalName: "Ozt Digital - Turan Öztürk",
+  taxInfo: "Ümraniye Vergi Dairesi · VKN 56230558944" as string | null,
+  address: "Akdeniz Caddesi No: 33, Ümraniye / İstanbul",
+  // Telefon ve WhatsApp aynı numara.
+  phone: "+90 506 909 00 61",
+  phoneHref: "tel:+905069090061",
+  // Yasal metinlerdeki başvuru adresi (sitede iletişim için gösterilmez).
   email: "hvturanozt@icloud.com",
   website: "oztdigital.com.tr",
 };

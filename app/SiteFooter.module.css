@@ -53,3 +53,12 @@
   justify-self: start;
   text-align: start;
 }
+
+/* Firma bilgisi (unvan, adres, vergi) */
+.company {
+  max-width: var(--container);
+  margin: 32px auto 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-dark);
+  font-size: 13px;
+}

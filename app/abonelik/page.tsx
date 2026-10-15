@@ -1,6 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { FEATURE_INFO, featuresAddedIn, type Plan as PlanKey } from "../../lib/plan";
+
+// Paket kartlarındaki özellikler ana sayfayla aynı tek listeden (lib/plan.ts)
+// gelir; veritabanındaki serbest metin listesi yalnızca bilinmeyen paketlerde.
+const PLAN_KEYS: Record<string, PlanKey> = { baslangic: "starter", profesyonel: "pro", premium: "premium" };
+const PREVIOUS: Record<PlanKey, string | null> = { starter: null, pro: "Başlangıç'taki her şey", premium: "Pro'daki her şey" };
+
+function planFeatures(slug: string, fallback: string[]) {
+  const key = PLAN_KEYS[slug];
+  if (!key) return fallback;
+  const added = featuresAddedIn(key).map((feature) => FEATURE_INFO[feature].label);
+  return PREVIOUS[key] ? [PREVIOUS[key]!, ...added] : added;
+}
 
 type Plan = {
   id: string;
@@ -774,9 +787,9 @@ export default function SubscriptionPage() {
                   <div className="line" />
 
                   <ul>
-                    {(
-                      plan.features ||
-                      []
+                    {planFeatures(
+                      plan.slug,
+                      plan.features || []
                     ).map(
                       (
                         feature,

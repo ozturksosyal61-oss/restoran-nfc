@@ -249,8 +249,17 @@
   border-radius: var(--radius);
 }
 
-.menuOnlyNote p {
+.menuOnlyText {
   flex: 1 1 320px;
+  display: grid;
+  gap: 6px;
+}
+
+.menuOnlyText h3 {
+  font-size: 20px;
+}
+
+.menuOnlyNote p {
   color: var(--muted);
   font-size: 15px;
 }

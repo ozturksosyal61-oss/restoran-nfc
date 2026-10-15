@@ -53,15 +53,15 @@ const content: SeoContent = {
           items: [
             {
               h3: "Menü yönetimi",
-              text: "Ürün, kategori, fiyat ve fotoğrafları panelden yönetin. 8 hazır tema arasından işletmenize uygun olanı seçin.",
+              text: "Ürün, kategori, fiyat ve fotoğrafları panelden yönetin. 4 tasarım ve 19 renk paleti arasından işletmenize uygun olanı seçin.",
             },
             {
               h3: "Masadan sipariş ve sipariş takibi",
-              text: "Müşteri menüden seçer, siparişini gönderir; sipariş masa numarasıyla panelinize düşer. Müşteri siparişinin durumunu telefonundan takip eder.",
+              text: "Müşteri menüden seçer, siparişini gönderir; sipariş masa numarasıyla panelinize düşer. Müşteri siparişinin durumunu telefonundan takip eder (Pro ve Premium).",
             },
             {
               h3: "Garson çağırma ve hesap isteme",
-              text: "Tek dokunuşla garson çağrısı ve hesap talebi. Ekibiniz talepleri panelden anında görür.",
+              text: "Tek dokunuşla garson çağrısı ve hesap talebi. Ekibiniz talepleri panelden anında görür (Pro ve Premium).",
             },
             {
               h3: "Masadan ödeme",
@@ -69,11 +69,11 @@ const content: SeoContent = {
             },
             {
               h3: "Çok dilli menü ve otomatik çeviri",
-              text: "Menünüz yabancı misafirleriniz için farklı dillerde görüntülenir; yapay zekâ ile otomatik çeviri yapılabilir.",
+              text: "Menünüz yabancı misafirleriniz için farklı dillerde görüntülenir (Pro ve Premium); Premium'da yapay zekâ ile otomatik çeviri yapılabilir.",
             },
             {
               h3: "Yapay zekâ ile menü aktarma",
-              text: "Mevcut menünüzün fotoğrafını ya da PDF'ini yükleyin, ürünler sisteme otomatik aktarılsın. Menüyü tek tek girmekle uğraşmayın.",
+              text: "Mevcut menünüzün fotoğrafını ya da PDF'ini yükleyin, ürünler sisteme otomatik aktarılsın (Premium). Menüyü tek tek girmekle uğraşmayın.",
             },
             {
               h3: "Menü açılış duyurusu ve kampanyalar",
@@ -81,7 +81,7 @@ const content: SeoContent = {
             },
             {
               h3: "Raporlar ve analiz",
-              text: "Satış raporları, ürün satış analizi ve menü istatistikleriyle neyin çalıştığını görün.",
+              text: "Menü istatistikleri her pakette; satış raporları Pro'da, Excel rapor ve ürün satış analizi Premium'da. Neyin çalıştığını görün.",
             },
           ],
         },
@@ -95,8 +95,8 @@ const content: SeoContent = {
           items: [
             "**Paketinizi seçin:** Sadece menü için Başlangıç, sipariş için Pro, ödeme ve tam sistem için Premium.",
             "**Menünüzü aktarın:** Ürünleri panelden girin ya da menünüzün fotoğrafını yükleyip yapay zekâ ile aktarın.",
-            "**Temanızı seçin:** İşletmenizin tarzına uygun temayı belirleyin.",
-            "**Masa ürünlerinizi alın:** Logonuz ve masa numaralarınızla hazırlanan QR/NFC stant, kart ya da plakalar masanıza yerleşir.",
+            "**Tasarımınızı seçin:** 4 tasarım ve 19 renk paleti arasından işletmenizin tarzına uygun olanı belirleyin.",
+            "**Masa ürünlerinizi alın:** Logonuz ve masa numaralarınızla hazırlanan QR/NFC stand, kart ya da plakalar masanıza yerleşir.",
             "**Yayına alın:** Müşterileriniz ilk günden menüyü telefonlarından açar.",
           ],
         },

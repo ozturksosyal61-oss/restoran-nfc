@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
 import TrackedLink from "./TrackedLink";
+import ContactLink from "./ContactLink";
 import SiteHeader, { DEMO_EVENT, PRODUCTS_EVENT } from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
 import ContactSection from "./ContactSection";
@@ -13,18 +14,26 @@ import type { Metadata } from "next";
 import { INSTAGRAM_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL, pageMetadata } from "../lib/site";
 import { COMPANY } from "../lib/legal";
 
-// Restoran sayısı en fazla 5 dakikada bir güncellenir.
+// Paket fiyatları en fazla 5 dakikada bir güncellenir.
 export const revalidate = 300;
 
-// Sistem panelindeki "aktif" tanımıyla aynı: is_active false olmayanlar.
-async function getRestaurantCount() {
-  const { count, error } = await supabase
-    .from("restaurants")
-    .select("id", { count: "exact", head: true })
-    .not("is_active", "is", false);
+// Paket fiyatları abonelik sayfasıyla aynı kaynaktan (subscription_plans).
+// Okunamazsa kartlarda fiyat yerine "fiyat teklifi" notu gösterilir.
+const PLAN_SLUGS = { starter: "baslangic", pro: "profesyonel", premium: "premium" } as const;
 
-  return error ? null : count;
+async function getPlanPrices() {
+  const { data, error } = await supabase
+    .from("subscription_plans")
+    .select("slug, monthly_price")
+    .eq("is_active", true);
+
+  if (error || !data) return null;
+  return new Map(data.map((row) => [String(row.slug), Number(row.monthly_price)]));
 }
+
+// Menü tasarımları ve renk paletleri (lib/themes.ts: Aurora 7, Zest 4, Linen 4, Luna 4).
+const DESIGN_COUNT = 4;
+const PALETTE_COUNT = 19;
 
 /* =========================================================
    İÇERİK
@@ -52,8 +61,8 @@ const features: {
   },
   {
     icon: "palette",
-    title: "Markanıza Uygun Temalar",
-    text: "8 hazır tema arasından işletmenizin tarzına en uygun olanı seçin.",
+    title: "Markanıza Uygun Tasarımlar",
+    text: `${DESIGN_COUNT} tasarım ve ${PALETTE_COUNT} renk paleti arasından işletmenizin tarzına en uygun olanı seçin.`,
   },
   {
     icon: "star",
@@ -91,7 +100,7 @@ const products = [
     image: "/products/nfc-card-black.png",
   },
   {
-    title: "Gold Metal QR Menü Plağı",
+    title: "Gold Metal QR Menü Plakası",
     image: "/products/gold-metal-qr-menu-plaque.png",
   },
 ];
@@ -103,17 +112,20 @@ const featureLabels = (plan: "starter" | "pro" | "premium") =>
 
 const plans = [
   {
+    key: "starter" as const,
     name: "Başlangıç",
     text: "Sipariş almayan kafe ve restoranlar için şık bir QR dijital menü.",
     items: featureLabels("starter"),
   },
   {
+    key: "pro" as const,
     name: "Pro",
     text: "Masada sipariş alan işletmeler için: siparişler, garson çağrıları ve satış raporları.",
     items: ["Başlangıç'taki her şey", ...featureLabels("pro")],
     featured: true,
   },
   {
+    key: "premium" as const,
     name: "Premium",
     text: "Kartla ödeme, garson ve mutfak ekranları, yapay zekâ ile tam restoran sistemi.",
     items: ["Pro'daki her şey", ...featureLabels("premium")],
@@ -164,7 +176,7 @@ const jsonLd = {
       name: SITE_NAME,
       url: SITE_URL,
       logo: `${SITE_URL}/logo.png`,
-      email: COMPANY.email,
+      telephone: COMPANY.phone,
       sameAs: [INSTAGRAM_URL],
     },
     {
@@ -188,20 +200,17 @@ const jsonLd = {
 };
 
 export default async function Home() {
-  const restaurantCount = await getRestaurantCount();
+  const prices = await getPlanPrices();
+  const priceOf = (key: keyof typeof PLAN_SLUGS) => {
+    const value = prices?.get(PLAN_SLUGS[key]);
+    return value != null && Number.isFinite(value) && value > 0 ? value : null;
+  };
+  const allPriced = plans.every((plan) => priceOf(plan.key) != null);
 
-  // Sayı alınamazsa bu kutu gizlenir; yanlış rakam göstermeyiz.
   const facts = [
     { value: "QR + NFC", label: "Tek dokunuşla menü" },
-    { value: "8", label: "Hazır menü teması" },
-    ...(restaurantCount != null
-      ? [
-          {
-            value: restaurantCount.toLocaleString("tr-TR"),
-            label: "Hizmet verilen restoran",
-          },
-        ]
-      : []),
+    { value: `${DESIGN_COUNT} + ${PALETTE_COUNT}`, label: "Menü tasarımı ve renk paleti" },
+    { value: "24 saat", label: "Kurulum" },
     { value: "Anlık", label: "Sipariş bildirimi" },
   ];
 
@@ -341,7 +350,7 @@ export default async function Home() {
               </span>
               <span>
                 <strong>Yeni sipariş</strong>
-                <small>Masa 12 · ₺640</small>
+                <small>Masa 12 · ₺760</small>
               </span>
             </div>
           </div>
@@ -576,6 +585,12 @@ export default async function Home() {
                 <span className={styles.planBadge}>En popüler</span>
               )}
               <h3 className={styles.planName}>{plan.name}</h3>
+              {allPriced && (
+                <p className={styles.planPrice}>
+                  <strong>{priceOf(plan.key)!.toLocaleString("tr-TR")} ₺</strong>
+                  <span>/ay</span>
+                </p>
+              )}
               <p className={styles.planText}>{plan.text}</p>
 
               <ul className={styles.planList}>
@@ -587,19 +602,32 @@ export default async function Home() {
                 ))}
               </ul>
 
-              <TrackedLink
-                href="/demo"
+              <ContactLink
+                topic="paket"
+                message={`${plan.name} paketiyle ilgileniyorum.`}
                 className={
                   plan.featured ? styles.btnGold : styles.btnSecondary
                 }
+              >
+                Bu paketi istiyorum
+                <Icon name="arrow" className={styles.btnIcon} />
+              </ContactLink>
+              <TrackedLink
+                href="/demo"
+                className={styles.planDemo}
                 {...DEMO_EVENT}
               >
-                Demoyu İncele
-                <Icon name="arrow" className={styles.btnIcon} />
+                Demoyu incele
               </TrackedLink>
             </article>
           ))}
         </div>
+
+        <p className={`${styles.planNote} ${styles.reveal}`}>
+          {allPriced
+            ? "Fiyatlara KDV dahildir. Masa ürünleri (NFC stand, kart, plaka) paketlere dahil değildir; teklif üzerine hazırlanır."
+            : "Fiyat teklifi için bize yazın, aynı gün dönüş yapıyoruz."}
+        </p>
       </section>
 
       {/* SSS */}
@@ -657,7 +685,7 @@ export default async function Home() {
       <SiteFooter />
 
       {/* MOBİL SABİT CTA */}
-      <div className={styles.mobileBar}>
+      <div className={styles.mobileBar} data-mobile-bar>
         <TrackedLink
           href="/urunler"
           className={styles.mobileBarSecondary}
