@@ -6,7 +6,7 @@
    ========================================================= */
 
 .page {
-  --display: var(--font-luna-display), system-ui, sans-serif;
+  --display: "OztLira", var(--font-luna-display), system-ui, sans-serif;
   --sans: var(--font-luna-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
   --hot: var(--luna-hot, #ff5fa2);
   --hot-bg: var(--luna-hot-bg, #2a1522);
@@ -636,4 +636,15 @@
   .spinner {
     animation-duration: 2s;
   }
+}
+
+/* Dokunma alanı en az 44px: görünüm aynı kalır, çevresine görünmez alan eklenir. */
+.searchClear {
+  position: relative;
+}
+
+.searchClear::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
 }

@@ -80,7 +80,7 @@
 .title {
   margin: 0;
   padding-right: 28px;
-  font-family: var(--font-aurora-display), "Iowan Old Style", Georgia, serif;
+  font-family: "OztLira", var(--font-aurora-display), "Iowan Old Style", Georgia, serif;
   font-size: 28px;
   font-weight: 600;
   line-height: 1.1;
@@ -150,4 +150,11 @@
   .card {
     animation: none;
   }
+}
+
+/* Dokunma alanı en az 44px: görünüm aynı kalır, çevresine görünmez alan eklenir. */
+.close::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
 }

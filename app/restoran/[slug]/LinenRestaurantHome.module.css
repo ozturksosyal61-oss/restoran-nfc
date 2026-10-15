@@ -35,7 +35,7 @@
   --danger-bg: var(--au-danger-bg);
   --shadow: var(--au-shadow);
 
-  --display: var(--font-linen-display), "Iowan Old Style", Georgia, serif;
+  --display: "OztLira", var(--font-linen-display), "Iowan Old Style", Georgia, serif;
   --sans: var(--font-linen-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
 
   min-height: 100vh;
@@ -138,9 +138,12 @@
 }
 
 .logo img {
+  /* Logo yuvarlak çerçevede kesilmesin: tamamı, kenarlardan boşlukla. */
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  box-sizing: border-box;
+  padding: 12%;
+  object-fit: contain;
 }
 
 .name {
@@ -179,6 +182,8 @@
   margin: 0;
   width: 100%;
   aspect-ratio: 4 / 3;
+  /* Küçük ekranda kapak kısalır; garson / hesap ilk ekranda görünsün. */
+  max-height: 26vh;
   position: relative;
   overflow: hidden;
   border-radius: 2px;
@@ -492,5 +497,12 @@
 @media (min-width: 900px) {
   .column {
     padding-top: 32px;
+  }
+}
+
+/* Kısa ekranlar (iPhone SE, tarayıcı çubukları açık): garson / hesap ilk ekranda kalsın. */
+@media (max-height: 740px) {
+  .cover {
+    max-height: 18vh;
   }
 }

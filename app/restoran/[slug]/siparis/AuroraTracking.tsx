@@ -4,6 +4,7 @@ import { useState } from "react";
 import AuroraIcon, { type AuroraIconName } from "../AuroraIcon";
 import { formatLira, type TableRequestType } from "../aurora-utils";
 import { serviceStatusText, useTableService } from "../TableService";
+import { ORDER_FLOW, ORDER_STATUS, type OrderStatus } from "../../../../lib/order-status";
 import styles from "../AuroraFlow.module.css";
 import TableGamesCard from "../TableGamesCard";
 import { orderNumber } from "../../../../lib/order-number";
@@ -31,50 +32,8 @@ type TrackingItem = {
   image_url: string | null;
 };
 
-// Beş aşama paneldeki sipariş durumlarıyla eşleşir.
-const STEPS = [
-  { key: "pending", title: "Sipariş alındı", detail: "İşletmeye iletildi" },
-  { key: "accepted", title: "Onaylandı", detail: "İşletme siparişi kabul etti" },
-  { key: "preparing", title: "Hazırlanıyor", detail: "Mutfakta" },
-  { key: "ready", title: "Hazır", detail: "Masanıza getiriliyor" },
-  { key: "delivered", title: "Masanızda", detail: "Afiyet olsun" },
-];
-
-// Üstteki büyük kart: başlık, açıklama ve ana sayfadaki üçlü çubuğun doluluğu.
-const HERO: Record<string, { title: string; text: string; fill: number[]; step: number }> = {
-  pending: {
-    title: "Sipariş alındı",
-    text: "Siparişiniz işletmeye iletildi, onay bekleniyor.",
-    fill: [0.5, 0, 0],
-    step: 0,
-  },
-  accepted: {
-    title: "Onaylandı",
-    text: "İşletme siparişinizi kabul etti, birazdan hazırlanmaya başlayacak.",
-    fill: [1, 0.15, 0],
-    step: 1,
-  },
-  preparing: {
-    title: "Hazırlanıyor",
-    text: "Siparişiniz mutfakta, hazır olunca masanıza gelecek.",
-    fill: [1, 0.55, 0],
-    step: 1,
-  },
-  ready: {
-    title: "Hazır",
-    text: "Siparişiniz hazır, masanıza getiriliyor.",
-    fill: [1, 1, 0.35],
-    step: 2,
-  },
-  delivered: {
-    title: "Masanızda",
-    text: "Siparişiniz teslim edildi. Afiyet olsun!",
-    fill: [1, 1, 1],
-    step: 2,
-  },
-};
-
-const BAR_LABELS = ["Alındı", "Hazırlanıyor", "Masanızda"];
+// Beş aşama paneldeki sipariş durumlarıyla eşleşir; adlar lib/order-status.ts.
+const STEPS = ORDER_FLOW.map((key) => ({ key, title: ORDER_STATUS[key].label, detail: ORDER_STATUS[key].detail }));
 
 const RATING_LABELS = ["", "Çok kötü", "Kötü", "Ortalama", "Çok iyi", "Mükemmel"];
 
@@ -150,7 +109,7 @@ export default function AuroraTracking({
   }
 
   const cancelled = order.status === "cancelled";
-  const hero = HERO[order.status] ?? HERO.pending;
+  const hero = ORDER_STATUS[(order.status as OrderStatus)] ?? ORDER_STATUS.pending;
   const live = !cancelled && order.status !== "delivered";
   const stepIndex = Math.max(
     0,
@@ -185,29 +144,10 @@ export default function AuroraTracking({
         {/* Durum kartı */}
         <section className={cancelled ? styles.heroCancelled : styles.hero} aria-live="polite">
           <div>
-            <h2>{cancelled ? "İptal edildi" : hero.title}</h2>
-            <p>
-              {cancelled
-                ? "Bu sipariş işletme tarafından iptal edildi. Sorunuz varsa garsonunuza danışın."
-                : hero.text}
-            </p>
+            <h2>{hero.label}</h2>
+            <p>{hero.text}</p>
           </div>
 
-          {!cancelled && (
-            <div className={styles.bars}>
-              {BAR_LABELS.map((label, i) => (
-                <div key={label}>
-                  <span className={styles.bar}>
-                    <span
-                      className={live && i === hero.step ? styles.barFillLive : styles.barFill}
-                      style={{ width: `${hero.fill[i] * 100}%` }}
-                    />
-                  </span>
-                  <span className={i === hero.step ? styles.barLabelOn : styles.barLabel}>{label}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </section>
 
         {/* Sipariş beklerken masa oyunları (işletme açtıysa) */}
@@ -395,9 +335,23 @@ export default function AuroraTracking({
         )}
       </div>
 
-      {/* Garson / hesap */}
+      {/* Garson / hesap ve alt gezinme (ana sayfadaki alt çubuğun karşılığı) */}
       {canRequest && (
         <div className={styles.footer}>
+          <nav className={styles.tabNav} aria-label="Restoran sayfaları">
+            <a href={homeHref}>
+              <AuroraIcon name="back" size={16} />
+              Ana sayfa
+            </a>
+            <a href={menuHref}>
+              <AuroraIcon name="plate" size={16} />
+              Menü
+            </a>
+            <a href={`${base}/odeme${tableQuery}`}>
+              <AuroraIcon name="receipt" size={16} />
+              Hesap
+            </a>
+          </nav>
           <div className={`${styles.footerInner} ${styles.footerActions}`}>
             <RequestButton
               icon="bell"

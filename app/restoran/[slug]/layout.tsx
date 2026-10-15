@@ -1,3 +1,4 @@
+import { instagramProfileUrl } from "../../../lib/restaurant-links";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -164,7 +165,7 @@ export default async function RestaurantLayout({
             <MenuPopup
               restaurantId={Number(restaurant.id)}
               popup={popup}
-              instagramUrl={restaurant.instagram_url ?? null}
+              instagramUrl={instagramProfileUrl(restaurant.instagram_url)}
             />
           )}
         </div>

@@ -1,3 +1,13 @@
+/* ₺ (U+20BA): bazı serif başlık yazı tiplerinde bozuk çiziliyor ("Ł" gibi).
+   Yalnızca bu karakter için sistemin sans yazı tipi kullanılır; tasarımların
+   --display yazı tipi zincirinin başında yer alır. */
+@font-face {
+  font-family: "OztLira";
+  src: local("Helvetica Neue"), local("HelveticaNeue"), local("Roboto"), local("Roboto-Regular"),
+    local("Segoe UI"), local("Arial"), local("ArialMT");
+  unicode-range: U+20BA;
+}
+
 /* =========================================================
    AURORA RENK TEMALARI
    Restoran kabuğuna (layout) eklenir; ana sayfa, menü, sepet,

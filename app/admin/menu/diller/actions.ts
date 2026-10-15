@@ -152,6 +152,15 @@ function cleanTranslation(job: Job, item: TranslatedItem | undefined): Translate
   };
 }
 
+// Aynı malzemenin farklı ürünlerde farklı çevrilmemesi için sabit terimler.
+const GLOSSARY: Partial<Record<MenuLanguage, string>> = {
+  en: "roka = arugula (never 'rocket'), dana = beef, kıyma = minced beef, tavuk = chicken, köz = roasted, lavaş = lavash",
+  de: "roka = Rucola, dana = Rind, kıyma = Rinderhack, tavuk = Hähnchen, lavaş = Lavash",
+  fr: "roka = roquette, dana = bœuf, kıyma = bœuf haché, tavuk = poulet",
+  ru: "roka = руккола, dana = говядина, kıyma = говяжий фарш, tavuk = курица",
+  ar: "roka = جرجير, dana = لحم بقري, kıyma = لحم مفروم, tavuk = دجاج",
+};
+
 async function translateChunk(language: MenuLanguage, jobs: Job[]) {
   const items = jobs.map((job) => ({
     key: jobKey(job),
@@ -171,7 +180,8 @@ async function translateChunk(language: MenuLanguage, jobs: Job[]) {
       "ingredients is a comma-separated list; translate each item and keep it comma-separated. " +
       "Each field must contain only the translated text of that same field: never add allergens, notes, " +
       "explanations, alternatives, the original text or your reasoning. " +
-      "Do not invent information, prices or ingredients. Return every key you receive exactly once.",
+      "Do not invent information, prices or ingredients. Return every key you receive exactly once." +
+      (GLOSSARY[language] ? ` Always use these terms consistently: ${GLOSSARY[language]}.` : ""),
     content: [
       {
         type: "text",

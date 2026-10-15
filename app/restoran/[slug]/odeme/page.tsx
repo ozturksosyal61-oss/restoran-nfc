@@ -1,5 +1,6 @@
 "use client";
 
+import { orderStatusLabel } from "../../../../lib/order-status";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/client";
@@ -17,7 +18,7 @@ type BillResponse = { open: boolean; session_id: number | null; restaurant_id: n
 function formatPrice(value: number) { return `${Number(value || 0).toLocaleString("tr-TR")} TL`; }
 function formatTime(value: string) { return new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit" }).format(new Date(value)); }
 function orderStatusText(status: string) {
-  switch (status) { case "pending": return "Bekliyor"; case "accepted": return "Onaylandı"; case "preparing": return "Hazırlanıyor"; case "ready": return "Hazır"; case "delivered": return "Teslim edildi"; default: return status || "Sipariş"; }
+  return orderStatusLabel(status);
 }
 
 export default function PaymentPage() {

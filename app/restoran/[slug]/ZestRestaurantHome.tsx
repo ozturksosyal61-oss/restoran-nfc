@@ -4,6 +4,8 @@ import { ActiveOrderCard, ActiveOrderProvider, OrderTabLink } from "./AuroraActi
 import type AuroraRestaurantHome from "./AuroraRestaurantHome";
 import TableGamesCard from "./TableGamesCard";
 import { TableServiceCard } from "./TableService";
+import CopyButton from "./CopyButton";
+import { MIN_REVIEWS_SHOWN } from "../../../lib/restaurant-links";
 import styles from "./ZestRestaurantHome.module.css";
 
 // Zest tasarımının restoran ana sayfası (fast food ve kafe). Aurora ana
@@ -148,7 +150,7 @@ export default function ZestRestaurantHome({
             ) : (
               <div className={styles.heroFallback} aria-hidden="true">{initial}</div>
             )}
-            {totalReviews > 0 && (
+            {totalReviews >= MIN_REVIEWS_SHOWN && (
               <span className={styles.heroBadge}>
                 <Icon name="star" />
                 {averageRating} · {totalReviews} değerlendirme
@@ -321,11 +323,16 @@ export default function ZestRestaurantHome({
                   <dt><Icon name="wifi" />WiFi</dt>
                   <dd>
                     {wifiName}
-                    {wifiPassword && <small>Şifre: <b>{wifiPassword}</b></small>}
+                    {wifiPassword && (
+                      <small>
+                        Şifre: <b>{wifiPassword}</b>
+                        <CopyButton text={wifiPassword} />
+                      </small>
+                    )}
                   </dd>
                 </div>
               )}
-              {totalReviews > 0 && (
+              {totalReviews >= MIN_REVIEWS_SHOWN && (
                 <div>
                   <dt><Icon name="star" />Müşteri puanı</dt>
                   <dd>{averageRating} / 5<small>{totalReviews} değerlendirme</small></dd>
@@ -339,7 +346,7 @@ export default function ZestRestaurantHome({
                   <a href={restaurant.instagram_url} target="_blank" rel="noopener noreferrer">Instagram</a>
                 )}
                 {restaurant.google_review_url && (
-                  <a href={restaurant.google_review_url} target="_blank" rel="noopener noreferrer">Google yorumları</a>
+                  <a href={restaurant.google_review_url} target="_blank" rel="noopener noreferrer">Google&apos;da yorum yazın</a>
                 )}
               </div>
             )}

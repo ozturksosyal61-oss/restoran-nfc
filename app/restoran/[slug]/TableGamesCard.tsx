@@ -27,7 +27,7 @@ export default function TableGamesCard({
         </svg>
       </span>
       <span className={styles.text}>
-        <strong>{variant === "tracking" ? "Beklerken oyna" : "Masa Oyunları"}</strong>
+        <strong>{variant === "tracking" ? "Beklerken oynayın" : "Masa Oyunları"}</strong>
         <small>
           {variant === "tracking"
             ? "Siparişiniz hazırlanırken masaca bir oyun açın"

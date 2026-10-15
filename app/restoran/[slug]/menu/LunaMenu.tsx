@@ -76,8 +76,12 @@ function Row({
           onClick={onAdd}
           aria-label={quantity > 0 ? t.inCartMore(product.name, quantity) : t.addToCartAria(product.name)}
         >
-          <AuroraIcon name="plus" size={quantity > 0 ? 13 : 17} strokeWidth={2.6} />
-          {quantity > 0 && <span>{quantity}</span>}
+          {/* Sepetteki adet "×2" olarak; dokununca bir adet daha eklenir. */}
+          {quantity > 0 ? (
+            <span>×{quantity}</span>
+          ) : (
+            <AuroraIcon name="plus" size={17} strokeWidth={2.6} />
+          )}
         </button>
       )}
     </article>
@@ -202,7 +206,7 @@ export default function LunaMenu({
           </div>
         )}
 
-        {!table && !menuOnly && (
+        {!table && !menuOnly && !menu.tableChecking && (
           <div className={styles.notice}>
             <AuroraIcon name="qr" />
             <span>

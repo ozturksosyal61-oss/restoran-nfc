@@ -6,7 +6,7 @@
    ========================================================= */
 
 .page {
-  --display: var(--font-linen-display), "Iowan Old Style", Georgia, serif;
+  --display: "OztLira", var(--font-linen-display), "Iowan Old Style", Georgia, serif;
   --sans: var(--font-linen-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
 
   min-height: 100vh;
@@ -572,4 +572,15 @@
   .spinner {
     animation-duration: 2s;
   }
+}
+
+/* Dokunma alanı en az 44px: görünüm aynı kalır, çevresine görünmez alan eklenir. */
+.searchClear {
+  position: relative;
+}
+
+.searchClear::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
 }

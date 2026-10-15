@@ -180,10 +180,11 @@ export default function AuroraCheckout({
         </div>
 
         <p className={styles.legalLine}>
-          Adınız ve notunuz yalnızca siparişinizin hazırlanması için restorana iletilir.{" "}
+          Adınız ve notunuz yalnızca siparişinizin hazırlanması için restorana iletilir. Ayrıntılar için{" "}
           <a href="/kvkk#menu-kullanicilari" target="_blank" rel="noreferrer">
-            Kişisel verilerin işlenmesi
-          </a>
+            kişisel verilerin işlenmesi
+          </a>{" "}
+          metnine bakabilirsiniz.
         </p>
 
         {error && (

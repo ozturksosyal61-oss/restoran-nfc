@@ -1,3 +1,4 @@
+import { instagramProfileUrl } from "../../../lib/restaurant-links";
 import type { Metadata } from "next";
 import { restaurantMetadata } from "../../../lib/restaurant-metadata";
 import { notFound, redirect } from "next/navigation";
@@ -162,7 +163,8 @@ export default async function RestaurantPage({
 
   // Restoranın girdiği bağlantılar yalnızca https ise gösterilir
   // ("javascript:" gibi adreslerle müşteri tarayıcısında kod çalışmasın).
-  restaurant.instagram_url = safeUrl(restaurant.instagram_url);
+  // Kullanıcı adı ya da profil adresi → profil adresi; boş / yalnızca instagram.com ise gizlenir.
+  restaurant.instagram_url = instagramProfileUrl(restaurant.instagram_url);
   restaurant.google_review_url = safeUrl(restaurant.google_review_url);
 
   // Çalışan değerlendirme Premium paketinde.

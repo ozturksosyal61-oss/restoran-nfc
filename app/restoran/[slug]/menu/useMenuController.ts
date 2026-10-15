@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/client";
 import {
+  setNumberLocale,
   readLastOrderId,
   readSavedTableToken,
   type TableRequestType,
@@ -136,6 +137,8 @@ export function useMenuController({
   const [categories, setCategories] = useState<Category[]>(initialData?.categories ?? []);
   const [products, setProducts] = useState<Product[]>(initialData?.products ?? []);
   const [table, setTable] = useState<Table | null>(null);
+  // Masa kodu doğrulanana kadar "QR kodu okutun" uyarısı gösterilmez.
+  const [tableChecking, setTableChecking] = useState(!menuOnly);
   const [lastOrderId, setLastOrderId] = useState("");
   const [loading, setLoading] = useState(!initialData);
   const [loadError, setLoadError] = useState("");
@@ -149,6 +152,8 @@ export function useMenuController({
   const [languages, setLanguages] = useState<MenuLanguage[]>(initialData?.languages ?? []);
   const [language, setLanguage] = useState<DisplayLanguage>("tr");
   const t = menuStrings(language);
+  // Fiyatlar seçili dilin sayı biçimiyle (alt bileşenler bu çizimde okur).
+  setNumberLocale(t.locale);
   const [toast, setToast] = useState<Toast | null>(null);
 
   const chipsRef = useRef<HTMLDivElement>(null);
@@ -311,6 +316,7 @@ export function useMenuController({
         setLanguages(availableLanguages);
         setLanguage(initialLanguage);
         setTable(nextTable);
+        setTableChecking(false);
         setLastOrderId(nextTable ? readLastOrderId(slug, nextTable.token) : "");
 
         // Sepet tüm restoranlar için tek bir tarayıcı kaydında tutulur. Bu
@@ -437,29 +443,43 @@ export function useMenuController({
     [cart.items]
   );
 
-  // Kaydırırken ekrandaki kategoriyi işaretle.
+  // Kaydırırken ekrandaki kategoriyi işaretle: başlığı ekranın üst
+  // kısmındaki çizgiyi (yapışkan şeritlerin altı) geçen son bölüm seçilir.
+  // Sayfa sonuna gelindiyse son bölüm.
   useEffect(() => {
     if (query || sections.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const line = Math.max(140, window.innerHeight * 0.3);
+      let current: number | null = null;
 
-        if (visible) {
-          setActiveCategory(Number(visible.target.getAttribute("data-category")));
-        }
-      },
-      { rootMargin: "-25% 0px -65% 0px" }
-    );
+      for (const { category } of sections) {
+        const element = document.getElementById(`kategori-${category.id}`);
+        if (!element) continue;
+        if (element.getBoundingClientRect().top <= line) current = category.id;
+      }
 
-    sections.forEach(({ category }) => {
-      const element = document.getElementById(`kategori-${category.id}`);
-      if (element) observer.observe(element);
-    });
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      if (atBottom) current = sections[sections.length - 1].category.id;
+      if (current === null) current = sections[0].category.id;
 
-    return () => observer.disconnect();
+      setActiveCategory((previous) => (previous === current ? previous : current));
+    };
+
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, [sections, query]);
 
   // Seçili kategori şeritte tam görünmüyorsa ortaya kaydır.
@@ -489,6 +509,17 @@ export function useMenuController({
   }, [toast]);
 
   const dialogOpen = Boolean(openProduct || sheet);
+
+  // Pencere açılıp sayfa kaydırması kilitlenince kaydırma çubuğu kaybolur ve
+  // içerik sağa kayar; çubuğun yeri her zaman ayrılır.
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.style.scrollbarGutter;
+    root.style.scrollbarGutter = "stable";
+    return () => {
+      root.style.scrollbarGutter = previous;
+    };
+  }, []);
 
   useEffect(() => {
     if (!dialogOpen) return;
@@ -615,6 +646,7 @@ export function useMenuController({
     pendingRequest,
     sentRequests,
     blockedRequests,
+    tableChecking,
     chipsRef,
     query,
     shownCategories,

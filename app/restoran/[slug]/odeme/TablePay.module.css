@@ -441,3 +441,24 @@
     padding: 0;
   }
 }
+
+/* Dokunma alanı en az 44px: görünüm aynı kalır, çevresine görünmez alan eklenir. */
+.stepper button {
+  position: relative;
+}
+
+.stepper button::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+.selected button {
+  position: relative;
+}
+
+.selected button::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+}

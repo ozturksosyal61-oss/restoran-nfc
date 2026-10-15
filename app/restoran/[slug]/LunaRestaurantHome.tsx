@@ -4,6 +4,8 @@ import { ActiveOrderCard, ActiveOrderProvider, OrderTabLink } from "./AuroraActi
 import type AuroraRestaurantHome from "./AuroraRestaurantHome";
 import TableGamesCard from "./TableGamesCard";
 import { TableServiceCard } from "./TableService";
+import CopyButton from "./CopyButton";
+import { MIN_REVIEWS_SHOWN } from "../../../lib/restaurant-links";
 import styles from "./LunaRestaurantHome.module.css";
 
 // Luna tasarımının restoran ana sayfası (bar ve kokteyl). Aurora ana
@@ -145,7 +147,7 @@ export default function LunaRestaurantHome({
             <div className={styles.cover}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={restaurant.cover_image_url} alt={`${restaurant.name} kapak fotoğrafı`} />
-              {totalReviews > 0 && (
+              {totalReviews >= MIN_REVIEWS_SHOWN && (
                 <span className={styles.ratingBadge}>
                   <Icon name="star" />
                   {averageRating} · {totalReviews} değerlendirme
@@ -168,8 +170,6 @@ export default function LunaRestaurantHome({
             <span className={styles.menuArrow} aria-hidden="true"><Icon name="arrow" /></span>
           </a>
 
-          <TableGamesCard href={`${base}/oyunlar${tableQuery}`} />
-
           <div className={styles.serviceGrid}>
             <ServiceCard
               restaurantId={Number(restaurant.id)}
@@ -186,6 +186,9 @@ export default function LunaRestaurantHome({
               subtitle="Adisyon gelsin"
             />
           </div>
+
+          {/* Garson / hesap ilk ekranda kalsın diye oyunlar servis düğmelerinin altında. */}
+          <TableGamesCard href={`${base}/oyunlar${tableQuery}`} />
 
           <div className={styles.quickGrid}>
             <a className={styles.quickItem} href={`${base}/odeme${tableQuery}`}>
@@ -300,11 +303,16 @@ export default function LunaRestaurantHome({
                   <dt>WiFi</dt>
                   <dd>
                     {wifiName}
-                    {wifiPassword && <small>Şifre: <b>{wifiPassword}</b></small>}
+                    {wifiPassword && (
+                      <small>
+                        Şifre: <b>{wifiPassword}</b>
+                        <CopyButton text={wifiPassword} />
+                      </small>
+                    )}
                   </dd>
                 </div>
               )}
-              {totalReviews > 0 && (
+              {totalReviews >= MIN_REVIEWS_SHOWN && (
                 <div>
                   <dt>Müşteri puanı</dt>
                   <dd>{averageRating} / 5<small>{totalReviews} değerlendirme</small></dd>
@@ -318,7 +326,7 @@ export default function LunaRestaurantHome({
                   <a href={restaurant.instagram_url} target="_blank" rel="noopener noreferrer">Instagram</a>
                 )}
                 {restaurant.google_review_url && (
-                  <a href={restaurant.google_review_url} target="_blank" rel="noopener noreferrer">Google yorumları</a>
+                  <a href={restaurant.google_review_url} target="_blank" rel="noopener noreferrer">Google&apos;da yorum yazın</a>
                 )}
               </div>
             )}

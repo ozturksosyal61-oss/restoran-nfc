@@ -4,6 +4,7 @@ import { useState } from "react";
 import AuroraIcon from "../AuroraIcon";
 import { formatLira } from "../aurora-utils";
 import { serviceStatusText, useTableService } from "../TableService";
+import { orderStatusLabel } from "../../../../lib/order-status";
 import styles from "../AuroraFlow.module.css";
 import { orderNumber } from "../../../../lib/order-number";
 import type { OnlinePayment } from "./pay-utils";
@@ -35,14 +36,6 @@ type Bill = {
   unconfirmed_total?: number;
 };
 
-const STATUS_TEXT: Record<string, string> = {
-  pending: "Onay bekliyor",
-  accepted: "Onaylandı",
-  preparing: "Hazırlanıyor",
-  ready: "Hazır",
-  delivered: "Teslim edildi",
-  cancelled: "İptal edildi",
-};
 
 function formatTime(value: string) {
   return new Date(value).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
@@ -236,7 +229,7 @@ export default function AuroraBill({
                 </span>
                 <span className={styles.orderSide}>
                   <span className={isPaid ? `${styles.chip} ${styles.chipOk}` : styles.chip}>
-                    {isPaid ? "Ödendi" : STATUS_TEXT[order.status] ?? "Sipariş"}
+                    {isPaid ? "Ödendi" : orderStatusLabel(order.status)}
                   </span>
                   <span className={styles.num}>{formatLira(order.total_amount)}</span>
                 </span>

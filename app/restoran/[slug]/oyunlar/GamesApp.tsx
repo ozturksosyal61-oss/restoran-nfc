@@ -16,7 +16,7 @@ const IDLE_RESET_MS = 30 * 60 * 1000;
 type Screen = "home" | TableGameId;
 
 const ORDER_TEXT: Record<string, string> = {
-  pending: "Siparişiniz alındı",
+  pending: "Siparişiniz onay bekliyor",
   accepted: "Siparişiniz onaylandı",
   preparing: "Siparişiniz hazırlanıyor",
   ready: "Siparişiniz hazır, masanıza geliyor",
@@ -48,7 +48,7 @@ function OrderStrip() {
     <>
       <a className={styles.orderStrip} href={order.href}>
         <span className={order.status === "delivered" ? styles.orderDot : styles.orderPulse} aria-hidden="true" />
-        <span>{ORDER_TEXT[order.status] ?? "Siparişiniz alındı"}</span>
+        <span>{ORDER_TEXT[order.status] ?? "Siparişiniz onay bekliyor"}</span>
         <small>Takip et</small>
       </a>
 

@@ -4,6 +4,8 @@ import { ActiveOrderCard, ActiveOrderProvider, OrderTabLink } from "./AuroraActi
 import type AuroraRestaurantHome from "./AuroraRestaurantHome";
 import TableGamesCard from "./TableGamesCard";
 import { TableServiceCard } from "./TableService";
+import CopyButton from "./CopyButton";
+import { MIN_REVIEWS_SHOWN } from "../../../lib/restaurant-links";
 import styles from "./LinenRestaurantHome.module.css";
 
 // Linen tasarımının restoran ana sayfası (fine dining ve bistro). Aurora
@@ -133,7 +135,12 @@ export default function LinenRestaurantHome({
           <dt>WiFi</dt>
           <dd>
             {wifiName}
-            {wifiPassword && <small>Şifre: <b>{wifiPassword}</b></small>}
+            {wifiPassword && (
+                      <small>
+                        Şifre: <b>{wifiPassword}</b>
+                        <CopyButton text={wifiPassword} />
+                      </small>
+                    )}
           </dd>
         </div>
       )}
@@ -161,7 +168,7 @@ export default function LinenRestaurantHome({
             )}
             <h1 className={styles.name}>{restaurant.name}</h1>
             {tagline && <p className={styles.tagline}>{tagline}</p>}
-            {totalReviews > 0 && (
+            {totalReviews >= MIN_REVIEWS_SHOWN && (
               <p className={styles.rating}>
                 ★ {averageRating} · {totalReviews} değerlendirme
               </p>
@@ -268,7 +275,7 @@ export default function LinenRestaurantHome({
 
             <dl className={styles.facts}>
               {facts}
-              {totalReviews > 0 && (
+              {totalReviews >= MIN_REVIEWS_SHOWN && (
                 <div>
                   <dt>Puan</dt>
                   <dd>{averageRating} / 5<small>{totalReviews} değerlendirme</small></dd>
@@ -282,7 +289,7 @@ export default function LinenRestaurantHome({
                   <a href={restaurant.instagram_url} target="_blank" rel="noopener noreferrer">Instagram</a>
                 )}
                 {restaurant.google_review_url && (
-                  <a href={restaurant.google_review_url} target="_blank" rel="noopener noreferrer">Google yorumları</a>
+                  <a href={restaurant.google_review_url} target="_blank" rel="noopener noreferrer">Google&apos;da yorum yazın</a>
                 )}
               </div>
             )}

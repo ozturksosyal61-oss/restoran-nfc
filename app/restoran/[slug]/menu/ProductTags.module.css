@@ -44,7 +44,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 34px;
+  min-height: 44px;
   padding: 0 12px;
   border: 1px solid var(--au-line);
   border-radius: 999px;

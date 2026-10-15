@@ -163,7 +163,7 @@ export default function ReflexGame({ onExit }: { onExit: () => void }) {
           <ol className={styles.rules}>
             <li>Telefonu masanın ortasına koyun, herkes kendi renginin önüne geçsin.</li>
             <li>Ekran kırmızıyken bekleyin. Yeşile dönünce ilk dokunan turu kazanır.</li>
-            <li>Erken dokunan yanar! Bazı turlarda yeşil tuzaktır: “MAVİDE dokun” yazıyorsa maviyi bekleyin.</li>
+            <li>Erken dokunan yanar! Bazı turlarda yeşil tuzaktır: “MAVİDE dokunun” yazıyorsa maviyi bekleyin.</li>
           </ol>
 
           <div className={styles.field}>
@@ -258,12 +258,12 @@ export default function ReflexGame({ onExit }: { onExit: () => void }) {
           : "";
 
   function zoneText(player: number) {
-    if (burned[player]) return { big: "Yandın!", small: "Erken dokundun" };
-    if (status === "ready") return { big: PLAYERS[player].name, small: "Parmağını hazırla" };
-    if (status === "wait" || status === "decoy") return trap ? { big: "MAVİDE dokun!", small: "Yeşil tuzak" } : { big: "Bekle…", small: "Yeşili bekle" };
-    if (status === "go") return times[player] != null ? { big: `${times[player]} ms`, small: winner === player ? "İlk sen!" : "" } : { big: "DOKUN!", small: "" };
+    if (burned[player]) return { big: "Yandınız!", small: "Erken dokundunuz" };
+    if (status === "ready") return { big: PLAYERS[player].name, small: "Parmağınızı hazırlayın" };
+    if (status === "wait" || status === "decoy") return trap ? { big: "MAVİDE dokunun!", small: "Yeşil tuzak" } : { big: "Bekleyin…", small: "Yeşili bekleyin" };
+    if (status === "go") return times[player] != null ? { big: `${times[player]} ms`, small: winner === player ? "İlk sen!" : "" } : { big: "DOKUNUN!", small: "" };
     // Sonuç
-    if (winner === player) return { big: "Kazandın!", small: `${times[player]} ms` };
+    if (winner === player) return { big: "Kazandınız!", small: `${times[player]} ms` };
     return { big: times[player] != null ? `${times[player]} ms` : "—", small: "" };
   }
 

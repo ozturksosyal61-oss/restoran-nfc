@@ -7,7 +7,7 @@ export const TABLE_GAMES = [
   {
     id: "anlat",
     name: "Anlat Bakalım",
-    short: "Yasaklı kelimeleri söylemeden anlat, masan bilsin.",
+    short: "Yasaklı kelimeleri söylemeden anlatın, masanız bilsin.",
     players: "2+ kişi",
   },
   {

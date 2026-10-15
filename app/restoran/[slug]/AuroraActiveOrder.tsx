@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { createClient } from "../../../lib/supabase/client";
+import { ORDER_STATUS } from "../../../lib/order-status";
 import styles from "./AuroraRestaurantHome.module.css";
 import { orderNumber } from "../../../lib/order-number";
 
@@ -128,15 +129,16 @@ export function useActiveOrder() {
 
 // Aşamalar paneldeki sipariş durumlarıyla eşleşir.
 // fill: üç çubuğun (Alındı · Hazırlanıyor · Masanızda) doluluk oranı.
+// Başlıklar takip ve hesap ekranlarıyla aynı (lib/order-status.ts).
 const STAGES: Record<string, { title: string; step: number; fill: number[] }> = {
-  pending: { title: "Siparişiniz alındı", step: 0, fill: [0.5, 0, 0] },
-  accepted: { title: "Siparişiniz onaylandı", step: 1, fill: [1, 0.15, 0] },
-  preparing: { title: "Siparişiniz hazırlanıyor", step: 1, fill: [1, 0.55, 0] },
-  ready: { title: "Siparişiniz hazır", step: 2, fill: [1, 1, 0.35] },
-  delivered: { title: "Siparişiniz masanızda", step: 2, fill: [1, 1, 1] },
+  pending: { title: ORDER_STATUS.pending.label, step: 0, fill: [0.5, 0, 0] },
+  accepted: { title: ORDER_STATUS.accepted.label, step: 1, fill: [1, 0.15, 0] },
+  preparing: { title: ORDER_STATUS.preparing.label, step: 1, fill: [1, 0.55, 0] },
+  ready: { title: ORDER_STATUS.ready.label, step: 2, fill: [1, 1, 0.35] },
+  delivered: { title: ORDER_STATUS.delivered.label, step: 2, fill: [1, 1, 1] },
 };
 
-const STEP_LABELS = ["Alındı", "Hazırlanıyor", "Masanızda"];
+const STEP_LABELS = [ORDER_STATUS.pending.label, ORDER_STATUS.preparing.label, ORDER_STATUS.delivered.label];
 
 export function ActiveOrderCard() {
   const order = useContext(ActiveOrderContext);

@@ -17,7 +17,7 @@
   --cta-ink: var(--au-cta-ink, #14110d);
   --ok: var(--au-ok, #3fb37f);
   --danger: var(--au-danger, #e5534b);
-  --display: var(--font-aurora-display), "Iowan Old Style", Georgia, serif;
+  --display: "OztLira", var(--font-aurora-display), "Iowan Old Style", Georgia, serif;
   --sans: var(--font-aurora-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
 
   min-height: 100vh;
@@ -787,4 +787,15 @@
   .zone {
     transition: none;
   }
+}
+
+/* Dokunma alanı en az 44px: görünüm aynı kalır, çevresine görünmez alan eklenir. */
+.round {
+  position: relative;
+}
+
+.round::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
 }
