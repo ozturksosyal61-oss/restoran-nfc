@@ -14,7 +14,7 @@ export const COMPANY = {
   phone: "+90 506 909 00 61",
   phoneHref: "tel:+905069090061",
   // Yasal metinlerdeki başvuru adresi (sitede iletişim için gösterilmez).
-  email: "hvturanozt@icloud.com",
+  email: "oztdigitaldestek@gmail.com",
   website: "oztdigital.com.tr",
 };
 
