@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "crypto";
+import { isCronAuthorized } from "../../../../lib/cron-auth";
 import { runWeeklyReports } from "../../../../lib/weekly-report-job";
 
 // Haftalık rapor e-postaları. Vercel zamanlanmış görevi (vercel.json) her
@@ -8,16 +8,8 @@ import { runWeeklyReports } from "../../../../lib/weekly-report-job";
 
 export const maxDuration = 60;
 
-function authorized(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const a = Buffer.from(`Bearer ${secret}`);
-  const b = Buffer.from(request.headers.get("authorization") ?? "");
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 export async function GET(request: Request) {
-  if (!authorized(request)) {
+  if (!isCronAuthorized(request)) {
     return new Response("UNAUTHORIZED", { status: 401 });
   }
 
