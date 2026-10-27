@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="tr"><head><meta name="robots" content="noindex"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minotaur · Hesabını sil</title><style>
+:root{--bg:#F5F6F1;--card:#fff;--text:#0B0D08;--muted:#575E55;--accent:#0B0D08;--lime:#C8F169;--border:#DDE0D6;--danger:#B3261E}
+@media (prefers-color-scheme: dark){:root{--bg:#000;--card:#141714;--text:#F2F4F0;--muted:#9BA39C;--accent:#C8F169;--border:#262B27;--danger:#FF8A80}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
+header{background:var(--lime);color:#0B0D08;padding:32px 20px 24px}header div{max-width:680px;margin:0 auto}
+header h1{margin:0;font-size:30px;letter-spacing:.5px;text-transform:uppercase;font-weight:800}header p{margin:6px 0 0}
+main{max-width:680px;margin:0 auto;padding:8px 20px 48px}section{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:22px;margin-top:18px}
+h2{margin:0 0 8px;font-size:19px}p,li{color:var(--muted)}a{color:var(--text)}
+nav{display:flex;flex-wrap:wrap;gap:8px 16px;max-width:680px;margin:18px auto 0;padding:0 20px;font-size:14px}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:0 20px 32px}
+label{display:block;font-weight:700;font-size:14px;margin:14px 0 6px}
+input[type=email],input[inputmode]{width:100%;height:52px;border-radius:14px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:17px;padding:0 14px}
+button{width:100%;min-height:52px;border:0;border-radius:16px;background:var(--accent);color:var(--bg);font-size:16px;font-weight:800;margin-top:16px;cursor:pointer}
+button.danger{background:var(--danger);color:#fff}button:disabled{opacity:.55;cursor:default}
+.msg{margin-top:14px;font-weight:600}.err{color:var(--danger)}.hidden{display:none}</style></head><body>
+<header><div><h1>Minotaur</h1><p>Hesabını sil</p></div></header>
+<nav><a href="gizlilik.html">Gizlilik Politikası</a><a href="aydinlatma.html">Kişisel Verilerin İşlenmesine İlişkin Aydınlatma Metni</a><a href="acik-riza.html">Sağlık Verilerinin İşlenmesine İlişkin Açık Rıza Metni</a><a href="kosullar.html">Kullanım Koşulları</a><a href="hesap-sil.html">Hesabını sil</a></nav>
+<main>
+<section><h2>Uygulamadan silmek (en kolay yol)</h2>
+<ol><li>Minotaur'u aç, sağ üstteki yuvarlak butondan <b>Profil</b>'e gir.</li><li>En alttaki <b>Hesabımı sil</b>'e dokun ve onayla.</li></ol></section>
+<section><h2>Uygulamaya giremiyorsan buradan sil</h2>
+<p>Hesabına kayıtlı e-posta adresini yaz. Sana 6 haneli bir doğrulama kodu göndereceğiz; kodu girince hesabın silinir.</p>
+<div id="step1"><label for="email">E-posta</label><input id="email" type="email" autocomplete="email" placeholder="ornek@eposta.com">
+<button id="send">Doğrulama kodu gönder</button></div>
+<div id="step2" class="hidden"><label for="code">E-postana gelen kod</label><input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+<label style="font-weight:600;display:flex;gap:10px;align-items:flex-start"><input id="ok" type="checkbox" style="width:22px;height:22px;margin-top:2px"> Hesabımın ve tüm kayıtlarımın kalıcı olarak silineceğini, bunun geri alınamayacağını anladım.</label>
+<button id="del" class="danger">Hesabımı kalıcı olarak sil</button></div>
+<p id="msg" class="msg" role="status"></p></section>
+<section><h2>Neler silinir?</h2><ul>
+<li>Hesabın (adın ve e-posta adresin)</li><li>Boy, kilo ölçümlerin ve antrenman tercihlerin</li>
+<li>Programların, antrenmanların, setlerin ve tarama sonuçların</li><li>Verdiğin onay kayıtları</li></ul>
+<p>Silme anında yapılır ve geri alınamaz. Veriler teknik yedeklerden en geç 30 gün içinde kalkar. Makine fotoğrafları zaten hiç saklanmaz.</p>
+<p>Sorun yaşarsan hesabına kayıtlı e-postadan <a href="mailto:oztdigitaldestek@gmail.com?subject=Minotaur%20hesap%20silme%20talebi">oztdigitaldestek@gmail.com</a> adresine "hesabımı silin" yazman yeterli; en geç 30 gün içinde sonuçlandırırız.</p></section>
+<script>
+const URL_ = "https://troyjduubjdvrpspfbjh.supabase.co", KEY = "sb_publishable_g1dHP_Mc-Lv7oaUtvXTZlQ_mDH0M6X0";
+const $ = (id) => document.getElementById(id);
+const say = (t, err) => { $('msg').textContent = t; $('msg').className = 'msg' + (err ? ' err' : ''); };
+async function post(path, body, token) {
+  const r = await fetch(URL_ + path, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: KEY, ...(token ? { Authorization: 'Bearer ' + token } : {}) }, body: JSON.stringify(body || {}) });
+  let d = {}; try { d = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error(d.msg || d.error_description || d.hata || d.message || ('Hata ' + r.status));
+  return d;
+}
+function tr(m) {
+  m = String(m).toLowerCase();
+  if (m.includes('rate') || m.includes('seconds')) return 'Çok sık denendi. Bir dakika bekleyip tekrar dene.';
+  if (m.includes('expired') || m.includes('invalid')) return 'Kod hatalı ya da süresi dolmuş. Yeni kod iste.';
+  if (m.includes('signups not allowed') || m.includes('not found')) return 'Bu e-postayla kayıtlı bir hesap bulunamadı.';
+  if (m.includes('fetch') || m.includes('network')) return 'Sunucuya bağlanılamadı. İnternet bağlantını kontrol et.';
+  return 'Bir sorun oluştu: ' + m;
+}
+$('send').onclick = async () => {
+  const e = $('email').value.trim().toLowerCase();
+  if (!/^\S+@\S+\.\S+$/.test(e)) return say('Geçerli bir e-posta adresi yaz.', true);
+  $('send').disabled = true; say('Gönderiliyor…');
+  try { await post('/auth/v1/otp', { email: e, create_user: false }); $('step1').classList.add('hidden'); $('step2').classList.remove('hidden'); say('Kodu ' + e + ' adresine gönderdik. Gereksiz klasörünü de kontrol et.'); }
+  catch (err) { say(tr(err.message), true); } finally { $('send').disabled = false; }
+};
+$('del').onclick = async () => {
+  const e = $('email').value.trim().toLowerCase(), c = $('code').value.trim();
+  if (!/^\d{6}$/.test(c)) return say('6 haneli kodu yaz.', true);
+  if (!$('ok').checked) return say('Önce onay kutusunu işaretle.', true);
+  $('del').disabled = true; say('Siliniyor…');
+  try {
+    const s = await post('/auth/v1/verify', { email: e, token: c, type: 'email' });
+    await post('/functions/v1/hesap-sil', {}, s.access_token);
+    $('step2').classList.add('hidden'); say('Hesabın ve tüm kayıtların silindi.');
+  } catch (err) { say(tr(err.message), true); $('del').disabled = false; }
+};
+</script></main>
+<footer>Sürüm 2026-10-27 · OZT Digital · <a href="mailto:oztdigitaldestek@gmail.com">oztdigitaldestek@gmail.com</a></footer>
+</body></html>
