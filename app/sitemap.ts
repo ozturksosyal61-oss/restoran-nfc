@@ -15,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/qr-menu", priority: 0.8, changeFrequency: "monthly" },
     { path: "/nfc-menu", priority: 0.8, changeFrequency: "monthly" },
     { path: "/dijital-menu", priority: 0.8, changeFrequency: "monthly" },
+    { path: "/uygulamalar", priority: 0.6, changeFrequency: "monthly" },
     { path: "/kvkk", priority: 0.3, changeFrequency: "yearly" },
     { path: "/gizlilik", priority: 0.3, changeFrequency: "yearly" },
     { path: "/cerez-politikasi", priority: 0.3, changeFrequency: "yearly" },

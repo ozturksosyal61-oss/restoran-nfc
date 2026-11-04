@@ -29,6 +29,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "/sistem/abonelikler", label: "Abonelikler", icon: "card" },
       { href: "/sistem/odeme-ayarlari", label: "Otomatik ödeme", icon: "wallet" },
       { href: "/sistem/yoneticiler", label: "Yönetici hesapları", icon: "user" },
+      { href: "/sistem/uygulamalar", label: "Uygulamalar", icon: "sparkle" },
       { href: "/sistem/hatalar", label: "Hatalar", icon: "alert" },
     ],
   },

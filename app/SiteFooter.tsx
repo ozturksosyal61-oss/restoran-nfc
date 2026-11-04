@@ -41,6 +41,7 @@ export default function SiteFooter() {
             <Link href="/urunler">Masa Ürünleri</Link>
             <Link href="/tasarimlar">Menü Tasarımları</Link>
             <Link href="/demo">Demo</Link>
+            <Link href="/uygulamalar">Uygulamalarımız</Link>
             <Link href="/#iletisim">İletişim</Link>
           </nav>
 
