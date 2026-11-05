@@ -17,10 +17,13 @@ const nextConfig: NextConfig = {
       "en/delete-account",
       "en/support",
     ];
-    return pages.map((page) => ({
+    const root = [
+      { source: "/bluffhouse", destination: "/bluffhouse/index.html" },
+    ];
+    return root.concat(pages.map((page) => ({
       source: `/bluffhouse/${page}`,
       destination: `/bluffhouse/${page}.html`,
-    }));
+    })));
   },
   async headers() {
     const common = [
