@@ -20,10 +20,20 @@ const nextConfig: NextConfig = {
     const root = [
       { source: "/bluffhouse", destination: "/bluffhouse/index.html" },
     ];
-    return root.concat(pages.map((page) => ({
-      source: `/bluffhouse/${page}`,
-      destination: `/bluffhouse/${page}.html`,
-    })));
+    // Minotaur yasal sayfaları (public/minotaur) da uzantısız açılır.
+    const minotaur = ["gizlilik", "aydinlatma", "acik-riza", "kosullar", "hesap-sil"];
+    return [
+      ...root,
+      { source: "/minotaur", destination: "/minotaur/index.html" },
+      ...pages.map((page) => ({
+        source: `/bluffhouse/${page}`,
+        destination: `/bluffhouse/${page}.html`,
+      })),
+      ...minotaur.map((page) => ({
+        source: `/minotaur/${page}`,
+        destination: `/minotaur/${page}.html`,
+      })),
+    ];
   },
   async headers() {
     const common = [
