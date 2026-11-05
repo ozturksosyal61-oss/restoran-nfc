@@ -5,6 +5,23 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: "6mb" },
   },
+  // Bluff House yasal/destek sayfaları (public/bluffhouse) uzantısız adreslerle de açılır.
+  async rewrites() {
+    const pages = [
+      "gizlilik",
+      "kullanim-sartlari",
+      "hesap-silme",
+      "destek",
+      "en/privacy",
+      "en/terms",
+      "en/delete-account",
+      "en/support",
+    ];
+    return pages.map((page) => ({
+      source: `/bluffhouse/${page}`,
+      destination: `/bluffhouse/${page}.html`,
+    }));
+  },
   async headers() {
     const common = [
       { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
