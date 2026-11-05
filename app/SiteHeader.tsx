@@ -34,12 +34,15 @@ export default function SiteHeader({ onHome = false }: { onHome?: boolean }) {
             Ürünler
           </TrackedLink>
           <Link href="/tasarimlar">Tasarımlar</Link>
-          <a href={`${base}#paketler`}>Paketler</a>
+          <a href={`${base}#paketler`}>Fiyatlandırma</a>
           <a href={`${base}#sss`}>SSS</a>
           <a href={`${base}#iletisim`}>İletişim</a>
         </nav>
 
         <div className={styles.navActions}>
+          <a href={`${base}#paketler`} className={styles.navPricing}>
+            Fiyatlar
+          </a>
           <Link href="/admin/login" className={styles.navLogin}>
             İşletme Girişi
           </Link>

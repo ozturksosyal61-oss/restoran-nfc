@@ -222,6 +222,14 @@ a:hover .productName .btnIcon {
   gap: 18px;
 }
 
+/* Üst menü (≤1024px) gizlendiğinde fiyatlara giden kısa bağlantı. */
+.navPricing {
+  display: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .navLogin {
   font-size: 14px;
   font-weight: 600;
@@ -1458,6 +1466,10 @@ a:hover .productName .btnIcon {
     display: none;
   }
 
+  .navPricing {
+    display: inline;
+  }
+
   .bento {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1520,6 +1532,14 @@ a:hover .productName .btnIcon {
   .navCta {
     height: 38px;
     padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .navActions {
+    gap: 14px;
+  }
+
+  .navPricing {
     font-size: 13px;
   }
 
@@ -1634,5 +1654,11 @@ a:hover .productName .btnIcon {
 
   .footer {
     padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 400px) {
+  .navCta .btnIcon {
+    display: none;
   }
 }
